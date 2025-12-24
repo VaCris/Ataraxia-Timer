@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useTimer } from './hooks/useTimer';
 import { useLocalStorage } from './hooks/useLocalStorage';
 
-import Header from './components/Layout/Header';
-import TimerModes from './components/Timer/TimerModes';
-import CircularDisplay from './components/Timer/CircularDisplay';
-import Controls from './components/Timer/Controls';
-import MissionLog from './components/Tasks/MissionLog';
-import SettingsModal from './components/Layout/SettingsModal';
+import Header from './components/layout/Header';
+import TimerModes from './components/timer/TimerModes';
+import CircularDisplay from './components/timer/CircularDisplay';
+import Controls from './components/timer/Controls';
+import MissionLog from './components/tasks/MissionLog';
+import SettingsModal from './components/layout/SettingsModal';
 
 import './styles/global.css';
 
