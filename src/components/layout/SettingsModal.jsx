@@ -1,10 +1,11 @@
-import { X, Image as ImageIcon, Link, Upload, Volume2, Palette, Clock } from 'lucide-react';
-
+import { X, Image as ImageIcon, Upload, Volume2, Palette, Clock, Zap, Repeat } from 'lucide-react';
 const SettingsModal = ({
     isOpen, onClose,
     currentBg, onBgChange,
     accentColor, onColorChange,
-    timerSettings, onTimerChange
+    timerSettings, onTimerChange,
+    autoStart, onAutoStartChange,
+    longBreakInterval, onLongBreakIntervalChange
 }) => {
     if (!isOpen) return null;
 
@@ -42,7 +43,68 @@ const SettingsModal = ({
                 <div className="modal-body">
 
                     <div className="setting-section">
-                        <label className="setting-label"><Palette size={14} />Theme</label>
+                        <label className="setting-label"><Zap size={14} /> Automation</label>
+
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            background: 'rgba(255,255,255,0.05)',
+                            padding: '12px',
+                            borderRadius: '10px',
+                            border: '1px solid var(--glass-border)',
+                            marginBottom: '10px'
+                        }}>
+                            <span style={{ fontSize: '0.9rem' }}>Auto-start Cycles</span>
+                            <input
+                                type="checkbox"
+                                checked={autoStart}
+                                onChange={(e) => onAutoStartChange(e.target.checked)}
+                                style={{
+                                    width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--primary-color)'
+                                }}
+                            />
+                        </div>
+
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            background: 'rgba(255,255,255,0.05)',
+                            padding: '12px',
+                            borderRadius: '10px',
+                            border: '1px solid var(--glass-border)'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Repeat size={16} color="var(--text-muted)" />
+                                <span style={{ fontSize: '0.85rem' }}>Long Break Interval</span>
+                            </div>
+                            <input
+                                type="number"
+                                min="1"
+                                max="99"
+                                value={longBreakInterval}
+                                onChange={(e) => {
+                                    const val = e.target.value;                         
+                                    if (val === '') {
+                                        onLongBreakIntervalChange('');
+                                    } else {
+                                        onLongBreakIntervalChange(Number(val));
+                                    }
+                                }}
+                                onBlur={() => {
+                                    if (!longBreakInterval || longBreakInterval < 1) {
+                                        onLongBreakIntervalChange(4);
+                                    }
+                                }}
+                                className="input-text"
+                                style={{ width: '60px', textAlign: 'center' }}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="setting-section">
+                        <label className="setting-label"><Palette size={14} />Theme Color</label>
                         <div className="color-picker-container">
                             <div className="color-preview" style={{ backgroundColor: accentColor }}></div>
                             <input
@@ -80,7 +142,7 @@ const SettingsModal = ({
                         <input
                             type="text"
                             className="input-text"
-                            placeholder="URL for background image..."
+                            placeholder="Paste image URL..."
                             value={currentBg.startsWith('data:') ? '' : currentBg}
                             onChange={(e) => onBgChange(e.target.value)}
                             style={{ marginBottom: '10px' }}
