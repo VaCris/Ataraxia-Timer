@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-export const useTimer = (initialMode = 'work', customSettings, autoStart = false, longBreakInterval = 4) => {
+export const useTimer = (initialMode = 'work', customSettings, autoStart = false, longBreakInterval = 4, volume = 0.5) => {
     const settings = customSettings || {
         work: 25,
         short: 5,
@@ -24,13 +24,19 @@ export const useTimer = (initialMode = 'work', customSettings, autoStart = false
     }, [mode, customSettings]);
 
     useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.volume = volume;
+        }
+    }, [volume]);
+
+    useEffect(() => {
         let interval = null;
 
         if (isActive && timeLeft > 0) {
             interval = setInterval(() => setTimeLeft((t) => t - 1), 1000);
         } else if (timeLeft === 0 && isActive) {
-            playAlarm();
-
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch(e => console.log("Error audio:", e));
             if (autoStart) {
                 handleAutoSwitch();
             } else {
@@ -53,12 +59,6 @@ export const useTimer = (initialMode = 'work', customSettings, autoStart = false
             setMode('work');
             setCycles(c => c + 1);
         }
-    };
-
-    const playAlarm = () => {
-        audioRef.current.currentTime = 0;
-        audioRef.current.volume = 0.5;
-        audioRef.current.play().catch(e => console.log(e));
     };
 
     const toggleTimer = () => setIsActive(!isActive);

@@ -1,27 +1,43 @@
-const CircularDisplay = ({ time, isActive }) => (
-    <div style={{
-        width: '320px', height: '320px',
-        borderRadius: '50%',
-        border: '8px solid rgba(255,255,255,0.03)',
-        display: 'flex', flexDirection: 'column',
-        justifyContent: 'center', alignItems: 'center',
-        boxShadow: isActive ? '0 0 60px var(--primary-glow)' : 'none',
-        transition: 'box-shadow 0.5s ease',
-        margin: '0 auto 3rem auto'
-    }}>
-        <span style={{ fontSize: '5.5rem', fontWeight: 700, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
-            {time}
-        </span>
-        <span style={{
-            color: 'var(--text-muted)',
-            textTransform: 'uppercase',
-            letterSpacing: '3px',
-            marginTop: '1rem',
-            fontSize: '0.9rem'
-        }}>
-            {isActive ? 'Focusing' : 'Ready'}
-        </span>
-    </div>
-);
+import React from 'react';
+
+const CircularDisplay = ({ time, isActive, mode }) => {
+    const radius = 120;
+    const stroke = 8;
+    const normalizedRadius = radius - stroke * 2;
+    const circumference = normalizedRadius * 2 * Math.PI;
+
+    const getStatusText = () => {
+        if (mode === 'short' || mode === 'long') {
+            return 'BREAK';
+        }
+        return isActive ? 'FOCUSING' : 'READY';
+    };
+
+    return (
+        <div style={{ position: 'relative', width: radius * 2, height: radius * 2, margin: '0 auto' }}>
+            <svg height={radius * 2} width={radius * 2} style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
+                <circle
+                    stroke="rgba(255, 255, 255, 0.1)" strokeWidth={stroke} fill="transparent"
+                    r={normalizedRadius} cx={radius} cy={radius}
+                />
+                <circle
+                    stroke="var(--primary-color)" strokeWidth={stroke} strokeDasharray={circumference + ' ' + circumference}
+                    style={{ strokeDashoffset: isActive ? 0 : circumference, transition: 'stroke-dashoffset 0.5s linear' }}
+                    strokeLinecap="round" fill="transparent"
+                    r={normalizedRadius} cx={radius} cy={radius}
+                />
+            </svg>
+
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                <h1 style={{ fontSize: '3.5rem', fontWeight: 700, margin: 0, fontVariantNumeric: 'tabular-nums', textShadow: '0 0 20px var(--primary-glow)' }}>
+                    {time}
+                </h1>
+                <p style={{ margin: 0, fontSize: '0.9rem', letterSpacing: '3px', textTransform: 'uppercase', opacity: 0.7, marginTop: '0.5rem', fontWeight: 600 }}>
+                    {getStatusText()}
+                </p>
+            </div>
+        </div>
+    );
+};
 
 export default CircularDisplay;
