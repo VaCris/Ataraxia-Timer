@@ -35,8 +35,8 @@ Si quieres correr este proyecto en tu propia máquina:
 
 1.  **Clonar el repositorio:**
     ```bash
-    git clone [https://github.com/TU_USUARIO/zenith-timer.git](https://github.com/TU_USUARIO/zenith-timer.git)
-    cd zenith-timer
+    git clone [https://github.com/TU_USUARIO/ataraxia-timer.git]
+    cd ataraxia-timer
     ```
 
 2.  **Instalar dependencias:**
