@@ -3,20 +3,20 @@
 </p>
 
 
-# ⚡ Zenith Timer
+# Ataraxia Timer
 
 **¡Hecho por Studios TKOH!**
 
 Un temporizador de productividad moderno y estético diseñado para el **Deep Work** (Trabajo Profundo). Ideal para streamers, desarrolladores y cualquiera que busque mantener el enfoque sin distracciones visuales.
 
-## 🚀 Características
+## Características
 
 * **Modos de Enfoque:** Temporizadores preconfigurados para *Focus* (Trabajo), *Short Break* (Descanso Corto) y *Long Break* (Descanso Largo).
 * **Modo "Sin Distracciones":** La interfaz se limpia automáticamente cuando el temporizador inicia, ocultando elementos innecesarios.
 * **Personalización Total:**
-    * 🎨 **Temas:** Cambia el color de acento de toda la aplicación.
-    * 🖼️ **Fondos:** Sube tus propias imágenes o usa URLs para personalizar el fondo.
-    * ⏱️ **Tiempos:** Ajusta la duración de cada modo según tu flujo de trabajo.
+    * **Temas:** Cambia el color de acento de toda la aplicación.
+    * **Fondos:** Sube tus propias imágenes o usa URLs para personalizar el fondo.
+    * **Tiempos:** Ajusta la duración de cada modo según tu flujo de trabajo.
 * **Mission Log:** Lista de tareas integrada para registrar tus objetivos de la sesión.
 * **Persistencia Local:** Tus configuraciones, tareas y colores se guardan automáticamente en el navegador.
 * **Alertas Sonoras:** Notificación de audio al finalizar el tiempo.
@@ -29,7 +29,7 @@ Un temporizador de productividad moderno y estético diseñado para el **Deep Wo
 * **Canvas Confetti**: Efectos visuales de celebración.
 * **CSS3 & Glassmorphism**: Estilos modernos con efectos de desenfoque y transparencias.
 
-## 📦 Instalación y Uso Local
+## Instalación y Uso Local
 
 Si quieres correr este proyecto en tu propia máquina:
 
@@ -52,7 +52,7 @@ Si quieres correr este proyecto en tu propia máquina:
 4.  **Abrir en el navegador:**
     Visita `http://localhost:5173` para ver la app.
 
-## 🌐 Despliegue (Deploy)
+## Despliegue (Deploy)
 
 Este proyecto está listo para ser desplegado en plataformas como **Render**, **Vercel** o **Netlify**.
 
@@ -62,7 +62,7 @@ Este proyecto está listo para ser desplegado en plataformas como **Render**, **
 
 > **Nota:** Si despliegas en una subcarpeta (como GitHub Pages), recuerda ajustar el `base` en `vite.config.js`.
 
-## 📄 Licencia
+## Licencia
 
 Este proyecto es de código abierto y está disponible bajo la **Licencia MIT**.
 
