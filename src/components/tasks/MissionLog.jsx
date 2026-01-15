@@ -1,32 +1,57 @@
-import React, { useState } from 'react';
-import { Plus, Trash2, CheckCircle2, Circle, GripVertical } from 'lucide-react';
-import useLocalStorage from '../../hooks/useLocalStorage';
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2, CheckCircle2, Circle, GripVertical, Loader2 } from 'lucide-react';
+import { tasksService } from '../../api/tasks.service';
 
 const MissionLog = () => {
-  const [tasks, setTasks] = useLocalStorage('dw-tasks', []);
+  const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState('');
+  const [loading, setLoading] = useState(true);
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
-  const addTask = (e) => {
+
+  useEffect(() => {
+    loadTasks();
+  }, []);
+
+  const loadTasks = async () => {
+    try {
+      const data = await tasksService.getAll();
+      setTasks(data);
+    } catch (error) {
+      console.error("Error loading tasks", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addTask = async (e) => {
     e.preventDefault();
     if (!newTask.trim()) return;
 
-    const task = {
-      id: Date.now(),
-      text: newTask,
-      completed: false
-    };
-    setTasks([...tasks, task]);
-    setNewTask('');
+    try {
+      const savedTask = await tasksService.create({ title: newTask });
+      setTasks([...tasks, savedTask]);
+      setNewTask('');
+    } catch (error) {
+      console.error("Error adding task", error);
+    }
   };
 
-  const toggleTask = (id) => {
-    setTasks(tasks.map(t =>
-      t.id === id ? { ...t, completed: !t.completed } : t
-    ));
+  const toggleTask = async (task) => {
+    try {
+      const updatedTask = await tasksService.update(task.id, { completed: !task.completed });
+      setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
+    } catch (error) {
+      console.error("Error toggling task", error);
+    }
   };
 
-  const deleteTask = (id) => {
-    setTasks(tasks.filter(t => t.id !== id));
+  const deleteTask = async (id) => {
+    try {
+      await tasksService.delete(id);
+      setTasks(tasks.filter(t => t.id !== id));
+    } catch (error) {
+      console.error("Error deleting task", error);
+    }
   };
 
   const handleDragStart = (index) => {
@@ -71,7 +96,9 @@ const MissionLog = () => {
         justifyContent: 'space-between'
       }}>
         Mission Log
-        <span style={{ opacity: 0.5 }}>{tasks.filter(t => t.completed).length}/{tasks.length}</span>
+        <span style={{ opacity: 0.5 }}>
+          {loading ? '...' : `${tasks.filter(t => t.completed).length}/${tasks.length}`}
+        </span>
       </h3>
 
       <form onSubmit={addTask} style={{ display: 'flex', gap: '10px', marginBottom: '1.5rem' }}>
@@ -80,6 +107,7 @@ const MissionLog = () => {
           placeholder="New Objective..."
           value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
+          disabled={loading}
           style={{
             background: 'rgba(0,0,0,0.2)',
             border: '1px solid var(--glass-border)',
@@ -93,14 +121,16 @@ const MissionLog = () => {
         />
         <button
           type="submit"
+          disabled={loading}
           style={{
             background: 'var(--primary-color)',
             border: 'none',
             width: '45px',
             borderRadius: '12px',
             color: 'white',
-            cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
+            cursor: loading ? 'wait' : 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            opacity: loading ? 0.7 : 1
           }}
         >
           <Plus size={20} />
@@ -115,7 +145,11 @@ const MissionLog = () => {
         gap: '10px',
         paddingRight: '5px'
       }}>
-        {tasks.length === 0 ? (
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '20px', color: 'var(--text-muted)' }}>
+            <Loader2 className="animate-spin" />
+          </div>
+        ) : tasks.length === 0 ? (
           <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '2rem', fontSize: '0.9rem', fontStyle: 'italic' }}>
             There are no active missions.
           </div>
@@ -149,7 +183,7 @@ const MissionLog = () => {
               </div>
 
               <button
-                onClick={() => toggleTask(task.id)}
+                onClick={() => toggleTask(task)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: task.completed ? 'var(--primary-color)' : 'var(--text-muted)', padding: 0, display: 'flex' }}
               >
                 {task.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
@@ -163,7 +197,7 @@ const MissionLog = () => {
                 wordBreak: 'break-word',
                 userSelect: 'none'
               }}>
-                {task.text}
+                {task.title}
               </span>
 
               <button
@@ -182,6 +216,8 @@ const MissionLog = () => {
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );

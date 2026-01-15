@@ -4,7 +4,7 @@ import CircularDisplay from './CircularDisplay';
 import Controls from './Controls';
 
 const TimerWidget = ({
-    mode, setMode,
+    mode, setMode,timeLeft,
     formatTime, isActive,
     cycles, longBreakInterval,
     toggleTimer, resetTimer,
@@ -68,7 +68,7 @@ const TimerWidget = ({
                 <TimerModes currentMode={mode} setMode={setMode} />
             </div>
 
-            <CircularDisplay time={formatTime()} isActive={isActive} mode={mode} />
+            <CircularDisplay time={formatTime(timeLeft)} isActive={isActive} mode={mode} />
 
             {mode === 'work' && (
                 <div style={{

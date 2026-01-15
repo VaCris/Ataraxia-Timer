@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Settings, Volume2, VolumeX, Music, Maximize, HelpCircle } from 'lucide-react'; // Importamos HelpCircle
+import { Settings, Volume2, VolumeX, Music, Maximize, HelpCircle } from 'lucide-react';
 
 import { useTimer } from './hooks/useTimer';
 import useLocalStorage from './hooks/useLocalStorage';
 import { usePip } from './hooks/usePip';
+import { useAuth } from './context/auth-context';
+import { settingsService } from './api/settings.service';
+import { tagsService } from './api/tags.service';
 
 import Header from './components/layout/Header';
 import MissionLog from './components/tasks/MissionLog';
@@ -17,9 +20,8 @@ import SupportModal from './components/layout/SupportModal';
 import './styles/global.css';
 
 function App() {
-  const [showIntro, setShowIntro] = useState(() => {
-    return !sessionStorage.getItem('dw-intro-seen');
-  });
+  const { user, token, loginAsGuest, loading } = useAuth();
+  const { pipWindow, togglePip } = usePip();
 
   const [bgImage, setBgImage] = useLocalStorage('dw-background', '');
   const [accentColor, setAccentColor] = useLocalStorage('dw-color', '#8b5cf6');
@@ -29,32 +31,82 @@ function App() {
   const [is24Hour, setIs24Hour] = useLocalStorage('dw-is24hour', false);
   const [volume, setVolume] = useLocalStorage('dw-volume', 0.5);
   const [playlistUrl, setPlaylistUrl] = useLocalStorage('dw-playlist', '');
-  const [isMusicOpen, setIsMusicOpen] = useState(false);
 
+  const [showIntro, setShowIntro] = useState(() => !sessionStorage.getItem('dw-intro-seen'));
+  const [isMusicOpen, setIsMusicOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
-  const { pipWindow, togglePip } = usePip();
 
-  const { mode, setMode, formatTime, isActive, toggleTimer, resetTimer, cycles } = useTimer(
+  const { mode, setMode, timeLeft, formatTime, isActive, toggleTimer, resetTimer, cycles } = useTimer(
     'work', timerSettings, autoStart, longBreakInterval, volume
   );
 
-  const toggleMute = () => {
-    setVolume(volume === 0 ? 0.5 : 0);
+  useEffect(() => {
+    if (!user || !token) return;
+
+    const syncSettings = async () => {
+      try {
+        const cloudSettings = await settingsService.getSettings();
+
+        if (cloudSettings) {
+          if (cloudSettings.focusDuration) {
+            setTimerSettings(prev => ({
+              ...prev,
+              work: cloudSettings.focusDuration,
+              short: cloudSettings.shortBreakDuration || prev.short,
+              long: cloudSettings.longBreakDuration || prev.long
+            }));
+          }
+
+          if (cloudSettings.longBreakInterval) {
+            setLongBreakInterval(cloudSettings.longBreakInterval);
+          }
+
+          const localAutoStart = localStorage.getItem('dw-autostart');
+
+          if (
+            cloudSettings.autoStartPomodoros !== undefined &&
+            localAutoStart === null
+          ) {
+            setAutoStart(cloudSettings.autoStartPomodoros);
+          }
+        }
+
+        const tags = await tagsService.getAll();
+        const focusTag = tags.find(tag => tag.name === 'Focus');
+
+        if (focusTag?.color) {
+          setAccentColor(focusTag.color);
+        }
+      } catch { }
+    };
+
+    syncSettings();
+  }, [user, token]);
+
+  useEffect(() => {
+    if (!loading && !user && !showIntro) {
+      loginAsGuest();
+    }
+  }, [loading, user, showIntro]);
+
+  const handleIntroComplete = async () => {
+    sessionStorage.setItem('dw-intro-seen', 'true');
+    setShowIntro(false);
+    if (!user) await loginAsGuest();
   };
+
+  const toggleMute = () => setVolume(volume === 0 ? 0.5 : 0);
 
   const toggleFullScreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
-    } else {
-      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (document.exitFullscreen) {
+      document.exitFullscreen();
     }
   };
 
-  const handleIntroComplete = () => {
-    sessionStorage.setItem('dw-intro-seen', 'true');
-    setShowIntro(false);
-  };
+  if (loading) return <div style={{ background: '#050505', width: '100%', height: '100vh' }} />;
 
   return (
     <div style={{
@@ -70,32 +122,22 @@ function App() {
       )}
 
       {pipWindow && createPortal(
-        <div style={{
-          width: '100%',
-          height: '100vh',
+        <div className="pip-container" style={{
+          width: '100%', height: '100vh',
           backgroundImage: bgImage ? `url(${bgImage})` : 'none',
           backgroundColor: '#050505',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          overflow: 'hidden'
+          backgroundSize: 'cover', backgroundPosition: 'center',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          position: 'relative', overflow: 'hidden'
         }}>
-          <div style={{
-            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 0
-          }} />
-
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 0 }} />
           <div style={{ position: 'relative', zIndex: 1, width: '100%' }}>
             <TimerWidget
-              mode={mode} setMode={setMode}
+              mode={mode} setMode={setMode} timeLeft={timeLeft}
               formatTime={formatTime} isActive={isActive}
               cycles={cycles} longBreakInterval={longBreakInterval}
               toggleTimer={toggleTimer} resetTimer={resetTimer}
-              togglePip={togglePip} isPipActive={true}
-              isInPipMode={true}
+              togglePip={togglePip} isPipActive={true} isInPipMode={true}
             />
           </div>
         </div>,
@@ -110,16 +152,13 @@ function App() {
       />
 
       <div className="app-wrapper">
-
         <div className={`header-container ${isActive ? 'hidden' : ''}`}>
           <Header is24Hour={is24Hour} />
         </div>
 
         <main className="main-layout">
           <div style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
+            width: '100%', display: 'flex', justifyContent: 'center',
             opacity: pipWindow ? 0.3 : 1,
             filter: pipWindow ? 'blur(2px) grayscale(100%)' : 'none',
             transition: 'all 0.5s ease',
@@ -127,19 +166,16 @@ function App() {
           }}>
             <TimerWidget
               mode={mode} setMode={setMode}
-              formatTime={formatTime} isActive={isActive}
+              timeLeft={timeLeft} formatTime={formatTime}
               cycles={cycles} longBreakInterval={longBreakInterval}
               toggleTimer={toggleTimer} resetTimer={resetTimer}
-              togglePip={togglePip}
-              isPipActive={!!pipWindow}
-              isInPipMode={false}
+              togglePip={togglePip} isPipActive={!!pipWindow} isInPipMode={false}
             />
           </div>
 
           <section className="tasks-section">
             <MissionLog />
           </section>
-
         </main>
 
         <div className={`dock-container dock-left ${isActive ? 'dock-hidden' : ''}`}>
@@ -176,13 +212,12 @@ function App() {
             <Maximize size={22} />
           </button>
 
-          <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)', margin: '0 4px' }}></div>
+          <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
 
-          <button onClick={() => setIsSupportOpen(true)} className="dock-btn" title="Support & Feedback">
+          <button onClick={() => setIsSupportOpen(true)} className="dock-btn" title="Support">
             <HelpCircle size={22} />
           </button>
         </div>
-
       </div>
 
       <SettingsModal
@@ -194,6 +229,7 @@ function App() {
         autoStart={autoStart} onAutoStartChange={setAutoStart}
         longBreakInterval={longBreakInterval} onLongBreakIntervalChange={setLongBreakInterval}
         is24Hour={is24Hour} onFormatChange={setIs24Hour}
+        volume={volume} onVolumeChange={setVolume}
       />
 
       <SupportModal

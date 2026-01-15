@@ -1,47 +1,57 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { timersService } from '../api/timers.service';
+import { getSecondsFromSettings } from '../utils/timer.utils';
 
-const ALARM_SOUND = '/sounds/alarm.mp3';
-
-export const useTimer = (initialMode, settings, autoStart, longBreakInterval, volume) => {
+export const useTimer = (initialMode = 'work', settings, autoStart, longBreakInterval, volume) => {
     const [mode, setMode] = useState(initialMode);
-    const [timeLeft, setTimeLeft] = useState(settings[initialMode] * 60);
+    const [timeLeft, setTimeLeft] = useState(() =>
+        getSecondsFromSettings(settings, initialMode)
+    );
     const [isActive, setIsActive] = useState(false);
     const [cycles, setCycles] = useState(0);
 
-    const audioRef = useRef(new Audio(ALARM_SOUND));
+    const audioRef = useRef(new Audio('/sounds/alarm.mp3'));
 
     useEffect(() => {
-        if (!isActive) {
-            setTimeLeft(settings[mode] * 60);
-        }
-    }, [settings, mode]);
+        setTimeLeft(getSecondsFromSettings(settings, mode));
+    }, [mode, settings]);
 
-    const switchMode = useCallback((newMode) => {
-        setMode(newMode);
-        setTimeLeft(settings[newMode] * 60);
-        setIsActive(false);
-    }, [settings]);
+    useEffect(() => {
+        audioRef.current.volume = volume;
+    }, [volume]);
 
     useEffect(() => {
         let interval = null;
 
         if (isActive && timeLeft > 0) {
             interval = setInterval(() => {
-                setTimeLeft((prevTime) => prevTime - 1);
+                setTimeLeft((prev) => prev - 1);
             }, 1000);
         } else if (timeLeft === 0) {
-            clearInterval(interval);
-            setIsActive(false);
             handleTimerComplete();
         }
 
         return () => clearInterval(interval);
     }, [isActive, timeLeft]);
 
-    const handleTimerComplete = () => {
-        playAlarm();
+    const handleTimerComplete = async () => {
+        audioRef.current.play().catch(e => console.log('Audio error:', e));
+        setIsActive(false);
 
         if (mode === 'work') {
+            try {
+                await timersService.saveSession({
+                    duration: settings.work * 60,
+                    tag: null,
+                    status: 'completed',
+                    startTime: new Date(Date.now() - settings.work * 60 * 1000).toISOString(),
+                    endTime: new Date().toISOString()
+                });
+                console.log("Session saved to cloud");
+            } catch (error) {
+                console.error(error);
+            }
+
             const newCycles = cycles + 1;
             setCycles(newCycles);
 
@@ -55,54 +65,35 @@ export const useTimer = (initialMode, settings, autoStart, longBreakInterval, vo
         }
 
         if (autoStart) {
-            setTimeout(() => setIsActive(true), 1000);
-        }
-    };
-
-    const playAlarm = () => {
-        const audio = audioRef.current;
-        audio.src = ALARM_SOUND;
-        audio.volume = volume;
-        audio.currentTime = 0;
-
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(error => {
-                console.log('Audio autoplay prevented:', error);
-            });
-        }
-    };
-
-    const stopAlarm = () => {
-        const audio = audioRef.current;
-        audio.pause();
-        audio.currentTime = 0;
-    };
-
-    const toggleTimer = () => {
-        if (isActive) {
-            setIsActive(false);
-        } else {
-            if (volume > 0) audioRef.current.load();
             setIsActive(true);
         }
     };
 
+    const switchMode = (newMode) => {
+        setMode(newMode);
+        setTimeLeft(getSecondsFromSettings(settings, newMode));
+        setIsActive(false);
+    };
+
+    const toggleTimer = () => setIsActive(!isActive);
+
     const resetTimer = () => {
         setIsActive(false);
-        setTimeLeft(settings[mode] * 60);
-        stopAlarm();
+        setTimeLeft(getSecondsFromSettings(settings, mode));
     };
 
-    const formatTime = () => {
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-        return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    const formatTime = (time) => {
+        if (typeof time !== 'number' || isNaN(time)) return '00:00';
+
+        const minutes = Math.floor(time / 60);
+        const seconds = time % 60;
+
+        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
 
-    useEffect(() => {
-        return () => stopAlarm();
-    }, []);
+    // console.log(settings);
+    // console.log(mode);
+    // console.log(settings?.[mode]);
 
     return {
         mode,
