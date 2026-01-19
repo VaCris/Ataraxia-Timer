@@ -1,23 +1,31 @@
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music2 } from 'lucide-react';
 
 const SpotifyPlayerUI = ({ currentTrack, isPaused, togglePlay, volume, setVolume }) => {
-    if (!currentTrack) return null;
+    const trackName = currentTrack?.name || "Ready to Play";
+    const artistName = currentTrack?.artists?.map(a => a.name).join(', ') || "Select a song";
+    const albumImage = currentTrack?.album?.images?.[0]?.url;
 
     return (
         <div className="spotify-player-ui">
             <div className="track-info">
-                <img src={currentTrack.album.images[0].url} alt={currentTrack.album.name} className="album-art" />
+                {albumImage ? (
+                    <img src={albumImage} alt={trackName} className="album-art" />
+                ) : (
+                    <div className="album-art-placeholder">
+                        <Music2 size={24} color="rgba(255,255,255,0.5)" />
+                    </div>
+                )}
                 <div className="track-details">
-                    <span className="track-name">{currentTrack.name}</span>
-                    <span className="artist-name">{currentTrack.artists.map(a => a.name).join(', ')}</span>
+                    <span className="track-name">{trackName}</span>
+                    <span className="artist-name">{artistName}</span>
                 </div>
             </div>
 
             <div className="player-controls">
                 <button className="control-btn-sm"><SkipBack size={20} /></button>
                 <button className="play-btn" onClick={togglePlay}>
-                    {isPaused ? <Play size={24} fill="white" /> : <Pause size={24} fill="white" />}
+                    {isPaused ? <Play size={24} fill="black" className="play-icon" /> : <Pause size={24} fill="black" className="play-icon" />}
                 </button>
                 <button className="control-btn-sm"><SkipForward size={20} /></button>
             </div>
@@ -45,7 +53,11 @@ const SpotifyPlayerUI = ({ currentTrack, isPaused, togglePlay, volume, setVolume
                     border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);
                 }
                 .track-info { display: flex; align-items: center; gap: 12px; }
-                .album-art { width: 48px; height: 48px; border-radius: 8px; }
+                .album-art { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; }
+                .album-art-placeholder { 
+                    width: 48px; height: 48px; border-radius: 8px; background: rgba(255,255,255,0.1);
+                    display: flex; align-items: center; justify-content: center;
+                }
                 .track-details { display: flex; flex-direction: column; overflow: hidden; }
                 .track-name { color: white; font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                 .artist-name { color: rgba(255,255,255,0.7); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -60,6 +72,7 @@ const SpotifyPlayerUI = ({ currentTrack, isPaused, togglePlay, volume, setVolume
                     cursor: pointer; transition: transform 0.2s;
                 }
                 .play-btn:hover { transform: scale(1.05); }
+                .play-icon { position: relative; left: 1px; }
 
                 .volume-controls { display: flex; align-items: center; gap: 8px; }
                 .volume-slider {

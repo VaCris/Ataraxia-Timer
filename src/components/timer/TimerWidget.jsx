@@ -9,10 +9,8 @@ const TimerWidget = ({
     cycles, longBreakInterval,
     toggleTimer, resetTimer,
     togglePip, isPipActive,
-    isInPipMode
+    isInPipMode,timerSettings
 }) => {
-
-    const currentRound = cycles % longBreakInterval === 0 ? longBreakInterval : cycles % longBreakInterval;
 
     if (isInPipMode) {
         return (
@@ -37,7 +35,7 @@ const TimerWidget = ({
                     fontVariantNumeric: 'tabular-nums',
                     textShadow: '0 0 20px rgba(0,0,0,0.5)'
                 }}>
-                    {formatTime()}
+                    {formatTime(timeLeft)}
                 </h1>
 
                 <span style={{
@@ -80,7 +78,7 @@ const TimerWidget = ({
                     textAlign: 'center',
                     paddingTop: '1rem'
                 }}>
-                    ROUND {currentRound} / {longBreakInterval}
+                    ROUND {cycles % longBreakInterval + 1} / {longBreakInterval}
                 </div>
             )}
 

@@ -1,6 +1,6 @@
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const BASE_URL = window.location.origin.includes('localhost')
-    ? 'https://ataraxia-timer.onrender.com'
+    ? 'http://127.0.0.1:5173'
     : window.location.origin;
 const REDIRECT_URI = `${BASE_URL}/callback`;
 const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";

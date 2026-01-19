@@ -1,7 +1,7 @@
 import React from 'react';
 import { Play, Pause, RotateCcw, Monitor, Maximize2 } from 'lucide-react';
 
-const Controls = ({ isActive, onToggle, onReset, onPipToggle, isPipActive, isInPipMode }) => {
+const Controls = ({ isActive, onToggle, onReset, onPipToggle, isInPipMode }) => {
 
     if (isInPipMode) {
         return (
@@ -29,9 +29,9 @@ const Controls = ({ isActive, onToggle, onReset, onPipToggle, isPipActive, isInP
             </button>
         );
     }
+
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-
             <button
                 onClick={onPipToggle}
                 className="control-btn-secondary"
@@ -60,7 +60,7 @@ const Controls = ({ isActive, onToggle, onReset, onPipToggle, isPipActive, isInP
 
             <button
                 className="control-btn-secondary"
-                title="Fullscreen (F11)"
+                title="Fullscreen"
                 style={{ opacity: 0.5, cursor: 'default' }}
             >
                 <Maximize2 size={20} />

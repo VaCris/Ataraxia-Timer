@@ -142,6 +142,7 @@ function App() {
                   formatTime={formatTime} isActive={isActive}
                   cycles={cycles} longBreakInterval={longBreakInterval}
                   toggleTimer={toggleTimer} resetTimer={resetTimer}
+                  timerSettings={timerSettings}
                   togglePip={togglePip} isPipActive={true} isInPipMode={true}
                 />
               </div>
@@ -175,6 +176,8 @@ function App() {
                   cycles={cycles} longBreakInterval={longBreakInterval}
                   toggleTimer={toggleTimer} resetTimer={resetTimer}
                   togglePip={togglePip} isPipActive={!!pipWindow} isInPipMode={false}
+                  isActive={isActive}
+                  timerSettings={timerSettings}
                 />
               </div>
 

@@ -10,15 +10,15 @@ const MusicWidget = ({ url, onUrlChange, isOpen, onClose }) => {
     const [isAnimating, setIsAnimating] = useState(false);
     const [spotifyToken, setSpotifyToken] = useState(null);
     const [userProfile, setUserProfile] = useState(null);
+    
     const [isSpotifyContent, setIsSpotifyContent] = useState(false);
-
+    const spotifyPlayer = useSpotifyPlayer(spotifyToken);
+    const { currentTrack, isPaused, togglePlay, volume, setVolume, playContext, playTrack, deviceId } = spotifyPlayer;    
+    
     const [savedPlaylists, setSavedPlaylists] = useState(() => {
         const saved = localStorage.getItem('dw-saved-playlists');
         return saved ? JSON.parse(saved) : [];
     });
-
-    const spotifyPlayer = useSpotifyPlayer(spotifyToken);
-    const { currentTrack, isPaused, togglePlay, volume, setVolume, playContext, playTrack, deviceId } = spotifyPlayer;
 
     useEffect(() => {
         localStorage.setItem('dw-saved-playlists', JSON.stringify(savedPlaylists));
@@ -163,7 +163,6 @@ const MusicWidget = ({ url, onUrlChange, isOpen, onClose }) => {
     };
 
     if (!isOpen) return null;
-
     const embedUrl = getEmbedUrl(url);
     const isFormMode = showInput || (!embedUrl && !isSpotifyContent);
 
@@ -178,7 +177,7 @@ const MusicWidget = ({ url, onUrlChange, isOpen, onClose }) => {
                     <div className="icon-glow">
                         <Music size={16} color="white" />
                     </div>
-                    <span>Soundtrack</span>
+                    <span>Musique</span>
                 </div>
                 <div className="music-controls">
                     {!isFormMode && (
