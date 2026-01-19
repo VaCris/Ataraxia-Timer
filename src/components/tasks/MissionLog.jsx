@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, CheckCircle2, Circle, GripVertical, Loader2 } from 'lucide-react';
 import { tasksService } from '../../api/tasks.service';
 import { useAuth } from '../../context/auth-context';
@@ -8,6 +8,11 @@ const MissionLog = () => {
   const [newTask, setNewTask] = useState('');
   const [loading, setLoading] = useState(false);
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
+
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [editingText, setEditingText] = useState('');
+  const inputRef = useRef(null);
+
   const { user, token, loading: authLoading, initialized } = useAuth();
 
   useEffect(() => {
@@ -18,6 +23,12 @@ const MissionLog = () => {
 
     loadTasks();
   }, [initialized, loading, token, user]);
+
+  useEffect(() => {
+    if (editingTaskId && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editingTaskId]);
 
   const loadTasks = async () => {
     try {
@@ -62,7 +73,44 @@ const MissionLog = () => {
     }
   };
 
+  const startEditing = (task) => {
+    setEditingTaskId(task.id);
+    setEditingText(task.title);
+  };
+
+  const saveEdit = async (id) => {
+    if (!editingText.trim()) {
+      setEditingTaskId(null);
+      return;
+    }
+
+    const oldTasks = [...tasks];
+    setTasks(tasks.map(t => t.id === id ? { ...t, title: editingText } : t));
+    setEditingTaskId(null);
+
+    try {
+      await tasksService.update(id, { title: editingText });
+    } catch (error) {
+      console.error("Error updating task title", error);
+      setTasks(oldTasks);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingTaskId(null);
+    setEditingText('');
+  };
+
+  const handleEditKeyDown = (e, id) => {
+    if (e.key === 'Enter') {
+      saveEdit(id);
+    } else if (e.key === 'Escape') {
+      cancelEdit();
+    }
+  };
+
   const handleDragStart = (index) => {
+    if (editingTaskId !== null) return;
     setDraggedItemIndex(index);
   };
 
@@ -165,10 +213,11 @@ const MissionLog = () => {
           tasks.map((task, index) => (
             <div
               key={task.id}
-              draggable
+              draggable={editingTaskId === null}
               onDragStart={() => handleDragStart(index)}
               onDragOver={handleDragOver}
               onDrop={() => handleDrop(index)}
+              onDoubleClick={() => startEditing(task)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -178,12 +227,12 @@ const MissionLog = () => {
                 borderRadius: '12px',
                 transition: 'all 0.2s',
                 opacity: draggedItemIndex === index ? 0.4 : (task.completed ? 0.6 : 1),
-                border: draggedItemIndex === index ? '1px dashed var(--text-muted)' : '1px solid transparent',
-                cursor: 'grab'
+                border: draggedItemIndex === index ? '1px dashed var(--text-muted)' : (editingTaskId === task.id ? '1px solid var(--primary-color)' : '1px solid transparent'),
+                cursor: editingTaskId === task.id ? 'text' : 'grab'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--glass-border)'}
+              onMouseEnter={(e) => { if (editingTaskId !== task.id) e.currentTarget.style.borderColor = 'var(--glass-border)' }}
               onMouseLeave={(e) => {
-                if (draggedItemIndex !== index) e.currentTarget.style.borderColor = 'transparent'
+                if (draggedItemIndex !== index && editingTaskId !== task.id) e.currentTarget.style.borderColor = 'transparent'
               }}
             >
               <div style={{ cursor: 'grab', color: 'var(--text-muted)', display: 'flex' }}>
@@ -191,25 +240,46 @@ const MissionLog = () => {
               </div>
 
               <button
-                onClick={() => toggleTask(task)}
+                onClick={(e) => { e.stopPropagation(); toggleTask(task); }}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: task.completed ? 'var(--primary-color)' : 'var(--text-muted)', padding: 0, display: 'flex' }}
               >
                 {task.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
               </button>
 
-              <span style={{
-                flex: 1,
-                fontSize: '0.9rem',
-                textDecoration: task.completed ? 'line-through' : 'none',
-                color: task.completed ? 'var(--text-muted)' : 'white',
-                wordBreak: 'break-word',
-                userSelect: 'none'
-              }}>
-                {task.title}
-              </span>
+              {editingTaskId === task.id ? (
+                <input
+                  ref={inputRef}
+                  value={editingText}
+                  onChange={(e) => setEditingText(e.target.value)}
+                  onBlur={() => saveEdit(task.id)}
+                  onKeyDown={(e) => handleEditKeyDown(e, task.id)}
+                  style={{
+                    flex: 1,
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'white',
+                    fontSize: '0.9rem',
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                    padding: 0,
+                    margin: 0
+                  }}
+                />
+              ) : (
+                <span style={{
+                  flex: 1,
+                  fontSize: '0.9rem',
+                  textDecoration: task.completed ? 'line-through' : 'none',
+                  color: task.completed ? 'var(--text-muted)' : 'white',
+                  wordBreak: 'break-word',
+                  userSelect: 'none'
+                }}>
+                  {task.title}
+                </span>
+              )}
 
               <button
-                onClick={() => deleteTask(task.id)}
+                onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', opacity: 0.6, padding: 0, display: 'flex' }}
                 title="Delete Mission"
               >
