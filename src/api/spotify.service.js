@@ -84,26 +84,66 @@ export async function getAccessToken(code) {
     }
 }
 
+export async function refreshAccessToken() {
+    const refreshToken = localStorage.getItem("spotify_refresh_token");
+    if (!refreshToken) return null;
+
+    try {
+        const res = await fetch(TOKEN_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+                client_id: CLIENT_ID,
+                grant_type: "refresh_token",
+                refresh_token: refreshToken
+            })
+        });
+
+        const data = await res.json();
+
+        if (data.access_token) {
+            console.log("Token refrescado con éxito");
+            localStorage.setItem("spotify_access_token", data.access_token);
+            if (data.refresh_token) {
+                localStorage.setItem("spotify_refresh_token", data.refresh_token);
+            }
+            return data.access_token;
+        }
+    } catch (error) {
+        console.error("Error al refrescar token:", error);
+    }
+    return null;
+}
+
 export async function getSpotifyProfile() {
-    const token = localStorage.getItem("spotify_access_token");
+    let token = localStorage.getItem("spotify_access_token");
     if (!token) return null;
 
     try {
-        const res = await fetch(PROFILE_ENDPOINT, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
+        let res = await fetch(PROFILE_ENDPOINT, {
+            headers: { Authorization: `Bearer ${token}` }
         });
 
         if (res.status === 401) {
-            console.warn("Token expirado.");
-            localStorage.removeItem("spotify_access_token");
-            return null;
+            console.warn("Token expirado. Intentando refrescar...");
+            token = await refreshAccessToken();
+
+            if (token) {
+                window.dispatchEvent(new Event('spotify-token-updated'));
+                res = await fetch(PROFILE_ENDPOINT, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            } else {
+                console.warn("No se pudo refrescar. Cerrando sesión.");
+                localStorage.removeItem("spotify_access_token");
+                localStorage.removeItem("spotify_refresh_token");
+                return null;
+            }
         }
 
         if (!res.ok) return null;
-
         return await res.json();
+
     } catch (error) {
         console.error("Error obteniendo perfil:", error);
         return null;
@@ -113,5 +153,6 @@ export async function getSpotifyProfile() {
 export const spotifyService = {
     loginWithSpotify,
     getAccessToken,
-    getSpotifyProfile
+    getSpotifyProfile,
+    refreshAccessToken
 };

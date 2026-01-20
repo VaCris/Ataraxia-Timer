@@ -10,11 +10,11 @@ const MusicWidget = ({ url, onUrlChange, isOpen, onClose }) => {
     const [isAnimating, setIsAnimating] = useState(false);
     const [spotifyToken, setSpotifyToken] = useState(null);
     const [userProfile, setUserProfile] = useState(null);
-    
+
     const [isSpotifyContent, setIsSpotifyContent] = useState(false);
     const spotifyPlayer = useSpotifyPlayer(spotifyToken);
-    const { currentTrack, isPaused, togglePlay, volume, setVolume, playContext, playTrack, deviceId } = spotifyPlayer;    
-    
+    const { currentTrack, isPaused, togglePlay, volume, setVolume, playContext, playTrack, deviceId } = spotifyPlayer;
+
     const [savedPlaylists, setSavedPlaylists] = useState(() => {
         const saved = localStorage.getItem('dw-saved-playlists');
         return saved ? JSON.parse(saved) : [];
@@ -306,7 +306,9 @@ const MusicWidget = ({ url, onUrlChange, isOpen, onClose }) => {
                                 width="100%"
                                 height={embedUrl.includes('spotify') ? '152' : '220'}
                                 frameBorder="0"
-                                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                referrerPolicy="strict-origin-when-cross-origin"
+                                allowFullScreen
                                 loading="lazy"
                                 title="Music Player"
                                 style={{ borderRadius: '16px', background: '#000', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}

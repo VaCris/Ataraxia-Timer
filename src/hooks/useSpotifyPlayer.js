@@ -34,10 +34,7 @@ export const useSpotifyPlayer = (token) => {
 
             newPlayer.addListener('initialization_error', ({ message }) => console.error(message));
             newPlayer.addListener('authentication_error', ({ message }) => console.error(message));
-
-            newPlayer.addListener('account_error', ({ message }) => {
-                console.error('Error de cuenta:', message);
-            });
+            newPlayer.addListener('account_error', ({ message }) => console.error("Error de cuenta (Premium requerido):", message));
 
             newPlayer.addListener('player_state_changed', (state) => {
                 if (!state) {
