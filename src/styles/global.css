@@ -112,6 +112,7 @@ body {
     border: 1px solid var(--glass-border);
     z-index: 50;
     transition: opacity 0.3s ease, transform 0.3s ease;
+    overflow: visible !important;
 }
 
 .dock-left {
