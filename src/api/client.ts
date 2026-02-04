@@ -1,8 +1,7 @@
 import axios from 'axios';
 
 const API_URL = (import.meta as any).env.VITE_API_URL;
-let isServerDown = false;
-let abortController = new AbortController();
+let circuitOpen = false;
 
 export const apiClient = axios.create({
     baseURL: API_URL,
@@ -10,9 +9,10 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
-    if (isServerDown) {
-        config.signal = abortController.signal;
-        abortController.abort();
+    if (circuitOpen) {
+        const controller = new AbortController();
+        config.signal = controller.signal;
+        controller.abort("Circuit breaker active: Server is down or CORS issue.");
     }
 
     const token = localStorage.getItem('token');
@@ -23,24 +23,13 @@ apiClient.interceptors.request.use((config) => {
 });
 
 apiClient.interceptors.response.use(
-    (response) => {
-        isServerDown = false;
-        return response;
-    },
+    (response) => response,
     (error) => {
-        if (axios.isAxiosError(error)) {
-            const status = error.response?.status;
-            const connectionFailed = !error.response || (status !== undefined && status >= 500);
-
-            if (connectionFailed && !isServerDown) {
-                isServerDown = true;
-                abortController.abort();
+        if (!error.response || error.response.status >= 500) {
+            if (!circuitOpen) {
+                circuitOpen = true;
                 window.dispatchEvent(new CustomEvent('server:down'));
-
-                setTimeout(() => {
-                    isServerDown = false;
-                    abortController = new AbortController();
-                }, 60000);
+                setTimeout(() => { circuitOpen = false; }, 300000);
             }
         }
         return Promise.reject(error);

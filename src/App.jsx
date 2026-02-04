@@ -66,7 +66,6 @@ function App() {
     const syncSettings = async () => {
       try {
         const cloudSettings = await settingsService.getSettings();
-
         if (cloudSettings) {
           if (cloudSettings.focusDuration) {
             setTimerSettings(prev => ({
@@ -76,27 +75,21 @@ function App() {
               long: cloudSettings.longBreakDuration || prev.long
             }));
           }
-
           if (cloudSettings.longBreakInterval) {
             setLongBreakInterval(cloudSettings.longBreakInterval);
           }
-
           const localAutoStart = localStorage.getItem('dw-autostart');
-
           if (cloudSettings.autoStartPomodoros !== undefined && localAutoStart === null) {
             setAutoStart(cloudSettings.autoStartPomodoros);
           }
         }
-
         const tags = await tagsService.getAll();
         const focusTag = tags.find(tag => tag.name === 'Focus');
-
         if (focusTag?.color) {
           setAccentColor(focusTag.color);
         }
       } catch { }
     };
-
     syncSettings();
   }, [user, token, isMaintenance]);
 
@@ -110,7 +103,9 @@ function App() {
   const handleIntroComplete = async () => {
     sessionStorage.setItem('dw-intro-seen', 'true');
     setShowIntro(false);
-    if (!user && !isMaintenance) await loginAsGuest().catch(() => setIsMaintenance(true));
+    if (!user && !isMaintenance) {
+      await loginAsGuest().catch(() => setIsMaintenance(true));
+    }
   };
 
   const toggleMute = () => setVolume(volume === 0 ? 0.5 : 0);
