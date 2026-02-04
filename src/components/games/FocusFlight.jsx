@@ -23,7 +23,7 @@ import dieSfx from '../../assets/game/sfx/die.wav';
 const FocusFlight = ({ onClose }) => {
     const canvasRef = useRef(null);
     const [score, setScore] = useState(0);
-    const [highScore, setHighScore] = useState(() => localStorage.getItem('focus-flight-hi') || 0);
+    const [highScore, setHighScore] = useState(() => Number(localStorage.getItem('focus-flight-best')) || 0);
     const [gameState, setGameState] = useState('getReady');
     const requestRef = useRef();
 
@@ -55,6 +55,15 @@ const FocusFlight = ({ onClose }) => {
     const pipes = useRef([]);
     const frames = useRef(0);
     const sfxPlayed = useRef(false);
+
+    useEffect(() => {
+        if (gameState === 'gameOver') {
+            if (score > highScore) {
+                setHighScore(score);
+                localStorage.setItem('focus-flight-best', score.toString());
+            }
+        }
+    }, [gameState, score, highScore]);
 
     useEffect(() => {
         assets.current.sprites.bg.src = bgImg;
@@ -155,7 +164,7 @@ const FocusFlight = ({ onClose }) => {
 
         requestRef.current = requestAnimationFrame(update);
         return () => cancelAnimationFrame(requestRef.current);
-    }, [gameState, score]);
+    }, [gameState, score, highScore]);
 
     const handleInteraction = (e) => {
         if (e) e.preventDefault();
