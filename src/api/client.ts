@@ -2,19 +2,17 @@ import axios from 'axios';
 
 const API_URL = (import.meta as any).env.VITE_API_URL;
 let isServerDown = false;
+let abortController = new AbortController();
 
 export const apiClient = axios.create({
     baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
 });
 
 apiClient.interceptors.request.use((config) => {
-    if (isServerDown && !config.url?.includes('auth')) {
-        const controller = new AbortController();
-        config.signal = controller.signal;
-        controller.abort("Server is currently offline");
+    if (isServerDown) {
+        config.signal = abortController.signal;
+        abortController.abort();
     }
 
     const token = localStorage.getItem('token');
@@ -32,28 +30,19 @@ apiClient.interceptors.response.use(
     (error) => {
         if (axios.isAxiosError(error)) {
             const status = error.response?.status;
-            const code = error.response?.data?.code;
+            const connectionFailed = !error.response || (status !== undefined && status >= 500);
 
-            const isNetworkError = !error.response && error.code !== 'ERR_CANCELED';
+            if (connectionFailed && !isServerDown) {
+                isServerDown = true;
+                abortController.abort();
+                window.dispatchEvent(new CustomEvent('server:down'));
 
-            const isCriticalStatus = status !== undefined && status >= 502 && status <= 504;
-
-            if ((isNetworkError || isCriticalStatus) && window.location.pathname !== '/maintenance') {
-                if (!isServerDown) {
-                    isServerDown = true;
-                    window.dispatchEvent(new CustomEvent('server:down'));
-
-                    setTimeout(() => {
-                        isServerDown = false;
-                    }, 30000);
-                }
-            }
-
-            if (status === 401 && code === 'AUTH_EXPIRED') {
-                window.dispatchEvent(new Event('auth:logout'));
+                setTimeout(() => {
+                    isServerDown = false;
+                    abortController = new AbortController();
+                }, 60000);
             }
         }
-
         return Promise.reject(error);
     }
 );
