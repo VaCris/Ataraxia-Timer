@@ -4,12 +4,15 @@ import { X, Trophy } from 'lucide-react';
 import bgImg from '../../assets/game/BG.png';
 import pipeTopImg from '../../assets/game/toppipe.png';
 import pipeBotImg from '../../assets/game/botpipe.png';
-import groundImg from '../../assets/game/ground.png';
+import g0 from '../../assets/game/ground/g0.png';
+import g1 from '../../assets/game/ground/g1.png';
 import bird0 from '../../assets/game/bird/b0.png';
 import bird1 from '../../assets/game/bird/b1.png';
 import bird2 from '../../assets/game/bird/b2.png';
 import readyImg from '../../assets/game/getready.png';
 import goImg from '../../assets/game/go.png';
+import t0 from '../../assets/game/tap/t0.png';
+import t1 from '../../assets/game/tap/t1.png';
 
 import startSfx from '../../assets/game/sfx/start.wav';
 import flapSfx from '../../assets/game/sfx/flap.wav';
@@ -34,9 +37,10 @@ const FocusFlight = ({ onClose }) => {
             bg: new Image(),
             pipeTop: new Image(),
             pipeBot: new Image(),
-            ground: new Image(),
+            ground: [new Image(), new Image()],
             ready: new Image(),
-            go: new Image()
+            go: new Image(),
+            tap: [new Image(), new Image()]
         },
         sfx: {
             start: new Audio(startSfx),
@@ -56,12 +60,15 @@ const FocusFlight = ({ onClose }) => {
         assets.current.sprites.bg.src = bgImg;
         assets.current.sprites.pipeTop.src = pipeTopImg;
         assets.current.sprites.pipeBot.src = pipeBotImg;
-        assets.current.sprites.ground.src = groundImg;
+        assets.current.sprites.ground[0].src = g0;
+        assets.current.sprites.ground[1].src = g1;
         assets.current.sprites.bird[0].src = bird0;
         assets.current.sprites.bird[1].src = bird1;
         assets.current.sprites.bird[2].src = bird2;
         assets.current.sprites.ready.src = readyImg;
         assets.current.sprites.go.src = goImg;
+        assets.current.sprites.tap[0].src = t0;
+        assets.current.sprites.tap[1].src = t1;
 
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
@@ -75,11 +82,9 @@ const FocusFlight = ({ onClose }) => {
                 bird.current.velocity += bird.current.gravity;
                 bird.current.y += bird.current.velocity;
 
-                if (bird.current.velocity <= 0) {
-                    bird.current.rotation = Math.max(-25, (-25 * bird.current.velocity) / (-1 * bird.current.thrust));
-                } else {
-                    bird.current.rotation = Math.min(90, (90 * bird.current.velocity) / (bird.current.thrust * 2));
-                }
+                bird.current.rotation = bird.current.velocity <= 0
+                    ? Math.max(-25, (-25 * bird.current.velocity) / -4.5)
+                    : Math.min(90, (90 * bird.current.velocity) / 9);
 
                 if (frames.current % 100 === 0) {
                     pipes.current.push({ x: canvasWidth, y: -210 * Math.min(Math.random() + 1, 1.8), gap: 85, passed: false });
@@ -116,11 +121,15 @@ const FocusFlight = ({ onClose }) => {
 
         const draw = (ctx) => {
             ctx.drawImage(assets.current.sprites.bg, 0, canvasHeight - assets.current.sprites.bg.height);
+
             pipes.current.forEach(p => {
                 ctx.drawImage(assets.current.sprites.pipeTop, p.x, p.y);
                 ctx.drawImage(assets.current.sprites.pipeBot, p.x, p.y + 400 + 85);
             });
-            ctx.drawImage(assets.current.sprites.ground, 0, canvasHeight - assets.current.sprites.ground.height);
+
+            const gFrame = Math.floor(frames.current / 10) % 2;
+            const groundSprite = assets.current.sprites.ground[gFrame];
+            ctx.drawImage(groundSprite, 0, canvasHeight - groundSprite.height);
 
             ctx.save();
             ctx.translate(bird.current.x, bird.current.y);
@@ -131,6 +140,14 @@ const FocusFlight = ({ onClose }) => {
             }
             ctx.restore();
 
+            if (gameState === 'getReady' || gameState === 'gameOver') {
+                const tapFrame = Math.floor(frames.current / 15) % 2;
+                const tapSprite = assets.current.sprites.tap[tapFrame];
+                if (tapSprite.complete) {
+                    ctx.drawImage(tapSprite, canvasWidth / 2 - tapSprite.width / 2, canvasHeight / 2 + 50);
+                }
+            }
+
             ctx.fillStyle = "white"; ctx.strokeStyle = "black"; ctx.lineWidth = 2;
             ctx.font = "35px Squada One"; ctx.textAlign = "center";
             ctx.fillText(score, canvasWidth / 2, 50); ctx.strokeText(score, canvasWidth / 2, 50);
@@ -138,17 +155,17 @@ const FocusFlight = ({ onClose }) => {
 
         requestRef.current = requestAnimationFrame(update);
         return () => cancelAnimationFrame(requestRef.current);
-    }, [gameState]);
+    }, [gameState, score]);
 
     const handleInteraction = (e) => {
         if (e) e.preventDefault();
         if (gameState === 'getReady') {
             assets.current.sfx.start.play();
             setGameState('play');
-            bird.current.velocity = bird.current.thrust * -1;
+            bird.current.velocity = -4.5;
         } else if (gameState === 'play') {
             assets.current.sfx.flap.play();
-            bird.current.velocity = bird.current.thrust * -1;
+            bird.current.velocity = -4.5;
         } else if (gameState === 'gameOver') {
             bird.current.y = 150; bird.current.velocity = 0; bird.current.rotation = 0;
             pipes.current = []; frames.current = 0; sfxPlayed.current = false;
@@ -185,7 +202,7 @@ const FocusFlight = ({ onClose }) => {
                 .game-container { background: #0a0a0a; border: 1px solid #8b5cf6; border-radius: 20px; width: 276px; overflow: hidden; }
                 .game-header { padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; color: #8b5cf6; }
                 .close-btn { background: none; border: none; color: #666; cursor: pointer; }
-                .canvas-wrapper { position: relative; cursor: pointer; width: 276px; height: 414px; }
+                .canvas-wrapper { position: relative; cursor: pointer; width: 276px; height: 414px; background: #30c0df; }
                 .game-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
                 .restart-btn { pointer-events: auto; margin-top: 20px; padding: 10px 20px; background: #8b5cf6; color: white; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; }
             `}</style>
