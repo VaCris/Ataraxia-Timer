@@ -80,13 +80,13 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             const data = await authService.login({ email, password });
-            const newToken = data.token || data.access_token;
-            const userData = { ...(data.user || data), isGuest: false };
-            saveSession(newToken, userData);
+            const newToken = data.access_token;
+            saveSession(newToken, data.user);
+
             return { success: true };
         } catch (error) {
-            const message = error.response?.data?.message || "Invalid credentials";
-            return { success: false, error: message };
+            console.error("Auth context error:", error.message);
+            return { success: false, error: error.message };
         }
     };
 

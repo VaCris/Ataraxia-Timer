@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
@@ -20,7 +20,7 @@ import SupportModal from './components/layout/SupportModal';
 import SpotifyCallback from './components/layout/SpotifyCallback';
 import LeftDock from './components/layout/LeftDock';
 import RightDock from './components/layout/RightDock';
-import PipPortal from './components/timer/PipPortal'; // Nuevo
+import PipPortal from './components/timer/PipPortal';
 import MaintenancePage from './components/layout/MaintenancePage';
 
 import './styles/global.css';
@@ -45,9 +45,13 @@ function App() {
 
   const timer = useTimer('work', timerSettings, autoStart, longBreakInterval, volume);
 
-  useSyncSettings(user, token, isMaintenance, {
-    setTimerSettings, setLongBreakInterval, setAutoStart, setAccentColor
-  });
+  const syncSetters = useMemo(() => ({
+    setTimerSettings,
+    setLongBreakInterval,
+    setAutoStart,
+    setAccentColor
+  }), [setTimerSettings, setLongBreakInterval, setAutoStart, setAccentColor]);
+  useSyncSettings(user, token, isMaintenance, syncSetters);
 
   useEffect(() => {
     const handleMaintenance = () => {
@@ -90,7 +94,6 @@ function App() {
         <Routes>
           <Route path="/maintenance" element={<MaintenancePage />} />
           <Route path="/callback" element={<SpotifyCallback />} />
-          {/* <Route path="/achievements" element={<AchievementHub />} /> */}
 
           <Route path="/*" element={
             <div style={{ width: '100%', '--primary-color': accentColor, '--primary-glow': `${accentColor}80` }}>

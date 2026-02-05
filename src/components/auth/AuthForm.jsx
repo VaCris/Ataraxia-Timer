@@ -22,8 +22,6 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                 result = await login(email, password);
             } else {
                 const deviceId = localStorage.getItem('device_id') || crypto.randomUUID();
-                if (!localStorage.getItem('device_id')) localStorage.setItem('device_id', deviceId);
-
                 result = await register({
                     firstName,
                     lastName,
@@ -40,7 +38,7 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                 toast.error(result.error || 'Authentication failed');
             }
         } catch (error) {
-            toast.error('An unexpected error occurred');
+            toast.error('Connection error with server');
         } finally {
             setIsLoading(false);
         }
@@ -50,23 +48,22 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
         <div className="auth-container" style={{ padding: '10px 0' }}>
             <div className="auth-header" style={{ marginBottom: '20px', textAlign: 'center' }}>
                 <h2 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'white' }}>
-                    {isLogin ? 'Sign In' : 'Join Ataraxia'}
+                    {isLogin ? 'Sign In' : 'Create Account'}
                 </h2>
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {!isLogin && (
                     <div style={{ display: 'flex', gap: '10px' }}>
-                        <div className="input-wrapper" style={{ position: 'relative', flex: 1 }}>
-                            <User size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                        <div className="input-wrapper" style={{ flex: 1 }}>
                             <input
                                 type="text"
                                 placeholder="First Name"
                                 className="input-text"
-                                style={{ paddingLeft: '40px', width: '100%' }}
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
                                 required={!isLogin}
+                                autoComplete="given-name"
                             />
                         </div>
                         <div className="input-wrapper" style={{ flex: 1 }}>
@@ -74,10 +71,10 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                                 type="text"
                                 placeholder="Last Name"
                                 className="input-text"
-                                style={{ width: '100%' }}
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
                                 required={!isLogin}
+                                autoComplete="family-name"
                             />
                         </div>
                     </div>
@@ -94,6 +91,7 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
+                            autoComplete="email"
                         />
                     </div>
                 </div>
@@ -109,6 +107,7 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
+                            autoComplete={isLogin ? "current-password" : "new-password"}
                         />
                     </div>
                 </div>
@@ -116,16 +115,16 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                 <button type="submit" className="btn-save" disabled={isLoading} style={{ marginTop: '10px', width: '100%', justifyContent: 'center', background: 'var(--primary-color)', border: 'none' }}>
                     {isLoading ? <Loader2 className="animate-spin" size={18} /> : (
                         <>
-                            {isLogin ? 'Sign In' : 'Create Account'}
+                            {isLogin ? 'Sign In' : 'Sign Up'}
                             <ArrowRight size={16} style={{ marginLeft: '8px' }} />
                         </>
                     )}
                 </button>
             </form>
 
-            <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '0.85rem' }}>
-                <button onClick={toggleMode} style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', fontWeight: '500' }}>
-                    {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                <button onClick={toggleMode} style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', fontSize: '0.85rem' }}>
+                    {isLogin ? "New to Ataraxia? Create account" : "Already have an account? Sign in"}
                 </button>
             </div>
         </div>

@@ -8,6 +8,11 @@ export const apiClient = axios.create({
     headers: { 'Content-Type': 'application/json' },
 });
 
+export const clearAuthHeader = () => {
+    delete apiClient.defaults.headers.Authorization;
+    localStorage.removeItem('token');
+};
+
 apiClient.interceptors.request.use((config) => {
     if (circuitOpen) {
         const controller = new AbortController();
@@ -30,6 +35,7 @@ apiClient.interceptors.response.use(
     (error) => {
         if (error.response?.status === 401) {
             console.warn("Sesión expirada o inválida. Limpiando...");
+            clearAuthHeader();
             localStorage.removeItem('token');
             // window.location.href = '/'; 
         }
