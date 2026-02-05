@@ -34,12 +34,15 @@ const SettingsModal = ({
             autoStartBreaks: autoStart,
             autoStartPomodoros: autoStart,
             longBreakInterval: Number(longBreakInterval) || 4,
-            theme: 'dark',
+            theme: 'light',
             soundEnabled: volume > 0,
             platform: 'web'
         };
-        try { await settingsService.saveSettings(payload); }
-        catch (err) { console.error('Settings save failed:', err); }
+        try {
+            await settingsService.saveSettings(payload);
+        } catch (err) {
+            console.error('Failed to save settings:', err);
+        }
     };
 
     const saveTagColor = async () => {

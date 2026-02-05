@@ -4,8 +4,6 @@ export interface CreateTaskDto {
 }
 
 export interface UpdateTaskDto extends Partial<CreateTaskDto> {
-    title?: string;
-    tag: string;
     completed?: boolean;
 }
 

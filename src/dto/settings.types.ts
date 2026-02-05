@@ -1,13 +1,13 @@
 export interface CreateSettingDto {
-    focusDuration?: number;
-    shortBreakDuration?: number;
-    longBreakDuration?: number;
-    autoStartBreaks?: boolean;
-    autoStartPomodoros?: boolean;
-    longBreakInterval?: number;
-    theme?: string;
-    soundEnabled?: boolean;
-    platform?: 'web' | 'mobile' | 'desktop';
+    focusDuration: number;
+    shortBreakDuration: number;
+    longBreakDuration: number;
+    autoStartBreaks: boolean;
+    autoStartPomodoros: boolean;
+    longBreakInterval: number;
+    theme: 'light' | 'dark' | 'system';
+    soundEnabled: boolean;
+    platform: 'web' | 'mobile' | 'desktop';
 }
 
 export interface UpdateSettingDto extends Partial<CreateSettingDto> { }
