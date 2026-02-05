@@ -4,7 +4,8 @@ export interface LoginDto {
 }
 
 export interface RegisterDto {
-    name: string;
+    firstname: string;
+    lastname: string;
     email: string;
     password: string;
     deviceId?: string;

@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { LoginDto, RegisterDto, AuthResponse } from '../dto/auth.types';
+import { LoginDto, RegisterDto, AuthResponse, GuestLoginDto } from '../dto/auth.types';
 
 export const authService = {
     login: async (data: LoginDto) => {
@@ -12,8 +12,8 @@ export const authService = {
         return response.data;
     },
 
-    guestLogin: async () => {
-        const response = await apiClient.post<AuthResponse>('/auth/guest-login', {deviceId: 'deviceId'});
+    guestLogin: async (data: GuestLoginDto) => {
+        const response = await apiClient.post<AuthResponse>('/auth/guest-login', data);
         return response.data;
     }
 };

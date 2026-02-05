@@ -64,24 +64,21 @@ const SettingsModal = ({
         if (!user || user.isGuest) return;
 
         const payload = {
-            focusDuration: Number(timerSettings.work) || 1,
-            shortBreakDuration: Number(timerSettings.short) || 1,
-            longBreakDuration: Number(timerSettings.long) || 1,
-            theme: 'default',
-            soundEnabled: volume > 0
+            focusDuration: Number(timerSettings.work) || 25,
+            shortBreakDuration: Number(timerSettings.short) || 5,
+            longBreakDuration: Number(timerSettings.long) || 15,
+            autoStartBreaks: autoStart,
+            autoStartPomodoros: autoStart,
+            longBreakInterval: Number(longBreakInterval) || 4,
+            theme: 'dark',
+            soundEnabled: volume > 0,
+            platform: 'web'
         };
 
-        if (
-            payload.focusDuration ||
-            payload.shortBreakDuration ||
-            payload.longBreakDuration ||
-            payload.soundEnabled !== undefined
-        ) {
-            try {
-                await settingsService.saveSettings(payload);
-            } catch (err) {
-                console.error('Failed to save settings:', err);
-            }
+        try {
+            await settingsService.saveSettings(payload);
+        } catch (err) {
+            console.error('Failed to save settings:', err);
         }
     };
 

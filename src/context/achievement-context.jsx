@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { achievementsService } from '../api/achievements.service';
 import { useAuth } from './auth-context';
 
@@ -9,28 +9,43 @@ export const AchievementProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const { token, user } = useAuth();
 
-    const fetchAchievements = async () => {
-        if (!token) return;
+    const fetchAchievements = useCallback(async () => {
+        if (!token || (user && user.isGuest)) {
+            setAchievements([]);
+            return;
+        }
+
         setLoading(true);
         try {
             const data = await achievementsService.getAchievements();
-            setAchievements(data);
+            setAchievements(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Error al cargar logros:", error);
+            setAchievements([]);
         } finally {
             setLoading(false);
         }
-    };
+    }, [token, user]);
 
     useEffect(() => {
         fetchAchievements();
-    }, [token]);
+    }, [fetchAchievements]);
 
     return (
-        <AchievementContext.Provider value={{ achievements, loading, refreshAchievements: fetchAchievements }}>
+        <AchievementContext.Provider value={{
+            achievements,
+            loading,
+            refreshAchievements: fetchAchievements
+        }}>
             {children}
         </AchievementContext.Provider>
     );
 };
 
-export const useAchievements = () => useContext(AchievementContext);
+export const useAchievements = () => {
+    const context = useContext(AchievementContext);
+    if (!context) {
+        throw new Error("useAchievements debe usarse dentro de un AchievementProvider");
+    }
+    return context;
+};

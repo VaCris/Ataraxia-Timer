@@ -7,6 +7,7 @@ export interface CreateSettingDto {
     longBreakInterval?: number;
     theme?: string;
     soundEnabled?: boolean;
+    platform?: 'web' | 'mobile' | 'desktop';
 }
 
 export interface UpdateSettingDto extends Partial<CreateSettingDto> { }

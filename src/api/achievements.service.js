@@ -6,8 +6,8 @@ export const achievementsService = {
         return response.data;
     },
 
-    getAchievementById: async (id) => {
-        const response = await apiClient.get(`/achievements/${id}`);
+    getStats: async () => {
+        const response = await apiClient.get('/gamification/stats');
         return response.data;
     }
 };
