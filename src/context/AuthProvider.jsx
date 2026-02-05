@@ -7,15 +7,23 @@ export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(() => localStorage.getItem('token'));
     const [user, setUser] = useState(() => {
         const savedUser = localStorage.getItem('dw-user');
-        return savedUser ? JSON.parse(savedUser) : null;
+        try {
+            return savedUser ? JSON.parse(savedUser) : null;
+        } catch {
+            return null;
+        }
     });
 
     const [loading, setLoading] = useState(false);
     const [initialized, setInitialized] = useState(true);
 
-    if (token) {
-        apiClient.defaults.headers.Authorization = `Bearer ${token}`;
-    }
+    useEffect(() => {
+        if (token) {
+            apiClient.defaults.headers.Authorization = `Bearer ${token}`;
+        } else {
+            delete apiClient.defaults.headers.Authorization;
+        }
+    }, [token]);
 
     const logout = useCallback(() => {
         setUser(null);
@@ -36,7 +44,6 @@ export const AuthProvider = ({ children }) => {
         setUser(newUser);
         localStorage.setItem('token', newToken);
         localStorage.setItem('dw-user', JSON.stringify(newUser));
-        apiClient.defaults.headers.Authorization = `Bearer ${newToken}`;
     };
 
     const loginAsGuest = async () => {
@@ -48,8 +55,11 @@ export const AuthProvider = ({ children }) => {
             const deviceId = localStorage.getItem('device_id') || crypto.randomUUID();
             localStorage.setItem('device_id', deviceId);
             const data = await authService.guestLogin({ deviceId });
+
             const newToken = data.token || data.access_token;
-            saveSession(newToken, { ...data.user, isGuest: true });
+            const guestUser = { ...(data.user || {}), isGuest: true, username: 'Guest' };
+
+            saveSession(newToken, guestUser);
             return true;
         } catch (error) {
             console.error("Guest login failed:", error);
@@ -60,18 +70,15 @@ export const AuthProvider = ({ children }) => {
     };
 
     const login = async (email, password) => {
-        setLoading(true);
         try {
             const data = await authService.login({ email, password });
             const newToken = data.token || data.access_token;
-            saveSession(newToken, data.user);
+            const userData = { ...(data.user || data), isGuest: false };
+            saveSession(newToken, userData);
             return { success: true };
         } catch (error) {
-
             const message = error.response?.data?.message || "Invalid credentials";
             return { success: false, error: message };
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -79,12 +86,12 @@ export const AuthProvider = ({ children }) => {
         try {
             const data = await authService.register(userData);
             const newToken = data.token || data.access_token;
-            saveSession(newToken, data.user);
+            const newUser = { ...(data.user || data), isGuest: false };
+            saveSession(newToken, newUser);
             return { success: true };
         } catch (error) {
             const message = error.response?.data?.message || "Registration failed";
             return { success: false, error: message };
-        } finally {
         }
     };
 

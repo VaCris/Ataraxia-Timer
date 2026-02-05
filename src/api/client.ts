@@ -12,19 +12,28 @@ apiClient.interceptors.request.use((config) => {
     if (circuitOpen) {
         const controller = new AbortController();
         config.signal = controller.signal;
-        controller.abort("Circuit breaker active: Server is down or CORS issue.");
+        controller.abort("Circuit breaker active: Server is down.");
     }
 
     const token = localStorage.getItem('token');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+    } else {
+        delete config.headers.Authorization;
     }
+
     return config;
 });
 
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
+        if (error.response?.status === 401) {
+            console.warn("Sesión expirada o inválida. Limpiando...");
+            localStorage.removeItem('token');
+            // window.location.href = '/'; 
+        }
+
         if (!error.response || error.response.status >= 500) {
             if (!circuitOpen) {
                 circuitOpen = true;

@@ -6,36 +6,40 @@ export const useSyncSettings = (user, token, isMaintenance, setters) => {
     const { setTimerSettings, setLongBreakInterval, setAutoStart, setAccentColor } = setters;
 
     useEffect(() => {
-        if (!user || !token || isMaintenance || user.isGuest) return;
+        if (!token || !user || user.isGuest || isMaintenance) return;
 
         const syncSettings = async () => {
             try {
-                const cloudSettings = await settingsService.getSettings();
-                if (cloudSettings) {
+                const [settingsRes, tagsRes] = await Promise.allSettled([
+                    settingsService.getSettings(),
+                    tagsService.getAll()
+                ]);
+
+
+                if (settingsRes.status === 'fulfilled' && settingsRes.value) {
+                    const cloud = settingsRes.value;
                     setTimerSettings(prev => ({
                         ...prev,
-                        work: cloudSettings.focusDuration || prev.work,
-                        short: cloudSettings.shortBreakDuration || prev.short,
-                        long: cloudSettings.longBreakDuration || prev.long
+                        work: cloud.focusDuration || prev.work,
+                        short: cloud.shortBreakDuration || prev.short,
+                        long: cloud.longBreakDuration || prev.long
                     }));
 
-                    if (cloudSettings.longBreakInterval) {
-                        setLongBreakInterval(cloudSettings.longBreakInterval);
-                    }
+                    if (cloud.longBreakInterval) setLongBreakInterval(cloud.longBreakInterval);
 
                     const localAutoStart = localStorage.getItem('dw-autostart');
-                    if (cloudSettings.autoStartPomodoros !== undefined && localAutoStart === null) {
-                        setAutoStart(cloudSettings.autoStartPomodoros);
+                    if (cloud.autoStartPomodoros !== undefined && localAutoStart === null) {
+                        setAutoStart(cloud.autoStartPomodoros);
                     }
                 }
 
-                const tags = await tagsService.getAll();
-                const focusTag = tags.find(tag => tag.name === 'Focus');
-                if (focusTag?.color) {
-                    setAccentColor(focusTag.color);
+                if (tagsRes.status === 'fulfilled' && tagsRes.value) {
+                    const focusTag = tagsRes.value.find(tag => tag.name === 'Focus');
+                    if (focusTag?.color) setAccentColor(focusTag.color);
                 }
+
             } catch (err) {
-                console.error("Cloud sync failed:", err);
+                console.warn("Cloud sync partial failure:", err.message);
             }
         };
 
