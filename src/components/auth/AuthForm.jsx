@@ -30,7 +30,7 @@ const AuthForm = ({ mode = 'login', onToggleMode }) => {
             }
 
             if (!result.success) {
-                setError(result.error || 'An unexpected error occurred');
+                setError(result.error || 'Authentication failed');
             }
         } catch (err) {
             setError('Connection error with the server');
@@ -40,7 +40,7 @@ const AuthForm = ({ mode = 'login', onToggleMode }) => {
     };
 
     return (
-        <div className="auth-container" style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px' }}>
+        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px' }}>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '15px' }}>
                 {mode === 'login' ? 'Sign in to sync your stats.' : 'Create an account to save your progress.'}
             </p>
@@ -50,30 +50,31 @@ const AuthForm = ({ mode = 'login', onToggleMode }) => {
                     <>
                         <input
                             type="text" placeholder="First Name" className="input-text" required
-                            autoComplete="given-name" value={firstName}
+                            name="firstName" autoComplete="given-name" value={firstName}
                             onChange={e => setFirstName(e.target.value)}
                         />
                         <input
                             type="text" placeholder="Last Name (Optional)" className="input-text"
-                            autoComplete="family-name" value={lastName}
+                            name="lastName" autoComplete="family-name" value={lastName}
                             onChange={e => setLastName(e.target.value)}
                         />
                     </>
                 )}
                 <input
                     type="email" placeholder="Email" className="input-text" required
-                    autoComplete="email" value={email}
+                    name="email" autoComplete="email" value={email}
                     onChange={e => setEmail(e.target.value)}
                 />
                 <input
                     type="password" placeholder="Password" className="input-text" required
+                    name="password"
                     autoComplete={mode === 'login' ? "current-password" : "new-password"}
                     value={password} onChange={e => setPassword(e.target.value)}
                 />
 
                 {mode === 'register' && (
                     <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '0' }}>
-                        * Must include at least 1 uppercase, 1 lowercase, and 1 number.
+                        * Password must include uppercase, lowercase, and a number.
                     </p>
                 )}
 

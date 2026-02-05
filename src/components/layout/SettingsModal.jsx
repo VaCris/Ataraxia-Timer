@@ -71,7 +71,6 @@ const SettingsModal = ({
                 </div>
 
                 <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-                    {/* Account Section */}
                     <div className="setting-section">
                         <div className="setting-label"><User size={14} /> Account</div>
                         {user && user.email && !user.isGuest ? (
@@ -90,7 +89,6 @@ const SettingsModal = ({
                         )}
                     </div>
 
-                    {/* Timer Section */}
                     <div className="setting-section">
                         <div className="setting-label"><Clock size={14} /> Timer (min)</div>
                         <div className="time-grid">
@@ -100,7 +98,6 @@ const SettingsModal = ({
                         </div>
                     </div>
 
-                    {/* System Section */}
                     <div className="setting-section">
                         <div className="setting-label"><Monitor size={14} /> System</div>
                         <div className="setting-row"><span>Auto-start Cycles</span><Switch checked={autoStart} onChange={() => onAutoStartChange(!autoStart)} /></div>
@@ -111,7 +108,6 @@ const SettingsModal = ({
                         <div className="setting-row"><span>24-Hour Clock</span><Switch checked={is24Hour} onChange={() => onFormatChange(!is24Hour)} /></div>
                     </div>
 
-                    {/* Appearance Section */}
                     <div className="setting-section">
                         <div className="setting-label"><Sun size={14} /> Appearance</div>
                         <div className="setting-row">
@@ -130,7 +126,6 @@ const SettingsModal = ({
                         </div>
                     </div>
 
-                    {/* Sound Section */}
                     <div className="setting-section">
                         <div className="setting-label"><Volume2 size={14} /> Sound & Volume</div>
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px' }}>
