@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, CheckCircle2, Circle, GripVertical, Loader2 } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, Circle, GripVertical, Loader2, Tag as TagIcon } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { tasksService } from '../../api/tasks.service';
 import { useAuth } from '../../context/auth-context';
 import { useAchievements } from '../../context/achievement-context';
@@ -7,9 +8,9 @@ import AdBanner from '../layout/AdBanner';
 
 const MissionLog = ({ showAd }) => {
   const [tasks, setTasks] = useState([]);
-  const [newTask, setNewTask] = useState('');
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskTag, setNewTaskTag] = useState('General');
   const [loading, setLoading] = useState(false);
-  const [draggedItemIndex, setDraggedItemIndex] = useState(null);
 
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingText, setEditingText] = useState('');
@@ -18,13 +19,57 @@ const MissionLog = ({ showAd }) => {
   const { user, token, initialized } = useAuth();
   const { refreshAchievements } = useAchievements();
 
+  const TITLE_REGEX = /^[a-zA-Z0-9\s\-_.,!?áéíóúÁÉÍÓÚñÑ]+$/;
+  const TAG_REGEX = /^[a-zA-Z0-9\s\-_]+$/;
+
+  useEffect(() => {
+    if (editingTaskId && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editingTaskId]);
+
+  const startEditing = (task) => {
+    setEditingTaskId(task.id);
+    setEditingText(task.title);
+  };
+
+  const saveEdit = async (id) => {
+    const currentTask = tasks.find(t => t.id === id);
+    if (editingText === currentTask.title) {
+      setEditingTaskId(null);
+      return;
+    }
+
+    if (!editingText.trim()) {
+      toast.error("The title cannot be empty");
+      setEditingTaskId(null);
+      return;
+    }
+
+    if (!TITLE_REGEX.test(editingText)) {
+      toast.error("Title contains invalid characters");
+      return;
+    }
+
+    const oldTasks = [...tasks];
+    setTasks(tasks.map(t => t.id === id ? { ...t, title: editingText } : t));
+    setEditingTaskId(null);
+
+    try {
+      await tasksService.update(id, { title: editingText });
+      toast.success('Mission updated', { icon: '✏️' });
+    } catch (error) {
+      toast.error("Failed to sync with server");
+      setTasks(oldTasks);
+    }
+  };
+
   const loadTasks = async () => {
     setLoading(true);
     try {
       const data = await tasksService.getAll();
       setTasks(data || []);
     } catch (error) {
-      console.error("Error loading tasks", error);
       setTasks([]);
     } finally {
       setLoading(false);
@@ -37,23 +82,26 @@ const MissionLog = ({ showAd }) => {
     }
   }, [initialized, token, user]);
 
-  useEffect(() => {
-    if (editingTaskId && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [editingTaskId]);
-
   const addTask = async (e) => {
     e.preventDefault();
-    if (!newTask.trim()) return;
+    if (!newTaskTitle.trim()) return;
+
+    if (!TITLE_REGEX.test(newTaskTitle)) {
+      return toast.error("El título contiene caracteres no permitidos");
+    }
 
     try {
-      const savedTask = await tasksService.create({ title: newTask });
+      const savedTask = await tasksService.create({
+        title: newTaskTitle,
+        tag: newTaskTag
+      });
       setTasks([...tasks, savedTask]);
-      setNewTask('');
+      setNewTaskTitle('');
+      toast.success('Nueva misión asignada! 🚀');
       refreshAchievements();
     } catch (error) {
-      console.error("Error adding task", error);
+      const message = error.response?.data?.message || "Error al crear la tarea";
+      toast.error(Array.isArray(message) ? message[0] : message);
     }
   };
 
@@ -61,12 +109,12 @@ const MissionLog = ({ showAd }) => {
     try {
       const updatedTask = await tasksService.update(task.id, { completed: !task.completed });
       setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
-
       if (updatedTask.completed) {
+        toast.success('Misión cumplida! 🎯');
         refreshAchievements();
       }
     } catch (error) {
-      console.error("Error toggling task", error);
+      toast.error("Error al actualizar estado");
     }
   };
 
@@ -74,71 +122,15 @@ const MissionLog = ({ showAd }) => {
     try {
       await tasksService.delete(id);
       setTasks(tasks.filter(t => t.id !== id));
+      toast.success('Misión eliminada');
       refreshAchievements();
     } catch (error) {
-      console.error("Error deleting task", error);
+      toast.error("Error al eliminar");
     }
-  };
-
-  const startEditing = (task) => {
-    setEditingTaskId(task.id);
-    setEditingText(task.title);
-  };
-
-  const saveEdit = async (id) => {
-    if (!editingText.trim()) {
-      setEditingTaskId(null);
-      return;
-    }
-
-    const oldTasks = [...tasks];
-    setTasks(tasks.map(t => t.id === id ? { ...t, title: editingText } : t));
-    setEditingTaskId(null);
-
-    try {
-      await tasksService.update(id, { title: editingText });
-    } catch (error) {
-      console.error("Error updating task title", error);
-      setTasks(oldTasks);
-    }
-  };
-
-  const cancelEdit = () => {
-    setEditingTaskId(null);
-    setEditingText('');
-  };
-
-  const handleEditKeyDown = (e, id) => {
-    if (e.key === 'Enter') {
-      saveEdit(id);
-    } else if (e.key === 'Escape') {
-      cancelEdit();
-    }
-  };
-
-  const handleDragStart = (index) => {
-    if (editingTaskId !== null) return;
-    setDraggedItemIndex(index);
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (index) => {
-    if (draggedItemIndex === null || draggedItemIndex === index) return;
-    const newTasks = [...tasks];
-    const itemToMove = newTasks[draggedItemIndex];
-
-    newTasks.splice(draggedItemIndex, 1);
-    newTasks.splice(index, 0, itemToMove);
-
-    setTasks(newTasks);
-    setDraggedItemIndex(null);
   };
 
   return (
-    <div style={{
+    <div className="mission-log-container" style={{
       background: 'rgba(255,255,255,0.03)',
       border: '1px solid var(--glass-border)',
       borderRadius: '24px',
@@ -148,166 +140,104 @@ const MissionLog = ({ showAd }) => {
       flexDirection: 'column',
       backdropFilter: 'blur(10px)'
     }}>
-      <h3 style={{
-        marginTop: 0,
-        marginBottom: '1.5rem',
-        fontSize: '0.9rem',
-        letterSpacing: '2px',
-        color: 'var(--text-muted)',
-        textTransform: 'uppercase',
-        display: 'flex',
-        justifyContent: 'space-between'
-      }}>
+      <h3 style={{ marginBottom: '1.5rem', fontSize: '0.9rem', letterSpacing: '2px', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
         Mission Log
-        <span style={{ opacity: 0.5 }}>
-          {loading ? '...' : `${tasks.filter(t => t.completed).length}/${tasks.length}`}
-        </span>
+        <span>{loading ? '...' : `${tasks.filter(t => t.completed).length}/${tasks.length}`}</span>
       </h3>
 
-      <form onSubmit={addTask} style={{ display: 'flex', gap: '10px', marginBottom: '1.5rem' }}>
-        <input
-          type="text"
-          placeholder="New Objective..."
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          disabled={loading}
-          style={{
-            background: 'rgba(0,0,0,0.2)',
-            border: '1px solid var(--glass-border)',
-            padding: '12px 16px',
-            borderRadius: '12px',
-            color: 'white',
-            width: '100%',
-            outline: 'none',
-            fontSize: '0.9rem'
-          }}
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            background: 'var(--primary-color)',
-            border: 'none',
-            width: '45px',
-            borderRadius: '12px',
-            color: 'white',
-            cursor: loading ? 'wait' : 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            opacity: loading ? 0.7 : 1
-          }}
-        >
-          <Plus size={20} />
-        </button>
+      <form onSubmit={addTask} style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <input
+            type="text" placeholder="Estudiar NestJS..." value={newTaskTitle}
+            onChange={(e) => setNewTaskTitle(e.target.value)}
+            disabled={loading}
+            className="input-text"
+            style={{ background: 'rgba(0,0,0,0.2)', flex: 1 }}
+          />
+          <button type="submit" disabled={loading} className="btn-upload" style={{ background: 'var(--primary-color)', width: '45px', borderRadius: '12px' }}>
+            <Plus size={20} />
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '4px 0' }}>
+          {['General', 'Programación', 'Estudio', 'Diseño', 'Salud'].map(tag => (
+            <button
+              key={tag} type="button" onClick={() => setNewTaskTag(tag)}
+              style={{
+                padding: '4px 10px', borderRadius: '12px', fontSize: '0.7rem',
+                border: '1px solid',
+                borderColor: newTaskTag === tag ? 'var(--primary-color)' : 'rgba(255,255,255,0.1)',
+                background: newTaskTag === tag ? 'var(--primary-color)' : 'transparent',
+                color: 'white', cursor: 'pointer', transition: 'all 0.2s'
+              }}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
       </form>
 
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        paddingRight: '5px'
-      }}>
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '20px', color: 'var(--text-muted)' }}>
-            <Loader2 className="animate-spin" />
-          </div>
-        ) : tasks.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '2rem', fontSize: '0.9rem', fontStyle: 'italic' }}>
-            There are no active missions.
-          </div>
-        ) : (
-          <>
-            {tasks.map((task, index) => (
-              <div
-                key={task.id}
-                draggable={editingTaskId === null}
-                onDragStart={() => handleDragStart(index)}
-                onDragOver={handleDragOver}
-                onDrop={() => handleDrop(index)}
-                onDoubleClick={() => startEditing(task)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  background: task.completed ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)',
-                  padding: '12px',
-                  borderRadius: '12px',
-                  transition: 'all 0.2s',
-                  opacity: draggedItemIndex === index ? 0.4 : (task.completed ? 0.6 : 1),
-                  border: draggedItemIndex === index ? '1px dashed var(--text-muted)' : (editingTaskId === task.id ? '1px solid var(--primary-color)' : '1px solid transparent'),
-                  cursor: editingTaskId === task.id ? 'text' : 'grab'
-                }}
-                onMouseEnter={(e) => { if (editingTaskId !== task.id) e.currentTarget.style.borderColor = 'var(--glass-border)' }}
-                onMouseLeave={(e) => {
-                  if (draggedItemIndex !== index && editingTaskId !== task.id) e.currentTarget.style.borderColor = 'transparent'
-                }}
-              >
-                <div style={{ cursor: 'grab', color: 'var(--text-muted)', display: 'flex' }}>
-                  <GripVertical size={14} />
-                </div>
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {tasks.map((task) => (
+          <div key={task.id} className="task-item" style={{
+            display: 'flex', alignItems: 'center', gap: '12px',
+            background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '12px',
+            opacity: task.completed ? 0.6 : 1,
+            transition: 'border 0.2s',
+            border: editingTaskId === task.id ? '1px solid var(--primary-color)' : '1px solid transparent'
+          }}>
+            <button onClick={() => toggleTask(task)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: task.completed ? 'var(--primary-color)' : 'var(--text-muted)' }}>
+              {task.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+            </button>
 
-                <button
-                  onClick={(e) => { e.stopPropagation(); toggleTask(task); }}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: task.completed ? 'var(--primary-color)' : 'var(--text-muted)', padding: 0, display: 'flex' }}
-                >
-                  {task.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
-                </button>
-
-                {editingTaskId === task.id ? (
-                  <input
-                    ref={inputRef}
-                    value={editingText}
-                    onChange={(e) => setEditingText(e.target.value)}
-                    onBlur={() => saveEdit(task.id)}
-                    onKeyDown={(e) => handleEditKeyDown(e, task.id)}
-                    style={{
-                      flex: 1,
-                      background: 'transparent',
-                      border: 'none',
-                      color: 'white',
-                      fontSize: '0.9rem',
-                      outline: 'none',
-                      fontFamily: 'inherit',
-                      padding: 0,
-                      margin: 0
-                    }}
-                  />
-                ) : (
-                  <span style={{
-                    flex: 1,
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              {editingTaskId === task.id ? (
+                <input
+                  ref={inputRef}
+                  value={editingText}
+                  onChange={(e) => setEditingText(e.target.value)}
+                  onBlur={() => saveEdit(task.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') saveEdit(task.id);
+                    if (e.key === 'Escape') setEditingTaskId(null);
+                  }}
+                  style={{
+                    background: 'rgba(0,0,0,0.3)',
+                    border: 'none',
+                    borderRadius: '4px',
+                    color: 'white',
                     fontSize: '0.9rem',
+                    outline: 'none',
+                    padding: '2px 0'
+                  }}
+                />
+              ) : (
+                <span
+                  onDoubleClick={() => startEditing(task)}
+                  style={{
+                    fontSize: '0.9rem',
+                    color: 'white',
                     textDecoration: task.completed ? 'line-through' : 'none',
-                    color: task.completed ? 'var(--text-muted)' : 'white',
-                    wordBreak: 'break-word',
-                    userSelect: 'none'
-                  }}>
-                    {task.title}
-                  </span>
-                )}
-
-                <button
-                  onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', opacity: 0.6, padding: 0, display: 'flex' }}
-                  title="Delete Mission"
+                    cursor: 'text'
+                  }}
                 >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
+                  {task.title}
+                </span>
+              )}
+              {task.tag && (
+                <span style={{ fontSize: '0.7rem', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <TagIcon size={10} /> {task.tag}
+                </span>
+              )}
+            </div>
 
-            {showAd && <AdBanner />}
-          </>
-        )}
+            <button onClick={() => deleteTask(task.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', opacity: 0.6 }}>
+              <Trash2 size={16} />
+            </button>
+          </div>
+        ))}
+        {showAd && <AdBanner />}
       </div>
-
-      <style>{`
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-        .animate-spin { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      `}</style>
     </div>
   );
 };

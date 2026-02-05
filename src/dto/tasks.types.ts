@@ -10,5 +10,6 @@ export interface UpdateTaskDto extends Partial<CreateTaskDto> {
 export interface TaskResponse extends CreateTaskDto {
     id: string;
     userId: string;
+    completed: boolean;
     createdAt: string;
 }
