@@ -22,7 +22,6 @@ const SettingsModal = ({
             hasOpenedRef.current = true;
         } else {
             document.body.style.overflow = 'unset';
-            if (hasOpenedRef.current) saveAll();
         }
         return () => { document.body.style.overflow = 'unset'; };
     }, [isOpen]);
@@ -41,7 +40,7 @@ const SettingsModal = ({
         try {
             await settingsService.saveSettings(payload);
         } catch (err) {
-            console.error('Cloud sync failed:', err);
+            toast.error("Failed to sync settings");
         }
     };
 
@@ -63,7 +62,7 @@ const SettingsModal = ({
     const saveAll = async () => {
         if (user && !user.isGuest) {
             await Promise.all([saveSettings(), saveTagColor()]);
-            toast.success('Settings synced to cloud! ☁️');
+            toast.success('Settings synced');
         } else {
             toast.success('Settings saved locally');
         }
