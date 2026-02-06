@@ -52,20 +52,27 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
     };
 
     return (
-        <div className="auth-container" style={{ padding: '10px 0' }}>
-            <div className="auth-header" style={{ marginBottom: '20px', textAlign: 'center' }}>
-                <h2 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'white' }}>
+        <div className="auth-container" style={{ padding: '8px' }}>
+            <div className="auth-header" style={{ marginBottom: '32px', textAlign: 'center' }}>
+                <h2 style={{
+                    fontSize: '1.5rem',
+                    fontWeight: '700',
+                    color: 'white',
+                    marginBottom: '8px',
+                    letterSpacing: '-0.025em'
+                }}>
                     {isLogin ? 'Sign In' : 'Create Account'}
                 </h2>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
                     {isLogin ? 'Enter your credentials' : 'Join the focus journey'}
                 </p>
             </div>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {!isLogin && (
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <div className="input-wrapper" style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <div style={{ flex: 1, position: 'relative' }}>
+                            <User size={16} style={iconStyle} />
                             <input
                                 type="text"
                                 placeholder="First Name"
@@ -73,11 +80,10 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
                                 required={!isLogin}
-                                autoComplete="given-name"
-                                style={{ width: '100%' }}
+                                style={{ paddingLeft: '40px' }}
                             />
                         </div>
-                        <div className="input-wrapper" style={{ flex: 1 }}>
+                        <div style={{ flex: 1 }}>
                             <input
                                 type="text"
                                 placeholder="Last Name"
@@ -85,8 +91,6 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
                                 required={!isLogin}
-                                autoComplete="family-name"
-                                style={{ width: '100%' }}
                             />
                         </div>
                     </div>
@@ -94,32 +98,30 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
 
                 <div className="input-group">
                     <div className="input-wrapper" style={{ position: 'relative' }}>
-                        <Mail size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                        <Mail size={16} style={iconStyle} />
                         <input
                             type="email"
                             placeholder="Email address"
                             className="input-text"
-                            style={{ paddingLeft: '40px', width: '100%' }}
+                            style={{ paddingLeft: '40px' }}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            autoComplete="email"
                         />
                     </div>
                 </div>
 
                 <div className="input-group">
                     <div className="input-wrapper" style={{ position: 'relative' }}>
-                        <Lock size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                        <Lock size={16} style={iconStyle} />
                         <input
                             type="password"
                             placeholder="Password"
                             className="input-text"
-                            style={{ paddingLeft: '40px', width: '100%' }}
+                            style={{ paddingLeft: '40px' }}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            autoComplete={isLogin ? "current-password" : "new-password"}
                         />
                     </div>
                 </div>
@@ -129,42 +131,58 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                     className="btn-save"
                     disabled={isLoading}
                     style={{
-                        marginTop: '10px',
+                        marginTop: '12px',
                         width: '100%',
+                        height: '48px',
                         justifyContent: 'center',
-                        background: 'var(--primary-color)',
+                        background: 'var(--primary-purple)',
+                        color: 'white',
+                        fontWeight: '600',
+                        borderRadius: '12px',
                         border: 'none',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px'
+                        gap: '10px',
+                        cursor: isLoading ? 'not-allowed' : 'pointer'
                     }}
                 >
-                    {isLoading ? <Loader2 className="animate-spin" size={18} /> : (
+                    {isLoading ? <Loader2 className="animate-spin" size={20} /> : (
                         <>
                             {isLogin ? 'Sign In' : 'Sign Up'}
-                            <ArrowRight size={16} />
+                            <ArrowRight size={18} />
                         </>
                     )}
                 </button>
             </form>
 
-            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <div style={{ marginTop: '24px', textAlign: 'center' }}>
                 <button
                     onClick={toggleMode}
                     style={{
                         background: 'none',
                         border: 'none',
-                        color: 'var(--primary-color)',
+                        color: 'var(--text-muted)',
                         cursor: 'pointer',
-                        fontSize: '0.85rem',
-                        fontWeight: '500'
+                        fontSize: '0.875rem'
                     }}
                 >
-                    {isLogin ? "New to Ataraxia? Create account" : "Already have an account? Sign in"}
+                    {isLogin ? "New to Ataraxia? " : "Already have an account? "}
+                    <span style={{ color: 'var(--primary-purple)', fontWeight: '600' }}>
+                        {isLogin ? "Create account" : "Sign in"}
+                    </span>
                 </button>
             </div>
         </div>
     );
+};
+
+const iconStyle = {
+    position: 'absolute',
+    left: '14px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: 'var(--text-muted)',
+    pointerEvents: 'none'
 };
 
 export default AuthForm;
