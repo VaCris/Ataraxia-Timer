@@ -28,16 +28,8 @@ export const useSyncSettings = (user, token, isMaintenance, setters) => {
 
                         if (cloudSettings.theme && cloudSettings.theme.includes('|')) {
                             const [savedColor, savedBg] = cloudSettings.theme.split('|');
-
-                            if (savedColor) {
-                                setters.setAccentColor(savedColor);
-                            }
-
-                            if (savedBg) {
-                                setters.setBgImage(savedBg);
-                            }
-                        } else if (cloudSettings.theme) {
-                            setters.setAccentColor(cloudSettings.theme);
+                            if (savedColor) setters.setAccentColor(savedColor);
+                            if (savedBg) setters.setBgImage(savedBg);
                         }
                     }
                     isFirstLoad.current = false;
