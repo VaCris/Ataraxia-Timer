@@ -5,7 +5,7 @@ export const buildSettingsPayload = (timerSettings, autoStart, interval, color, 
     autoStartBreaks: Boolean(autoStart),
     autoStartPomodoros: Boolean(autoStart),
     longBreakInterval: Math.max(1, Number(interval) || 4),
-    theme: color || 'dark',
+    theme: 'dark',
     soundEnabled: volume > 0,
     platform: 'web'
 });
