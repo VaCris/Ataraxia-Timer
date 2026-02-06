@@ -22,9 +22,22 @@ export const useSyncSettings = (user, token, isMaintenance, setters) => {
                         if (cloudSettings.longBreakInterval) {
                             setters.setLongBreakInterval(cloudSettings.longBreakInterval);
                         }
-
                         if (cloudSettings.autoStartPomodoros !== undefined) {
                             setters.setAutoStart(cloudSettings.autoStartPomodoros);
+                        }
+
+                        if (cloudSettings.theme && cloudSettings.theme.includes('|')) {
+                            const [savedColor, savedBg] = cloudSettings.theme.split('|');
+
+                            if (savedColor) {
+                                setters.setAccentColor(savedColor);
+                            }
+
+                            if (savedBg) {
+                                setters.setBgImage(savedBg);
+                            }
+                        } else if (cloudSettings.theme) {
+                            setters.setAccentColor(cloudSettings.theme);
                         }
                     }
                     isFirstLoad.current = false;
