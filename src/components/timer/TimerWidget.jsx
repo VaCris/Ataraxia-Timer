@@ -6,7 +6,7 @@ import Controls from './Controls';
 const TimerWidget = ({
     mode, setMode,timeLeft,
     formatTime, isActive,
-    cycles, longBreakInterval = 4,
+    cycles, longBreakInterval,
     toggleTimer, resetTimer,
     togglePip, isPipActive,
     isInPipMode,timerSettings
