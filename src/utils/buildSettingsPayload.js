@@ -1,14 +1,10 @@
-export const buildSettingsPayload = (timerSettings, autoStart, longBreakInterval, accentColor, volume) => {
-    const combinedTheme = `${accentColor}|${background || ''}`;
-    return {
-        timerSettings: {
-            work: Math.max(1, Math.min(timerSettings.work || 25, 120)),
-            short: Math.max(1, timerSettings.short || 5),
-            long: Math.max(1, timerSettings.long || 15)
-        },
-        autoStart: Boolean(autoStart),
-        longBreakInterval: Math.max(1, Math.min(longBreakInterval || 4, 10)),
-        theme: combinedTheme,
-        volume: Math.max(0, Math.min(volume || 0.5, 1))
-    };
-};
+export const buildSettingsPayload = (timerSettings, autoStart, longBreakInterval, accentColor, volume, background) => ({
+    focusDuration: Number(timerSettings.work),
+    shortBreakDuration: Number(timerSettings.short),
+    longBreakDuration: Number(timerSettings.long),
+    longBreakInterval: Number(longBreakInterval),
+    autoStartPomodoros: Boolean(autoStart),
+    theme: `${accentColor}|${background || ''}`,
+    soundEnabled: volume > 0,
+    platform: "web"
+});
