@@ -89,7 +89,7 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                             className="input-text"
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
-                            required={!isLogin}
+                            required={false}
                             style={inputBaseStyle}
                         />
                     </div>
