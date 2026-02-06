@@ -33,9 +33,7 @@ const SettingsModal = ({
             timerSettings,
             autoStart,
             longBreakInterval,
-            accentColor,
-            volume,
-            currentBg
+            volume
         );
 
         try {
