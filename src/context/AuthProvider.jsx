@@ -4,7 +4,7 @@ import { authService } from '../api/auth.service';
 import { apiClient } from '../api/client';
 
 export const AuthProvider = ({ children }) => {
-    const [token, setToken] = useState(() => localStorage.getItem('token'));
+    const [token, setToken] = useState(() => localStorage.getItem('access_token'));
     const [user, setUser] = useState(() => {
         const savedUser = localStorage.getItem('dw-user');
         try {
@@ -28,7 +28,8 @@ export const AuthProvider = ({ children }) => {
     const logout = useCallback(() => {
         setUser(null);
         setToken(null);
-        localStorage.removeItem('token');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
         localStorage.removeItem('dw-user');
         delete apiClient.defaults.headers.Authorization;
     }, []);
@@ -39,36 +40,28 @@ export const AuthProvider = ({ children }) => {
         return () => window.removeEventListener('auth:logout', handleAuthError);
     }, [logout]);
 
-    const saveSession = (newToken, newUser) => {
+    const saveSession = (newToken, newUser, newRefreshToken) => {
         setToken(newToken);
         setUser(newUser);
-        localStorage.setItem('token', newToken);
+        localStorage.setItem('access_token', newToken);
+
+        if (newRefreshToken) {
+            localStorage.setItem('refresh_token', newRefreshToken);
+        }
         localStorage.setItem('dw-user', JSON.stringify(newUser));
     };
 
     const loginAsGuest = async () => {
-        const storedToken = localStorage.getItem('token');
+        const storedToken = localStorage.getItem('access_token');
         if (user || storedToken) return true;
 
         setLoading(true);
         try {
             const deviceId = localStorage.getItem('device_id') || crypto.randomUUID();
             localStorage.setItem('device_id', deviceId);
-
             const data = await authService.guestLogin({ deviceId });
-
-            const newToken = data.access_token;
-
-            const newUser = {
-                ...data.user,
-                username: 'Guest'
-            };
-
-            if (newToken && newUser) {
-                saveSession(newToken, newUser);
-                return true;
-            }
-            return false;
+            saveSession(data.access_token, data.user, data.refresh_token);
+            return true;
         } catch (error) {
             console.error("Guest login failed:", error);
             return false;
@@ -80,12 +73,9 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             const data = await authService.login({ email, password });
-            const newToken = data.access_token;
-            saveSession(newToken, data.user);
-
+            saveSession(data.access_token, data.user, data.refresh_token);
             return { success: true };
         } catch (error) {
-            console.error("Auth context error:", error.message);
             return { success: false, error: error.message };
         }
     };
@@ -93,15 +83,14 @@ export const AuthProvider = ({ children }) => {
     const register = async (userData) => {
         try {
             const data = await authService.register(userData);
-            const newToken = data.access_token;
-            const newUser = { ...data.user, isGuest: false };
-            saveSession(newToken, newUser);
+            saveSession(data.access_token, data.user, data.refresh_token);
             return { success: true };
         } catch (error) {
             const message = error.response?.data?.message || "Registration failed";
             return { success: false, error: message };
         }
     };
+
     return (
         <AuthContext.Provider value={{
             user, token, loading, initialized,
