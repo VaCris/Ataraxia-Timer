@@ -1,5 +1,4 @@
-export const buildSettingsPayload = (timerSettings, autoStart, longBreakInterval, accentColor, volume, background) => {
-    const themePayload = `${accentColor}|${background || ''}`; 
+export const buildSettingsPayload = (timerSettings, autoStart, longBreakInterval, volume) => {
     return {
         focusDuration: Number(timerSettings.work),
         shortBreakDuration: Number(timerSettings.short),
