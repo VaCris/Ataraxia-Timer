@@ -254,7 +254,8 @@ const MusicWidget = () => {
 
             <style>{`
                 .music-widget-container {
-                    position: fixed; bottom: 90px; left: 2rem; width: 420px;
+                    width: clamp(320px, 28vw, 400px);
+                    max-height: calc(100vh - 140px);
                     background: rgba(30, 30, 35, 0.75);
                     backdrop-filter: blur(24px) saturate(180%);
                     -webkit-backdrop-filter: blur(24px) saturate(180%);
@@ -262,9 +263,16 @@ const MusicWidget = () => {
                     border-radius: 24px;
                     overflow: hidden;
                     z-index: 50;
+                    display: flex;
+                    flex-direction: column;
                     transform-origin: bottom left;
                     transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
                 }
+                .music-content {
+                    overflow-y: auto;
+                    -webkit-overflow-scrolling: touch;
+                }
+
                 .widget-open { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; visibility: visible; }
                 .widget-closed { opacity: 0; transform: scale(0.9) translateY(20px); pointer-events: none; visibility: hidden; }
                 
@@ -296,7 +304,6 @@ const MusicWidget = () => {
                 .action-btn.play { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.3); cursor: not-allowed; }
                 .action-btn.play.active { background: var(--primary-color, #8b5cf6); color: white; cursor: pointer; box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4); }
                 .action-btn.play.active:hover { transform: scale(1.05); }
-                
                 .youtube-hint {
                     background: rgba(255, 160, 0, 0.08);
                     border: 1px solid rgba(255, 160, 0, 0.15);
@@ -339,6 +346,195 @@ const MusicWidget = () => {
                 .btn-connect { background: #1db954; color: white; border: none; padding: 8px 18px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: transform 0.2s, background 0.2s; }
                 .btn-connect:hover { background: #1ed760; transform: scale(1.03); }
                 .player-view { padding: 0; display: flex; align-items: center; justify-content: center; }
+                @media (max-width: 1280px) {
+                    .music-widget-container {
+                        width: 450px;
+                        left: 1.5rem;
+                        bottom: 80px;
+                    }
+                }
+                @media (max-width: 1024px) {
+                    .music-widget-container {
+                        max-height: calc(100vh - 150px);
+                    }
+
+                    .list-scroll {
+                        max-height: 140px;
+                    }
+                }
+                @media (max-width: 768px) {
+                    .music-header {
+                        padding: 14px 16px;
+                    }
+
+                    .input-view {
+                        padding: 16px;
+                        gap: 14px;
+                    }
+
+                    .list-scroll {
+                        max-height: 120px;
+                    }
+
+                    iframe {
+                        height: 220px !important;
+                    }
+                }
+                @media (max-width: 600px) {
+                    .music-widget-container {
+                        left: 0.75rem;
+                        right: 0.75rem;
+                        width: auto;
+                        bottom: 72px;
+                        border-radius: 18px;
+                    }
+
+                    .music-title span {
+                        font-size: 0.95rem;
+                    }
+
+                    .icon-glow {
+                        width: 30px;
+                        height: 30px;
+                    }
+
+                    .input-group input {
+                        font-size: 0.9rem;
+                    }
+
+                    iframe {
+                        height: 200px !important;
+                    }
+                }
+
+                @media (max-width: 520px) {
+                    .music-widget-container {
+                        max-height: calc(100vh - 140px);
+                    }
+
+                    .input-view {
+                        padding: 14px;
+                        gap: 12px;
+                    }
+
+                    .hero-section h3 {
+                        font-size: 1rem;
+                    }
+
+                    .hero-section p {
+                        font-size: 0.82rem;
+                    }
+
+                    .list-scroll {
+                        max-height: 96px;
+                    }
+
+                    iframe {
+                        height: 190px !important;
+                        border-radius: 12px;
+                    }
+                }
+                    
+                @media (max-width: 340px) {
+
+                    .music-widget-container {
+                        left: 0.5rem;
+                        right: 0.5rem;
+                        width: auto;
+                        bottom: 60px;
+                        border-radius: 16px;
+                    }
+
+                    .music-header {
+                        padding: 12px;
+                    }
+
+                    .music-title span {
+                        font-size: 0.9rem;
+                    }
+
+                    .input-group,
+                    .spotify-card,
+                    .youtube-hint {
+                        min-width: 0;
+                    }
+
+                    .input-group {
+                        gap: 4px;
+                        padding: 4px;
+                    }
+
+                    .input-group input {
+                        font-size: 0.85rem;
+                        padding: 8px 10px;
+                    }
+
+                    .action-btn,
+                    .action-btn-play {
+                        width: 30px;
+                        height: 30px;
+                        min-width: 30px;
+                        border-radius: 8px;
+                    }
+
+                    .action-btn svg,
+                    .action-btn-play svg {
+                        width: 16px;
+                        height: 16px;
+                    }
+
+                    .spotify-connect-mini {
+                        padding: 8px 10px;
+                        font-size: 0.8rem;
+                        gap: 6px;
+                    }
+
+                    .spotify-card {
+                        padding: 10px;
+                        gap: 8px;
+                    }
+
+                    .spotify-card button {
+                        padding: 6px 10px;
+                        font-size: 0.8rem;
+                    }
+
+                    .saved-item {
+                        padding: 6px 8px;
+                        font-size: 0.8rem;
+                    }
+
+                    .player-view iframe {
+                        height: 160px !important;
+                    }
+                }
+
+                @media (max-width: 380px) {
+                    .music-widget-container {
+                        bottom: 64px;
+                        max-height: calc(100vh - 150px);
+                    }
+
+                    .control-btn {
+                        width: 28px;
+                        height: 28px;
+                    }
+
+                    .input-group {
+                        gap: 4px;
+                        padding: 4px;
+                    }
+
+                    .action-btn,
+                    .action-btn-play {
+                        width: 34px;
+                        border-radius: 10px;
+                    }
+
+                    iframe {
+                        height: 170px !important;
+                    }
+                }
             `}</style>
         </div>
     );
