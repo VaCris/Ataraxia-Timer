@@ -35,26 +35,27 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     useEffect(() => {
-        const interceptor = apiClient.interceptors.response.use(
-            (response) => response,
-            (error) => {
-                if (error.response?.status === 401) {
-                    if (user && !user.isGuest) {
-                        toast.error("Session expired. Please sign in again.", {
-                            id: 'auth-error',
-                        });
-                    }
-                    logout();
-                    if (window.location.pathname !== '/') {
-                        window.location.href = '/';
-                    }
-                }
-                return Promise.reject(error);
+        const handleAuthLogout = () => {
+            if (user && !user.isGuest) {
+                toast.error("Session expired. Please sign in again.", { id: 'auth-error' });
             }
-        );
+            logout();
+            if (window.location.pathname !== '/') {
+                window.location.href = '/';
+            }
+        };
 
-        return () => apiClient.interceptors.response.eject(interceptor);
-    }, [logout,user]);
+        window.addEventListener('auth:logout', handleAuthLogout);
+        return () => window.removeEventListener('auth:logout', handleAuthLogout);
+    }, [logout, user]);
+
+    useEffect(() => {
+        if (token) {
+            apiClient.defaults.headers.Authorization = `Bearer ${token}`;
+        } else {
+            delete apiClient.defaults.headers.Authorization;
+        }
+    }, [token]);
 
     const saveSession = (newToken, newUser, newRefreshToken) => {
         setToken(newToken);
