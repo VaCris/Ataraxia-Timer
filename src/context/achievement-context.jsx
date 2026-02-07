@@ -20,7 +20,7 @@ export const AchievementProvider = ({ children }) => {
             const data = await achievementsService.getAchievements();
             setAchievements(Array.isArray(data) ? data : []);
         } catch (error) {
-            console.error("Error al cargar logros:", error);
+            console.error("Error loading achievements:", error);
             setAchievements([]);
         } finally {
             setLoading(false);
@@ -45,7 +45,7 @@ export const AchievementProvider = ({ children }) => {
 export const useAchievements = () => {
     const context = useContext(AchievementContext);
     if (!context) {
-        throw new Error("useAchievements debe usarse dentro de un AchievementProvider");
+        throw new Error("useAchievements must be used within an AchievementProvider");
     }
     return context;
 };
