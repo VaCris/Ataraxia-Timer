@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AuthContext } from './auth-context';
 import { authService } from '../api/auth.service';
-import { apiClient } from '../api/client';
+import toast from 'react-hot-toast';
 
 export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(() => localStorage.getItem('access_token'));
@@ -17,21 +17,12 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const [initialized, setInitialized] = useState(true);
 
-    useEffect(() => {
-        if (token) {
-            apiClient.defaults.headers.Authorization = `Bearer ${token}`;
-        } else {
-            delete apiClient.defaults.headers.Authorization;
-        }
-    }, [token]);
-
     const logout = useCallback(() => {
         setUser(null);
         setToken(null);
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         localStorage.removeItem('dw-user');
-        delete apiClient.defaults.headers.Authorization;
     }, []);
 
     useEffect(() => {
@@ -40,6 +31,7 @@ export const AuthProvider = ({ children }) => {
                 toast.error("Session expired. Please sign in again.", { id: 'auth-error' });
             }
             logout();
+
             if (window.location.pathname !== '/') {
                 window.location.href = '/';
             }
@@ -49,19 +41,10 @@ export const AuthProvider = ({ children }) => {
         return () => window.removeEventListener('auth:logout', handleAuthLogout);
     }, [logout, user]);
 
-    useEffect(() => {
-        if (token) {
-            apiClient.defaults.headers.Authorization = `Bearer ${token}`;
-        } else {
-            delete apiClient.defaults.headers.Authorization;
-        }
-    }, [token]);
-
     const saveSession = (newToken, newUser, newRefreshToken) => {
         setToken(newToken);
         setUser(newUser);
         localStorage.setItem('access_token', newToken);
-
         if (newRefreshToken) {
             localStorage.setItem('refresh_token', newRefreshToken);
         }
@@ -69,13 +52,13 @@ export const AuthProvider = ({ children }) => {
     };
 
     const loginAsGuest = async () => {
-        const storedToken = localStorage.getItem('access_token');
-        if (user || storedToken) return true;
+        if (user || token) return true;
 
         setLoading(true);
         try {
             const deviceId = localStorage.getItem('device_id') || crypto.randomUUID();
             localStorage.setItem('device_id', deviceId);
+
             const data = await authService.guestLogin({ deviceId });
             saveSession(data.access_token, data.user, data.refresh_token);
             return true;
@@ -93,8 +76,8 @@ export const AuthProvider = ({ children }) => {
             saveSession(data.access_token, data.user, data.refresh_token);
             return { success: true };
         } catch (error) {
-            console.error(error.message);
-            return { success: false, error: error.message };
+            const message = error.response?.data?.message || "Login failed";
+            return { success: false, error: message };
         }
     };
 
