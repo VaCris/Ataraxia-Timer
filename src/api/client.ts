@@ -18,12 +18,12 @@ const processQueue = (error: any, token: string | null = null) => {
 
 apiClient.interceptors.request.use((config) => {
     const token = localStorage.getItem('access_token');
-
+    
     if (token && token.startsWith('offline_token_')) {
-        return Promise.reject({
-            isOfflineToken: true,
-            message: "Blocked request: Temporary token"
-        });
+        const error: any = new Error("Offline Mode");
+        error.isOfflineToken = true;
+        error.config = config;
+        throw error;
     }
 
     if (token && config.headers) {
@@ -44,22 +44,30 @@ apiClient.interceptors.response.use(
         return response;
     },
     async (error) => {
-        if (error.isOfflineToken) return Promise.reject(error);
+        if (error.isOfflineToken || error.code === "ERR_NETWORK" || !error.response) {
+            if (error.config?.method === 'get') {
+                const cacheKey = `offline_cache_${error.config.url}`;
+                const cachedData = localStorage.getItem(cacheKey);
+                
+                if (cachedData) {
+                    return Promise.resolve({
+                        data: JSON.parse(cachedData),
+                        status: 200,
+                        statusText: 'OK',
+                        headers: {},
+                        config: error.config
+                    });
+                }
+                return Promise.resolve({ data: [], status: 200, config: error.config });
+            }
+            return Promise.reject(error);
+        }
 
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-        if (!error.response || error.response.status >= 500) {
-            if (originalRequest.method === 'get') {
-                const cachedData = localStorage.getItem(`offline_cache_${originalRequest.url}`);
-                if (cachedData) {
-                    return Promise.resolve({ ...error, status: 200, data: JSON.parse(cachedData) });
-                }
-            }
-        }
-
         if (error.response?.status === 401 && !originalRequest._retry) {
             if (originalRequest.url?.includes('/auth/login')) return Promise.reject(error);
-
+            
             if (isRefreshing) {
                 return new Promise((resolve, reject) => { failedQueue.push({ resolve, reject }); })
                     .then(token => {
@@ -70,7 +78,7 @@ apiClient.interceptors.response.use(
 
             originalRequest._retry = true;
             isRefreshing = true;
-
+            
             try {
                 const refreshToken = localStorage.getItem('refresh_token');
                 const { data } = await refreshClient.post('/auth/refresh', {}, {
