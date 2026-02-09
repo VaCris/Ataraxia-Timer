@@ -9,7 +9,11 @@
 **¡Hecho por Studios TKOH!**
 
 Un temporizador de productividad moderno y estético diseñado para el **Deep Work** (Trabajo Profundo). Ideal para streamers, desarrolladores y cualquiera que busque mantener el enfoque sin distracciones visuales.
-
+<p align="center">
+  <a href="https://ataraxia-timer.onrender.com/" target="_blank">
+    <img src="https://github.com/VaCris/Ataraxia-Timer/blob/feature/pwa-offline-support/.codeviz/Diagram/Ataraxia.png" width="900" alt="Diagram Ataraxia">
+  </a>
+</p>
 ## Características
 
 * **Modos de Enfoque:** Temporizadores preconfigurados para *Focus* (Trabajo), *Short Break* (Descanso Corto) y *Long Break* (Descanso Largo).
