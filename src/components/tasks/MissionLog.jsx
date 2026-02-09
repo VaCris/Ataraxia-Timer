@@ -1,8 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, CheckCircle2, Circle, Loader2, Tag as TagIcon } from 'lucide-react';
+import {
+  Plus,
+  Trash2,
+  CheckCircle2,
+  Circle,
+  Loader2,
+  Tag as TagIcon,
+  CloudOff,
+  RefreshCw
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tasksService } from '../../api/tasks.service';
 import { tagsService } from '../../api/tags.service';
+import { syncManager } from '../../api/sync.manager';
 import { useAuth } from '../../context/auth-context';
 import { useAchievements } from '../../context/achievement-context';
 import AdBanner from '../layout/AdBanner';
@@ -35,7 +45,7 @@ const MissionLog = ({ showAd }) => {
       setTasks(tasksData || []);
       setTags(tagsData || []);
     } catch (error) {
-      console.error(error);
+      console.error("Offline or Server Error:", error);
     } finally {
       setTimeout(() => setLoading(false), 600);
     }
@@ -51,41 +61,48 @@ const MissionLog = ({ showAd }) => {
     }
   }, [initialized, token, user?.id, user?.isGuest]);
 
-  const MissionSkeleton = () => (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '12px',
-      background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '12px',
-      animation: 'pulse 1.5s infinite ease-in-out'
-    }}>
-      <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)' }} />
-      <div style={{ flex: 1 }}>
-        <div style={{ width: '60%', height: '12px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', marginBottom: '8px' }} />
-        <div style={{ width: '30%', height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }} />
-      </div>
-    </div>
-  );
-
   const addTask = async (e) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
     if (!TITLE_REGEX.test(newTaskTitle)) return toast.error("Title contains invalid characters");
 
+    const tempId = `temp-${Date.now()}`;
+    const titleToSave = newTaskTitle;
+    const tagToSave = newTaskTag;
+
+    const optimisticTask = {
+      id: tempId,
+      title: titleToSave,
+      tag: tagToSave,
+      completed: false,
+      isSyncing: true
+    };
+    setTasks(prev => [optimisticTask, ...prev]);
+    setNewTaskTitle('');
+
     try {
-      const existingTag = tags.find(t => t.name.toLowerCase() === newTaskTag.toLowerCase());
-      if (!existingTag) {
-        const createdTag = await tagsService.create({ name: newTaskTag, color: newTaskTagColor });
-        setTags([...tags, createdTag]);
-      } else if (existingTag.color !== newTaskTagColor) {
-        await tagsService.update(existingTag.id, { color: newTaskTagColor });
-        setTags(tags.map(t => t.id === existingTag.id ? { ...t, color: newTaskTagColor } : t));
+      if (navigator.onLine) {
+        const existingTag = tags.find(t => t.name.toLowerCase() === tagToSave.toLowerCase());
+        if (!existingTag) {
+          const createdTag = await tagsService.create({ name: tagToSave, color: newTaskTagColor });
+          setTags(prev => [...prev, createdTag]);
+        }
       }
 
-      const savedTask = await tasksService.create({ title: newTaskTitle, tag: newTaskTag });
-      setTasks([...tasks, savedTask]);
-      setNewTaskTitle('');
-      toast.success('Mission assigned! 🚀');
+      const result = await tasksService.create({ title: titleToSave, tag: tagToSave });
+
+      setTasks(prev => prev.map(t => t.id === tempId ? result : t));
+
+      if (result.isOffline) {
+        toast("Misión guardada localmente 📡", { id: 'offline-toast' });
+      } else {
+        toast.success('Mission assigned!');
+      }
       refreshAchievements();
-    } catch (error) { toast.error("Failed to sync"); }
+    } catch (error) {
+      setTasks(prev => prev.filter(t => t.id !== tempId));
+      toast.error("Failed to add mission");
+    }
   };
 
   const getTagColor = (tagName) => {
@@ -94,26 +111,44 @@ const MissionLog = ({ showAd }) => {
   };
 
   const toggleTask = async (task) => {
+    if (task.isOffline) return toast.error("Espera a la sincronización para completar");
+
+    const originalTasks = [...tasks];
+    setTasks(tasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t));
+
     try {
       const updatedTask = await tasksService.update(task.id, { completed: !task.completed });
       setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
       if (updatedTask.completed) {
-        toast.success('Mission accomplished! 🎯');
+        toast.success('Mission accomplished!');
         refreshAchievements();
       }
-    } catch (error) { toast.error("Update failed"); }
+    } catch (error) {
+      setTasks(originalTasks);
+      toast.error("Update failed");
+    }
   };
 
-  const deleteTask = async (id) => {
+  const deleteTask = async (id, isOffline) => {
+    const originalTasks = [...tasks];
+    setTasks(tasks.filter(t => t.id !== id));
+
     try {
-      await tasksService.delete(id);
-      setTasks(tasks.filter(t => t.id !== id));
+      if (!isOffline) {
+        await tasksService.delete(id);
+      } else {
+        syncManager.removeFromQueue('outbox_tasks', id);
+      }
       toast.success('Mission deleted');
       refreshAchievements();
-    } catch (error) { toast.error("Delete failed"); }
+    } catch (error) {
+      setTasks(originalTasks);
+      toast.error("Delete failed");
+    }
   };
 
-  const saveEdit = async (id) => {
+  const saveEdit = async (id, isOffline) => {
+    if (isOffline) return toast.error("No se pueden editar misiones offline");
     const currentTask = tasks.find(t => t.id === id);
     if (editingText === currentTask.title || !editingText.trim()) {
       setEditingTaskId(null);
@@ -134,14 +169,16 @@ const MissionLog = ({ showAd }) => {
       display: 'flex', flexDirection: 'column', backdropFilter: 'blur(10px)'
     }}>
       <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .animate-spin-slow { animation: spin 3s linear infinite; }
       `}</style>
+
       <h3 style={{ marginBottom: '1.5rem', fontSize: '0.9rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
         Mission Log
-        <span>{loading ? 'SYNCING...' : `${tasks.filter(t => t.completed).length}/${tasks.length}`}</span>
+        <span style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {loading && <RefreshCw size={12} className="animate-spin" />}
+          {tasks.filter(t => t.completed).length}/{tasks.length}
+        </span>
       </h3>
 
       <form onSubmit={addTask} style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -151,25 +188,7 @@ const MissionLog = ({ showAd }) => {
             value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)}
             style={{ background: 'transparent', border: 'none', flex: 1, padding: '10px 15px', color: 'white', outline: 'none' }}
           />
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-save"
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '12px',
-              justifyContent: 'center',
-              background: 'var(--primary-color)',
-              boxShadow: '0 4px 12px var(--primary-glow)',
-              border: 'none',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              transition: 'all 0.3s ease'
-            }}
-          >
+          <button type="submit" disabled={loading} className="btn-save" style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--primary-color)', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {loading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={20} />}
           </button>
         </div>
@@ -195,49 +214,56 @@ const MissionLog = ({ showAd }) => {
       </form>
 
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {loading ? (
-          <>
-            <MissionSkeleton />
-            <MissionSkeleton />
-            <MissionSkeleton />
-          </>
-        ) : (
-          tasks.map((task) => (
-            <div key={task.id} className="task-item" style={{
-              display: 'flex', alignItems: 'center', gap: '12px',
-              background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '12px',
-              opacity: task.completed ? 0.6 : 1,
-              border: editingTaskId === task.id ? '1px solid var(--primary-color)' : '1px solid transparent'
-            }}>
-              <button onClick={() => toggleTask(task)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: task.completed ? 'var(--primary-color)' : 'var(--text-muted)' }}>
-                {task.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
-              </button>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                {editingTaskId === task.id ? (
-                  <input
-                    ref={inputRef} value={editingText}
-                    onChange={(e) => setEditingText(e.target.value)}
-                    onBlur={() => saveEdit(task.id)}
-                    onKeyDown={(e) => e.key === 'Enter' && saveEdit(task.id)}
-                    style={{ background: 'rgba(0,0,0,0.3)', border: 'none', color: 'white', fontSize: '0.9rem', outline: 'none' }}
-                  />
-                ) : (
-                  <span onDoubleClick={() => { setEditingTaskId(task.id); setEditingText(task.title); }} style={{ fontSize: '0.9rem', color: 'white', textDecoration: task.completed ? 'line-through' : 'none', cursor: 'text' }}>
-                    {task.title}
-                  </span>
-                )}
-                {task.tag && (
-                  <span style={{ fontSize: '0.65rem', color: getTagColor(task.tag), display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold', marginTop: '2px' }}>
-                    <TagIcon size={10} /> {task.tag.toUpperCase()}
-                  </span>
-                )}
-              </div>
-              <button onClick={() => deleteTask(task.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', opacity: 0.6 }}>
+        {tasks.map((task) => (
+          <div key={task.id} className="task-item" style={{
+            display: 'flex', alignItems: 'center', gap: '12px',
+            background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '12px',
+            opacity: task.completed ? 0.6 : 1,
+            border: editingTaskId === task.id ? '1px solid var(--primary-color)' : '1px solid transparent'
+          }}>
+            <button onClick={() => toggleTask(task)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: task.completed ? 'var(--primary-color)' : 'var(--text-muted)' }}>
+              {task.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+            </button>
+
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              {editingTaskId === task.id ? (
+                <input
+                  ref={inputRef} value={editingText}
+                  onChange={(e) => setEditingText(e.target.value)}
+                  onBlur={() => saveEdit(task.id, task.isOffline)}
+                  onKeyDown={(e) => e.key === 'Enter' && saveEdit(task.id, task.isOffline)}
+                  style={{ background: 'rgba(0,0,0,0.3)', border: 'none', color: 'white', fontSize: '0.9rem', outline: 'none' }}
+                />
+              ) : (
+                <span
+                  onDoubleClick={() => { if (!task.isOffline) { setEditingTaskId(task.id); setEditingText(task.title); } }}
+                  style={{ fontSize: '0.9rem', color: 'white', textDecoration: task.completed ? 'line-through' : 'none', cursor: task.isOffline ? 'default' : 'text' }}
+                >
+                  {task.title}
+                </span>
+              )}
+              {task.tag && (
+                <span style={{ fontSize: '0.65rem', color: getTagColor(task.tag), display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
+                  <TagIcon size={10} /> {task.tag.toUpperCase()}
+                </span>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {task.isOffline && (
+                <div title="Waiting for sync">
+                  <CloudOff size={14} style={{ color: '#fb923c' }} />
+                </div>
+              )}
+              {task.isSyncing && !task.isOffline && (
+                <RefreshCw size={14} className="animate-spin" style={{ color: 'var(--primary-color)' }} />
+              )}
+              <button onClick={() => deleteTask(task.id, task.isOffline)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', opacity: 0.6 }}>
                 <Trash2 size={16} />
               </button>
             </div>
-          ))
-        )}
+          </div>
+        ))}
         {showAd && !loading && <AdBanner />}
       </div>
     </div>
