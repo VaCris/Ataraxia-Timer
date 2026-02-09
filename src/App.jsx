@@ -27,7 +27,7 @@ import MaintenancePage from './components/layout/MaintenancePage';
 import './styles/global.css';
 
 function App() {
-  const { user, token, loginAsGuest, loading } = useAuth();
+  const { user, token, loginAsGuest, logout, loading } = useAuth();
   const { pipWindow, togglePip } = usePip();
   const navigate = useNavigate();
 
@@ -56,6 +56,56 @@ function App() {
   }), [setTimerSettings, setLongBreakInterval, setAutoStart, setAccentColor]);
 
   useSyncSettings(user, token, isMaintenance, syncSetters);
+
+  useEffect(() => {
+    let pollingInterval;
+
+    const waitForServerAndMigrate = async () => {
+      const storedToken = localStorage.getItem('access_token');
+
+      if (navigator.onLine && storedToken?.startsWith('offline_token_')) {
+        try {
+          const apiUrl = import.meta.env.VITE_API_URL;
+          await fetch(`${apiUrl}/tags`, {
+            method: 'HEAD',
+            cache: 'no-store'
+          });
+
+          if (pollingInterval) clearInterval(pollingInterval);
+
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('user_data');
+          localStorage.removeItem('refresh_token');
+
+          logout();
+          setAuthAttempted(false);
+
+        } catch (error) {
+        }
+      }
+    };
+
+    const handleConnectionChange = () => {
+      if (navigator.onLine) {
+        waitForServerAndMigrate();
+        pollingInterval = setInterval(waitForServerAndMigrate, 5000);
+      } else {
+        if (pollingInterval) clearInterval(pollingInterval);
+      }
+    };
+
+    window.addEventListener('online', handleConnectionChange);
+    window.addEventListener('offline', () => clearInterval(pollingInterval));
+
+    if (navigator.onLine) handleConnectionChange();
+
+    return () => {
+      window.removeEventListener('online', handleConnectionChange);
+      window.removeEventListener('offline', () => clearInterval(pollingInterval));
+      if (pollingInterval) clearInterval(pollingInterval);
+    };
+  }, [logout]);
+
   useEffect(() => {
     if (navigator.onLine && !isMaintenance && user) {
       const timer = setTimeout(() => syncManager.syncAll(), 2000);
@@ -77,6 +127,7 @@ function App() {
 
   useEffect(() => {
     const storedToken = localStorage.getItem('access_token');
+
     if (
       !loading && !user && !storedToken &&
       !showIntro && !isMaintenance &&
