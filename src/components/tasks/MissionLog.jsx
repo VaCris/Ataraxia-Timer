@@ -1,165 +1,96 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
-  Plus,
-  Trash2,
-  CheckCircle2,
-  Circle,
-  Loader2,
-  Tag as TagIcon,
-  CloudOff,
-  RefreshCw
+  Plus, Trash2, CheckCircle2, Circle, Loader2,
+  Tag as TagIcon, CloudOff, RefreshCw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { tasksService } from '../../api/tasks.service';
-import { tagsService } from '../../api/tags.service';
-import { syncManager } from '../../api/sync.manager';
+
 import { useAuth } from '../../context/auth-context';
 import { useAchievements } from '../../context/achievement-context';
 import AdBanner from '../layout/AdBanner';
 
+import {
+  fetchTasksRequest, addTaskRequest, updateTaskRequest, deleteTaskRequest
+} from '../../store/slices/tasksSlice';
+
 const MissionLog = ({ showAd }) => {
-  const [tasks, setTasks] = useState([]);
-  const [tags, setTags] = useState([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskTag, setNewTaskTag] = useState('General');
   const [newTaskTagColor, setNewTaskTagColor] = useState('#8b5cf6');
-  const [loading, setLoading] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingText, setEditingText] = useState('');
   const inputRef = useRef(null);
 
-  const { user, token, initialized } = useAuth();
+  const dispatch = useDispatch();
+  const { tasks, tags, loading, initialized: tasksInitialized } = useSelector(state => state.tasks);
+  const { user, token, initialized: authInitialized } = useAuth();
   const { refreshAchievements } = useAchievements();
 
   const TITLE_REGEX = /^[a-zA-Z0-9\s\-_.,!?áéíóúÁÉÍÓÚñÑ]+$/;
-
-  const loadData = async () => {
-    if (!token && !user) return; 
-    
-    setLoading(true);
-    try {
-      const [tasksData, tagsData] = await Promise.all([
-        tasksService.getAll(),
-        tagsService.getAll()
-      ]);
-      setTasks(tasksData || []);
-      setTags(tagsData || []);
-    } catch (error) {
-      console.error("Error loading missions", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (initialized && token && user && !user.isGuest) {
-      loadData();
-    } else if (initialized && (user?.isGuest || !token)) {
-      setTasks([]);
-      setTags([]);
-      setLoading(false);
+    if (authInitialized && (user || token) && !tasksInitialized && !loading) {
+      dispatch(fetchTasksRequest());
     }
-  }, [initialized, token, user?.id, user?.isGuest]);
+  }, [authInitialized, user, token, tasksInitialized, loading, dispatch]);
 
-  const addTask = async (e) => {
+  const addTask = (e) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
     if (!TITLE_REGEX.test(newTaskTitle)) return toast.error("Title contains invalid characters");
 
     const tempId = `temp-${Date.now()}`;
-    const titleToSave = newTaskTitle;
-    const tagToSave = newTaskTag;
-
-    const optimisticTask = {
+    dispatch(addTaskRequest({
       id: tempId,
-      title: titleToSave,
-      tag: tagToSave,
+      title: newTaskTitle,
+      tag: newTaskTag,
+      tagColor: newTaskTagColor,
       completed: false,
-      isSyncing: true
-    };
-    setTasks(prev => [optimisticTask, ...prev]);
+      isSyncing: true,
+      isOptimistic: true
+    }));
+
     setNewTaskTitle('');
+    toast.success('Mission assigned!');
+    refreshAchievements();
+  };
 
-    try {
-      if (navigator.onLine) {
-        const existingTag = tags.find(t => t.name.toLowerCase() === tagToSave.toLowerCase());
-        if (!existingTag) {
-          const createdTag = await tagsService.create({ name: tagToSave, color: newTaskTagColor });
-          setTags(prev => [...prev, createdTag]);
-        }
-      }
+  const toggleTask = (task) => {
+    if (task.isOptimistic) return;
 
-      const result = await tasksService.create({ title: titleToSave, tag: tagToSave });
+    dispatch(updateTaskRequest({
+      id: task.id,
+      updates: { completed: !task.completed }
+    }));
 
-      setTasks(prev => prev.map(t => t.id === tempId ? result : t));
-
-      if (result.isOffline) {
-        toast("Locally stored mission", { id: 'offline-toast' });
-      } else {
-        toast.success('Mission assigned!');
-      }
+    if (!task.completed) {
+      toast.success('Mission accomplished!');
       refreshAchievements();
-    } catch (error) {
-      setTasks(prev => prev.filter(t => t.id !== tempId));
-      toast.error("Failed to add mission");
     }
+  };
+
+  const deleteTask = (id) => {
+    dispatch(deleteTaskRequest(id));
+    toast.success('Mission deleted');
+  };
+
+  const saveEdit = (id, isOffline) => {
+    if (isOffline) return toast.error("Cannot edit offline missions");
+
+    const currentTask = tasks.find(t => t.id === id);
+    if (!currentTask || editingText === currentTask.title || !editingText.trim()) {
+      setEditingTaskId(null);
+      return;
+    }
+
+    dispatch(updateTaskRequest({ id, updates: { title: editingText } }));
+    toast.success('Mission updated');
+    setEditingTaskId(null);
   };
 
   const getTagColor = (tagName) => {
     const foundTag = tags.find(t => t.name === tagName);
     return foundTag?.color || 'var(--primary-color)';
-  };
-
-  const toggleTask = async (task) => {
-    if (task.isOffline) return toast.error("Wait for synchronization to complete");
-
-    const originalTasks = [...tasks];
-    setTasks(tasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t));
-
-    try {
-      const updatedTask = await tasksService.update(task.id, { completed: !task.completed });
-      setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
-      if (updatedTask.completed) {
-        toast.success('Mission accomplished!');
-        refreshAchievements();
-      }
-    } catch (error) {
-      setTasks(originalTasks);
-      toast.error("Update failed");
-    }
-  };
-
-  const deleteTask = async (id, isOffline) => {
-    const originalTasks = [...tasks];
-    setTasks(tasks.filter(t => t.id !== id));
-
-    try {
-      if (!isOffline) {
-        await tasksService.delete(id);
-      } else {
-        syncManager.removeFromQueue('outbox_tasks', id);
-      }
-      toast.success('Mission deleted');
-      refreshAchievements();
-    } catch (error) {
-      setTasks(originalTasks);
-      toast.error("Delete failed");
-    }
-  };
-
-  const saveEdit = async (id, isOffline) => {
-    if (isOffline) return toast.error("Cannot edit offline missions");
-    const currentTask = tasks.find(t => t.id === id);
-    if (editingText === currentTask.title || !editingText.trim()) {
-      setEditingTaskId(null);
-      return;
-    }
-    try {
-      await tasksService.update(id, { title: editingText });
-      setTasks(tasks.map(t => t.id === id ? { ...t, title: editingText } : t));
-      toast.success('Mission updated');
-    } catch (error) { toast.error("Edit failed"); }
-    setEditingTaskId(null);
   };
 
   return (
@@ -188,8 +119,8 @@ const MissionLog = ({ showAd }) => {
             value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)}
             style={{ background: 'transparent', border: 'none', flex: 1, padding: '10px 15px', color: 'white', outline: 'none' }}
           />
-          <button type="submit" disabled={loading} className="btn-save" style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--primary-color)', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {loading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={20} />}
+          <button type="submit" className="btn-save" style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--primary-color)', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Plus size={20} />
           </button>
         </div>
 
@@ -213,6 +144,7 @@ const MissionLog = ({ showAd }) => {
         </div>
       </form>
 
+      {/* Lista de Tareas */}
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {tasks.map((task) => (
           <div key={task.id} className="task-item" style={{
@@ -232,6 +164,7 @@ const MissionLog = ({ showAd }) => {
                   onChange={(e) => setEditingText(e.target.value)}
                   onBlur={() => saveEdit(task.id, task.isOffline)}
                   onKeyDown={(e) => e.key === 'Enter' && saveEdit(task.id, task.isOffline)}
+                  autoFocus
                   style={{ background: 'rgba(0,0,0,0.3)', border: 'none', color: 'white', fontSize: '0.9rem', outline: 'none' }}
                 />
               ) : (
@@ -250,15 +183,16 @@ const MissionLog = ({ showAd }) => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {task.isOffline && (
-                <div title="Waiting for sync">
+              {(task.isOffline || task.isSyncing) && !task.isOptimistic && (
+                <div title="Saved offline">
                   <CloudOff size={14} style={{ color: '#fb923c' }} />
                 </div>
               )}
-              {task.isSyncing && !task.isOffline && (
+              {task.isOptimistic && (
                 <RefreshCw size={14} className="animate-spin" style={{ color: 'var(--primary-color)' }} />
               )}
-              <button onClick={() => deleteTask(task.id, task.isOffline)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', opacity: 0.6 }}>
+
+              <button onClick={() => deleteTask(task.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', opacity: 0.6 }}>
                 <Trash2 size={16} />
               </button>
             </div>
