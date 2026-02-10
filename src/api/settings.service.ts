@@ -1,5 +1,6 @@
 import { apiClient } from './client';
 import { CreateSettingDto, UpdateSettingDto, SettingResponse } from '../dto/settings.types';
+import { syncManager } from './sync.manager';
 
 const SETTINGS_ENDPOINT = '/settings';
 
@@ -33,9 +34,19 @@ export const settingsService = {
         return response.data;
     },
 
-    updateSettings: async (data: UpdateSettingDto) => {
-        const response = await apiClient.patch<SettingResponse>(SETTINGS_ENDPOINT, data);
-        return response.data;
+    updateSettings: async (data: any, isSyncing = false) => {
+        try {
+            const response = await apiClient.patch('/settings', data);
+            return response.data;
+        } catch (error: any) {
+            if (isSyncing) throw error;
+
+            if (!error.response) {
+                syncManager.addToQueue('outbox_settings', data);
+                return data;
+            }
+            throw error;
+        }
     },
 
     saveSettings: async (data: CreateSettingDto) => {

@@ -7,23 +7,25 @@ export const apiClient: AxiosInstance = axios.create({
     headers: { 'Content-Type': 'application/json' },
 });
 
-const refreshClient = axios.create({
-    baseURL: API_URL,
-});
-
+const refreshClient = axios.create({ baseURL: API_URL });
 let isRefreshing = false;
 let failedQueue: any[] = [];
 
 const processQueue = (error: any, token: string | null = null) => {
-    failedQueue.forEach(prom => {
-        if (error) prom.reject(error);
-        else prom.resolve(token);
-    });
+    failedQueue.forEach(prom => error ? prom.reject(error) : prom.resolve(token));
     failedQueue = [];
 };
 
 apiClient.interceptors.request.use((config) => {
     const token = localStorage.getItem('access_token');
+    
+    if (token && token.startsWith('offline_token_')) {
+        const error: any = new Error("Offline Mode");
+        error.isOfflineToken = true;
+        error.config = config;
+        throw error;
+    }
+
     if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -31,49 +33,67 @@ apiClient.interceptors.request.use((config) => {
 });
 
 apiClient.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        if (response.config.method === 'get' && response.status === 200) {
+            const cacheKey = `offline_cache_${response.config.url}`;
+            const newData = JSON.stringify(response.data);
+            if (localStorage.getItem(cacheKey) !== newData) {
+                localStorage.setItem(cacheKey, newData);
+            }
+        }
+        return response;
+    },
     async (error) => {
-        const originalRequest = error.config;
-
-        if (originalRequest.url?.includes('/auth/login')) {
+        if (error.isOfflineToken || error.code === "ERR_NETWORK" || !error.response) {
+            if (error.config?.method === 'get') {
+                const cacheKey = `offline_cache_${error.config.url}`;
+                const cachedData = localStorage.getItem(cacheKey);
+                
+                if (cachedData) {
+                    return Promise.resolve({
+                        data: JSON.parse(cachedData),
+                        status: 200,
+                        statusText: 'OK',
+                        headers: {},
+                        config: error.config
+                    });
+                }
+                return Promise.resolve({ data: [], status: 200, config: error.config });
+            }
             return Promise.reject(error);
         }
 
+        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
         if (error.response?.status === 401 && !originalRequest._retry) {
+            if (originalRequest.url?.includes('/auth/login')) return Promise.reject(error);
+            
             if (isRefreshing) {
-                return new Promise((resolve, reject) => {
-                    failedQueue.push({ resolve, reject });
-                }).then(token => {
-                    originalRequest.headers.Authorization = `Bearer ${token}`;
-                    return apiClient(originalRequest);
-                }).catch(err => Promise.reject(err));
+                return new Promise((resolve, reject) => { failedQueue.push({ resolve, reject }); })
+                    .then(token => {
+                        originalRequest.headers.Authorization = `Bearer ${token}`;
+                        return apiClient(originalRequest);
+                    });
             }
 
             originalRequest._retry = true;
             isRefreshing = true;
-
-            const refreshToken = localStorage.getItem('refresh_token');
-
+            
             try {
-
+                const refreshToken = localStorage.getItem('refresh_token');
                 const { data } = await refreshClient.post('/auth/refresh', {}, {
                     headers: { Authorization: `Bearer ${refreshToken}` }
                 });
-
-                const { access_token, refresh_token } = data;
-                localStorage.setItem('access_token', access_token);
-                if (refresh_token) localStorage.setItem('refresh_token', refresh_token);
-
-                processQueue(null, access_token);
+                localStorage.setItem('access_token', data.access_token);
+                processQueue(null, data.access_token);
                 isRefreshing = false;
-
-                originalRequest.headers.Authorization = `Bearer ${access_token}`;
+                originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
                 return apiClient(originalRequest);
-            } catch (refreshError) {
-                processQueue(refreshError, null);
+            } catch (err) {
+                processQueue(err, null);
                 isRefreshing = false;
                 window.dispatchEvent(new CustomEvent('auth:logout'));
-                return Promise.reject(refreshError);
+                return Promise.reject(err);
             }
         }
         return Promise.reject(error);

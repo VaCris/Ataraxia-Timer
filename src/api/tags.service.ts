@@ -15,8 +15,22 @@ export const tagsService = {
     },
 
     create: async (data: CreateTagDto) => {
-        const response = await apiClient.post<TagResponse>(ENDPOINT, data);
-        return response.data;
+        try {
+            const response = await apiClient.post<TagResponse>(ENDPOINT, data);
+            return response.data;
+        } catch (error: any) {
+            if (!error.response) {
+                const optimisticTag = {
+                    ...data,
+                    id: `temp_tag_${Date.now()}`,
+                    userId: 'pending',
+                    isOffline: true
+                };
+
+                return optimisticTag as unknown as TagResponse;
+            }
+            throw error;
+        }
     },
 
     update: async (id: string, data: UpdateTagDto) => {
