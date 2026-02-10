@@ -1,17 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { X, Sun, Monitor, Upload, Volume2, Clock, User, LogOut, Save, Trash2 } from 'lucide-react';
-import { useAuth } from '../../context/auth-context';
-import { settingsService } from '../../api/settings.service';
-import { buildSettingsPayload } from '../../utils/buildSettingsPayload';
-import { tagsService } from '../../api/tags.service';
-import AuthForm from '../auth/AuthForm';
 import toast from 'react-hot-toast';
 
-const SettingsModal = ({
-    isOpen, onClose, currentBg, onBgChange, accentColor, onColorChange,
-    timerSettings, onTimerChange, autoStart, onAutoStartChange,
-    longBreakInterval, onLongBreakIntervalChange, is24Hour, onFormatChange, volume, onVolumeChange
-}) => {
+import { useAuth } from '../../context/auth-context';
+import AuthForm from '../auth/AuthForm';
+
+import { updateSettings, updateTimerSettings } from '../../store/slices/settingsSlice';
+
+const SettingsModal = ({ isOpen, onClose }) => {
+    const dispatch = useDispatch();
+    const {
+        timerSettings, autoStart, longBreakInterval,
+        accentColor, bgImage, is24Hour, volume
+    } = useSelector(state => state.settings);
+
     const { user, logout } = useAuth();
     const [authMode, setAuthMode] = useState('login');
     const hasOpenedRef = useRef(false);
@@ -26,47 +29,13 @@ const SettingsModal = ({
         return () => { document.body.style.overflow = 'unset'; };
     }, [isOpen]);
 
-    const saveSettings = async () => {
-        if (!user || user.isGuest) return;
-
-        const payload = buildSettingsPayload(
-            timerSettings,
-            autoStart,
-            longBreakInterval,
-            volume
-        );
-
-        try {
-            await settingsService.saveSettings(payload);
-            toast.success('Settings & Background synced');
-        } catch (err) {
-            toast.error("Failed to sync settings");
-        }
-    };
-
-    const saveTagColor = async () => {
-        if (!user || user.isGuest || !/^#([0-9A-F]{3}){1,2}$/i.test(accentColor)) return;
-        try {
-            const tags = await tagsService.getAll();
-            const focusTag = tags.find(tag => tag.name === 'Focus');
-            if (focusTag) {
-                await tagsService.update(focusTag.id, { color: accentColor });
-            } else {
-                await tagsService.create({ name: 'Focus', color: accentColor });
-            }
-        } catch (error) {
-            console.error('Tag sync failed:', error);
-        }
-    };
-
-    const saveAll = async () => {
-        if (user && !user.isGuest) {
-            await Promise.all([saveSettings(), saveTagColor()]);
-            toast.success('Settings synced');
-        } else {
-            toast.success('Settings saved locally');
-        }
-    };
+    const handleTimerChange = (newSettings) => dispatch(updateTimerSettings(newSettings));
+    const handleAutoStartChange = (val) => dispatch(updateSettings({ autoStart: val }));
+    const handleLongBreakChange = (val) => dispatch(updateSettings({ longBreakInterval: val }));
+    const handleFormatChange = (val) => dispatch(updateSettings({ is24Hour: val }));
+    const handleColorChange = (val) => dispatch(updateSettings({ accentColor: val }));
+    const handleVolumeChange = (val) => dispatch(updateSettings({ volume: val }));
+    const handleBgChange = (val) => dispatch(updateSettings({ bgImage: val }));
 
     const playTestAlarm = () => {
         const audio = new Audio('/sounds/alarm.mp3');
@@ -90,7 +59,7 @@ const SettingsModal = ({
                         {user && !user.isGuest ? (
                             <div style={{ background: 'rgba(139, 92, 246, 0.1)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                                    <span style={{ fontWeight: 500 }}>{user.username || 'Member'}</span>
+                                    <span style={{ fontWeight: 500 }}>{user.name || 'Member'}</span>
                                     <span style={{ fontSize: '0.8rem', color: 'var(--primary-color)' }}>Pro</span>
                                 </div>
                                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '15px' }}>{user.email}</p>
@@ -106,24 +75,23 @@ const SettingsModal = ({
                             />
                         )}
                     </div>
-
                     <div className="setting-section">
                         <div className="setting-label"><Clock size={14} /> Timer (min)</div>
                         <div className="time-grid">
-                            <TimeInput label="Focus" value={timerSettings.work} onChange={(v) => onTimerChange({ ...timerSettings, work: v })} />
-                            <TimeInput label="Short" value={timerSettings.short} onChange={(v) => onTimerChange({ ...timerSettings, short: v })} />
-                            <TimeInput label="Long" value={timerSettings.long} onChange={(v) => onTimerChange({ ...timerSettings, long: v })} />
+                            <TimeInput label="Focus" value={timerSettings.work} onChange={(v) => handleTimerChange({ ...timerSettings, work: v })} />
+                            <TimeInput label="Short" value={timerSettings.short} onChange={(v) => handleTimerChange({ ...timerSettings, short: v })} />
+                            <TimeInput label="Long" value={timerSettings.long} onChange={(v) => handleTimerChange({ ...timerSettings, long: v })} />
                         </div>
                     </div>
 
                     <div className="setting-section">
                         <div className="setting-label"><Monitor size={14} /> System</div>
-                        <div className="setting-row"><span>Auto-start Cycles</span><Switch checked={autoStart} onChange={() => onAutoStartChange(!autoStart)} /></div>
+                        <div className="setting-row"><span>Auto-start Cycles</span><Switch checked={autoStart} onChange={() => handleAutoStartChange(!autoStart)} /></div>
                         <div className="setting-row">
                             <span>Long Break Interval</span>
-                            <input type="number" min="1" max="10" value={longBreakInterval} onChange={(e) => onLongBreakIntervalChange(parseInt(e.target.value) || 1,10)} className="input-text-mini" />
+                            <input type="number" min="1" max="10" value={longBreakInterval} onChange={(e) => handleLongBreakChange(parseInt(e.target.value) || 1)} className="input-text-mini" />
                         </div>
-                        <div className="setting-row"><span>24-Hour Clock</span><Switch checked={is24Hour} onChange={() => onFormatChange(!is24Hour)} /></div>
+                        <div className="setting-row"><span>24-Hour Clock</span><Switch checked={is24Hour} onChange={() => handleFormatChange(!is24Hour)} /></div>
                     </div>
 
                     <div className="setting-section">
@@ -132,25 +100,24 @@ const SettingsModal = ({
                             <span>Theme Color</span>
                             <div className="color-picker-wrapper">
                                 <div className="color-preview" style={{ backgroundColor: accentColor }}></div>
-                                <input type="color" value={accentColor} onChange={(e) => onColorChange(e.target.value)} />
+                                <input type="color" value={accentColor} onChange={(e) => handleColorChange(e.target.value)} />
                             </div>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
                             <div style={{ display: 'flex', gap: '8px' }}>
-                                <input type="text" placeholder="Background Image URL..." className="input-text" value={currentBg && !currentBg.startsWith('data:') ? currentBg : ''} onChange={(e) => onBgChange(e.target.value)} style={{ flex: 1 }} />
-                                {currentBg && <button onClick={() => onBgChange('')} className="btn-icon" style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5' }}><Trash2 size={18} /></button>}
+                                <input type="text" placeholder="Background Image URL..." className="input-text" value={bgImage && !bgImage.startsWith('data:') ? bgImage : ''} onChange={(e) => handleBgChange(e.target.value)} style={{ flex: 1 }} />
+                                {bgImage && <button onClick={() => handleBgChange('')} className="btn-icon" style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5' }}><Trash2 size={18} /></button>}
                             </div>
-                            <label className="btn-upload"><Upload size={16} /> <span>Upload from Device</span><input type="file" accept="image/*" onChange={(e) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onloadend = () => onBgChange(r.result); r.readAsDataURL(f); } }} hidden /></label>
+                            <label className="btn-upload"><Upload size={16} /> <span>Upload from Device</span><input type="file" accept="image/*" onChange={(e) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onloadend = () => handleBgChange(r.result); r.readAsDataURL(f); } }} hidden /></label>
                         </div>
                     </div>
 
-                    {/* Sound Section */}
                     <div className="setting-section">
                         <div className="setting-label"><Volume2 size={14} /> Sound & Volume</div>
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '16px' }}>
                                 <Volume2 size={20} color="var(--text-muted)" />
-                                <input type="range" min="0" max="1" step="0.01" value={volume} onChange={(e) => onVolumeChange(parseFloat(e.target.value))} style={{ flex: 1, accentColor: accentColor || '#8b5cf6' }} />
+                                <input type="range" min="0" max="1" step="0.01" value={volume} onChange={(e) => handleVolumeChange(parseFloat(e.target.value))} style={{ flex: 1, accentColor: accentColor || '#8b5cf6' }} />
                                 <span style={{ minWidth: '40px', textAlign: 'right' }}>{Math.round(volume * 100)}%</span>
                             </div>
                             <button onClick={playTestAlarm} className="btn-upload" style={{ width: '100%', justifyContent: 'center' }}>Test Alarm Sound</button>
@@ -159,8 +126,8 @@ const SettingsModal = ({
                 </div>
 
                 <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                    <button onClick={saveAll} className="btn-save" style={{ width: '100%', padding: '12px', background: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                        <Save size={18} /> Save Changes
+                    <button onClick={onClose} className="btn-save" style={{ width: '100%', padding: '12px', background: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                        <Save size={18} /> Done
                     </button>
                 </div>
             </div>
@@ -180,15 +147,7 @@ const TimeInput = ({ label, value, onChange }) => {
         const val = e.target.value;
         if (val === '') { onChange(''); return; }
         const num = Number(val);
-        if (!Number.isNaN(num)) {
-            let validatedVal = num;
-            if (label === "Focus") {
-                validatedVal = Math.max(1, Math.min(num, 120));
-            } else {
-                validatedVal = Math.max(1, num);
-            }
-            onChange(validatedVal);
-        }
+        if (!Number.isNaN(num)) onChange(label === "Focus" ? Math.max(1, Math.min(num, 120)) : Math.max(1, num));
     };
     return (
         <div className="time-box">

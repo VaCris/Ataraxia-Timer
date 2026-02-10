@@ -72,9 +72,3 @@ export const syncManager = {
         localStorage.setItem(key, JSON.stringify(queue.filter((t: any) => t.tempId !== tempId)));
     }
 };
-
-let syncDebounce: any;
-window.addEventListener('online', () => {
-    clearTimeout(syncDebounce);
-    syncDebounce = setTimeout(() => syncManager.syncAll(), 5000);
-});
