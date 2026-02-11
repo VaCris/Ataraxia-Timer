@@ -149,10 +149,27 @@ export async function getSpotifyProfile() {
         return null;
     }
 }
+export async function resumePlayer() {
+    const token = localStorage.getItem("spotify_access_token");
+    return fetch("https://api.spotify.com/v1/me/player/play", {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` }
+    });
+}
+
+export async function pausePlayer() {
+    const token = localStorage.getItem("spotify_access_token");
+    return fetch("https://api.spotify.com/v1/me/player/pause", {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` }
+    });
+}
 
 export const spotifyService = {
     loginWithSpotify,
     getAccessToken,
     getSpotifyProfile,
-    refreshAccessToken
+    refreshAccessToken,
+    resume: resumePlayer,
+    pause: pausePlayer
 };
