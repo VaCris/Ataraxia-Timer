@@ -3,6 +3,7 @@ import {
     startTimer, pauseTimer, resetTimer, tick,
     switchMode, incrementCycles, setConfig
 } from '../slices/timerSlice';
+import { setPlaying } from '../slices/musicSlice';
 import { timersService } from '../../api/timers.service';
 
 const playAlarm = (volume) => {
@@ -34,7 +35,7 @@ function* runTimerSaga() {
 function* handleTimerComplete() {
     const { mode, settings, cycles, longBreakInterval, autoStart, volume } = yield select(state => state.timer);
     yield call(playAlarm, volume);
-
+    yield put(setPlaying(false));
     if (mode === 'work') {
         try {
             const duration = settings.work * 60;
@@ -73,7 +74,9 @@ function* saveStateSaga() {
 
 export function* timerSaga() {
     yield takeLatest(startTimer.type, runTimerSaga);
-
+    yield takeEvery(pauseTimer.type, function* () {
+        yield put(setPlaying(false));
+    });
     yield takeEvery([
         tick.type, startTimer.type, pauseTimer.type,
         resetTimer.type, switchMode.type, setConfig.type
