@@ -5,6 +5,8 @@ const ENDPOINTS = {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
     GUEST: '/auth/guest-login',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password'
 };
 
 export const authService = {
