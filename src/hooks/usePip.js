@@ -47,7 +47,7 @@ export const usePip = () => {
             setPipWindow(pip);
 
         } catch (error) {
-            console.error("Error al abrir PiP:", error);
+            console.error({ error:"Error opening PiP" });
         }
     }, [pipWindow]);
 
