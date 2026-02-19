@@ -2,7 +2,7 @@ import { apiClient } from './client';
 
 export const achievementsService = {
     getAchievements: async () => {
-        const response = await apiClient.get('/achievements');
+        const response = await apiClient.get('/gamification/achievements');
         return response.data;
     },
 
