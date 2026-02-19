@@ -29,10 +29,10 @@ const MissionLog = ({ showAd }) => {
 
   const TITLE_REGEX = /^[a-zA-Z0-9\s\-_.,!?áéíóúÁÉÍÓÚñÑ]+$/;
   useEffect(() => {
-    if (authInitialized && (user || token) && !tasksInitialized && !loading) {
+    if (user && !tasksInitialized) {
       dispatch(fetchTasksRequest());
     }
-  }, [authInitialized, user, token, tasksInitialized, loading, dispatch]);
+  }, [dispatch, user, tasksInitialized]);
 
   const addTask = (e) => {
     e.preventDefault();
