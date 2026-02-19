@@ -7,8 +7,7 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
+    const [username, setUsername] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
@@ -36,8 +35,7 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                     localStorage.getItem('device_id') || crypto.randomUUID();
 
                 result = await register({
-                    firstName: firstName.trim(),
-                    lastName: lastName.trim(),
+                    username: username.trim(),
                     email: cleanEmail,
                     password,
                     deviceId
@@ -62,7 +60,9 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
     const inputBaseStyle = {
         height: '48px',
         borderRadius: '12px',
-        fontSize: '0.95rem'
+        fontSize: '0.95rem',
+        width: '100%',
+        boxSizing: 'border-box'
     };
 
     return (
@@ -95,26 +95,23 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '16px'
+                    gap: '12px'
                 }}
             >
                 {!isLogin && (
                     <div
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
-                            gap: '12px'
-                        }}
+                        className="input-group"
+                        style={{ position: 'relative' }}
                     >
                         <div style={{ position: 'relative' }}>
                             <User size={18} style={iconStyle} />
                             <input
                                 type="text"
-                                placeholder="First Name"
+                                placeholder="Username"
                                 className="input-text"
-                                value={firstName}
+                                value={username}
                                 onChange={(e) =>
-                                    setFirstName(e.target.value)
+                                    setUsername(e.target.value)
                                 }
                                 required={!isLogin}
                                 style={{
@@ -123,18 +120,6 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                                 }}
                             />
                         </div>
-
-                        <input
-                            type="text"
-                            placeholder="Last Name"
-                            className="input-text"
-                            value={lastName}
-                            onChange={(e) =>
-                                setLastName(e.target.value)
-                            }
-                            required={false}
-                            style={inputBaseStyle}
-                        />
                     </div>
                 )}
 
