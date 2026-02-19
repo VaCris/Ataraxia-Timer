@@ -18,12 +18,14 @@ const tasksSlice = createSlice({
         },
         fetchTasksSuccess: (state, action) => {
             state.loading = false;
+            state.initialized = true;
             state.tasks = action.payload.tasks;
             state.tags = action.payload.tags;
             state.initialized = true;
         },
         fetchTasksFailure: (state, action) => {
             state.loading = false;
+            state.initialized = true;
             state.error = action.payload;
         },
 
