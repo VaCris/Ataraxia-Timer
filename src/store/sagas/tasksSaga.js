@@ -10,14 +10,26 @@ import {
 } from '../slices/tasksSlice';
 import { syncManager } from '../../api/sync.manager';
 
+function* safeGetTasks() {
+    try { return yield call(tasksService.getAll); }
+    catch (e) { return []; }
+}
+
+function* safeGetTags() {
+    try { return yield call(tagsService.getAll); }
+    catch (e) { return []; }
+}
+
 function* fetchTasksSaga() {
     try {
         const [tasks, tags] = yield all([
-            call(tasksService.getAll),
-            call(tagsService.getAll)
+            call(safeGetTasks),
+            call(safeGetTags)
         ]);
-        yield put(fetchTasksSuccess({ tasks: tasks || [], tags: tags || [] }));
+
+        yield put(fetchTasksSuccess({ tasks, tags }));
     } catch (error) {
+        console.error({ error: "Fetch tasks failed" });
         yield put(fetchTasksFailure(error.message));
     }
 }
@@ -28,22 +40,25 @@ function* addTaskSaga(action) {
         if (navigator.onLine) {
             const currentTags = yield select(state => state.tasks.tags);
             const exists = currentTags.find(t => t.name.toLowerCase() === tag.toLowerCase());
-            
+
             if (!exists) {
                 try {
                     const newTag = yield call(tagsService.create, { name: tag, color: tagColor });
                     yield put(addTagSuccess(newTag));
-                } catch (e) {
-                    console.warn("Could not create tag automatically", e);
+                } catch (error) {
+                    console.warn({ error: "Tag creation failed, proceeding without tag" });
                 }
             }
         }
 
-        const result = yield call(tasksService.create, { title, tag });
-        
+        const taskPayload = { title: title.trim(), tag: tag.trim() };
+
+        const result = yield call(tasksService.create, taskPayload);
+
         yield put(addTaskSuccess({ tempId, realTask: result }));
 
     } catch (error) {
+        console.error({ error: "Add task failed" });
         yield put(addTaskFailure({ tempId, error: error.message }));
     }
 }
@@ -54,7 +69,7 @@ function* updateTaskSaga(action) {
         const result = yield call(tasksService.update, id, updates);
         yield put(updateTaskSuccess(result));
     } catch (error) {
-        console.error("Update failed", error);
+        console.error({ error: "Update task failed" });
     }
 }
 
