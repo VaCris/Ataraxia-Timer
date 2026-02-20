@@ -11,7 +11,7 @@ const playAlarm = (volume) => {
         audio.volume = volume;
         audio.play().catch(e => console.error("Audio play failed", e));
     } catch (error) {
-        console.error({error:"Audio error"});
+        console.error({ error: "Audio error" });
     }
 };
 
@@ -36,6 +36,16 @@ function* handleTimerComplete() {
     yield call(playAlarm, volume);
 
     if (mode === 'work') {
+        yield put(incrementCycles());
+        const nextCycleCount = Number(cycles) + 1;
+        const interval = Number(longBreakInterval) || 4;
+
+        if (nextCycleCount % interval === 0) {
+            yield put(switchMode('long'));
+        } else {
+            yield put(switchMode('short'));
+        }
+
         try {
             const duration = settings.work * 60;
             const sessionData = {
@@ -46,23 +56,16 @@ function* handleTimerComplete() {
                 createdAt: new Date().toISOString()
             };
             yield call(timersService.saveSession, sessionData);
-            yield put(incrementCycles());
             window.dispatchEvent(new CustomEvent('timer:completed'));
         } catch (error) {
-            console.error({error:"Error saving session data"});
-        }
-
-        const newCycles = cycles + 1;
-        if (newCycles % longBreakInterval === 0) {
-            yield put(switchMode('long'));
-        } else {
-            yield put(switchMode('short'));
+            console.warn("Error saving session data");
         }
     } else {
         yield put(switchMode('work'));
     }
 
     if (autoStart) {
+        yield delay(500);
         yield put(startTimer());
     }
 }
@@ -77,6 +80,7 @@ export function* timerSaga() {
 
     yield takeEvery([
         tick.type, startTimer.type, pauseTimer.type,
-        resetTimer.type, switchMode.type, setConfig.type
+        resetTimer.type, switchMode.type, setConfig.type,
+        incrementCycles.type
     ], saveStateSaga);
 }
