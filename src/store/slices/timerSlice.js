@@ -47,6 +47,9 @@ const timerSlice = createSlice({
         },
         switchMode: (state, action) => {
             const newMode = action.payload;
+            if (state.mode === 'work' && (newMode === 'short' || newMode === 'long')) {
+                state.cycles += 1;
+            }
             state.mode = newMode;
             state.timeLeft = state.settings[newMode] * 60;
             state.isActive = false;
