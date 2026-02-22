@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
 
 import { fetchSettingsRequest } from './store/slices/settingsSlice';
+import { fetchTasksRequest } from './store/slices/tasksSlice';
 import { useTimer } from './hooks/useTimer';
 import { usePip } from './hooks/usePip';
 import { useAuth } from './context/auth-context';
@@ -36,20 +37,23 @@ function App() {
     loading: settingsLoading
   } = useSelector(state => state.settings);
 
-  //const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
+  const tasksInitialized = useSelector(state => state.tasks.initialized);
   const { user, token, loginAsGuest, loading: authLoading } = useAuth();
   const { pipWindow, togglePip } = usePip();
+
   const [showIntro, setShowIntro] = useState(() => !sessionStorage.getItem('dw-intro-seen'));
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isMaintenance, setIsMaintenance] = useState(false);
-  const [authAttempted, setAuthAttempted] = useState(false);
+
+  const authAttempted = useRef(false);
 
   useEffect(() => {
-    if (user && !settingsInitialized && !settingsLoading) {
-      dispatch(fetchSettingsRequest());
+    if (user) {
+      if (!settingsInitialized && !settingsLoading) dispatch(fetchSettingsRequest());
+      if (!tasksInitialized) dispatch(fetchTasksRequest());
     }
-  }, [dispatch, user, settingsInitialized]);
+  }, [dispatch, user, settingsInitialized, settingsLoading, tasksInitialized]);
 
   const timer = useTimer('work', timerSettings, autoStart, longBreakInterval, volume);
 
@@ -67,21 +71,20 @@ function App() {
 
   useEffect(() => {
     const storedToken = localStorage.getItem('access_token');
-    if (!authLoading && !user && !storedToken && !showIntro && !isMaintenance && !authAttempted) {
-      setAuthAttempted(true);
+    if (!authLoading && !user && !storedToken && !showIntro && !isMaintenance && !authAttempted.current) {
+      authAttempted.current = true;
       loginAsGuest().catch(() => { });
     }
-  }, [authLoading, user, showIntro, isMaintenance, loginAsGuest, authAttempted]);
+  }, [authLoading, user, showIntro, isMaintenance, loginAsGuest]);
 
-  const handleIntroComplete = async () => {
+  const handleIntroComplete = () => {
     sessionStorage.setItem('dw-intro-seen', 'true');
     setShowIntro(false);
-    setAuthAttempted(false);
+    authAttempted.current = false;
   };
 
   const toggleMute = () => {
-    const newVol = volume === 0 ? 0.5 : 0;
-    dispatch({ type: 'settings/updateSettings', payload: { volume: newVol } });
+    dispatch({ type: 'settings/updateSettings', payload: { volume: volume === 0 ? 0.5 : 0 } });
   };
 
   const setVolumeHandler = (val) => {
@@ -157,7 +160,7 @@ function App() {
                   setIsSettingsOpen={setIsSettingsOpen}
                   setIsSupportOpen={setIsSupportOpen}
                   toggleFullScreen={toggleFullScreen}
-                  //setIsAchievementsOpen={setIsAchievementsOpen}
+                //setIsAchievementsOpen={setIsAchievementsOpen}
                 />
 
                 {/* {isAchievementsOpen && (
