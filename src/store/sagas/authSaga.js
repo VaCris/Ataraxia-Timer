@@ -4,6 +4,8 @@ import {
     loginRequest, loginSuccess, loginFailure,
     registerRequest, registerSuccess, registerFailure,
     guestLoginRequest, guestLoginSuccess, guestLoginFailure,
+    forgotPasswordRequest, forgotPasswordSuccess, forgotPasswordFailure,
+    resetPasswordRequest, resetPasswordSuccess, resetPasswordFailure,
     logout
 } from '../slices/authSlice';
 
@@ -17,8 +19,22 @@ const saveSession = (data) => {
 
 const clearSession = () => {
     localStorage.removeItem('access_token');
-    localStorage.removeItem('dw-user');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('dw-user');
+    localStorage.removeItem('user_data');
+
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (
+            key.startsWith('offline_cache_') ||
+            key.startsWith('dw-saved-playlists') ||
+            key === 'timer_state'
+        ) {
+            keysToRemove.push(key);
+        }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
 };
 
 function* loginSaga(action) {
@@ -54,7 +70,7 @@ function* guestLoginSaga(action) {
     try {
         const deviceId = localStorage.getItem('device_id') || crypto.randomUUID();
         localStorage.setItem('device_id', deviceId);
-        
+
         const data = yield call(authService.guestLogin, { deviceId });
         yield call(saveSession, data);
         yield put(guestLoginSuccess(data));
@@ -62,6 +78,32 @@ function* guestLoginSaga(action) {
     } catch (error) {
         yield put(guestLoginFailure(error.message));
         if (resolve) resolve(false);
+    }
+}
+
+function* forgotPasswordSaga(action) {
+    const { email, resolve } = action.payload || {};
+    try {
+        yield call(authService.forgotPassword, email);
+        yield put(forgotPasswordSuccess());
+        if (resolve) resolve({ success: true });
+    } catch (error) {
+        const message = error.response?.data?.message || "Failed to send reset email";
+        yield put(forgotPasswordFailure(message));
+        if (resolve) resolve({ success: false, error: message });
+    }
+}
+
+function* resetPasswordSaga(action) {
+    const { token, password, resolve } = action.payload || {};
+    try {
+        yield call(authService.resetPassword, token, password);
+        yield put(resetPasswordSuccess());
+        if (resolve) resolve({ success: true });
+    } catch (error) {
+        const message = error.response?.data?.message || "Failed to reset password";
+        yield put(resetPasswordFailure(message));
+        if (resolve) resolve({ success: false, error: message });
     }
 }
 
@@ -82,7 +124,7 @@ function* checkServerStatus() {
                 localStorage.removeItem('dw-user');
                 localStorage.removeItem('refresh_token');
 
-                yield put(logout()); 
+                yield put(logout());
             } catch (e) {
                 yield delay(5000);
             }
@@ -98,6 +140,8 @@ export function* watchAuth() {
         takeLatest(registerRequest.type, registerSaga),
         takeLatest(guestLoginRequest.type, guestLoginSaga),
         takeLatest(logout.type, logoutSaga),
+        takeLatest(forgotPasswordRequest.type, forgotPasswordSaga),
+        takeLatest(resetPasswordRequest.type, resetPasswordSaga),
         call(checkServerStatus),
     ]);
 }
