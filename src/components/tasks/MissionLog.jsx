@@ -1,17 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  Plus, Trash2, CheckCircle2, Circle, Loader2,
+  Plus, Trash2, CheckCircle2, Circle,
   Tag as TagIcon, CloudOff, RefreshCw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import { useAuth } from '../../context/auth-context';
 import { useAchievements } from '../../context/achievement-context';
 import AdBanner from '../layout/AdBanner';
 
 import {
-  fetchTasksRequest, addTaskRequest, updateTaskRequest, deleteTaskRequest
+  addTaskRequest, updateTaskRequest, deleteTaskRequest
 } from '../../store/slices/tasksSlice';
 
 const MissionLog = ({ showAd }) => {
@@ -20,19 +19,12 @@ const MissionLog = ({ showAd }) => {
   const [newTaskTagColor, setNewTaskTagColor] = useState('#8b5cf6');
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingText, setEditingText] = useState('');
-  const inputRef = useRef(null);
 
   const dispatch = useDispatch();
-  const { tasks, tags, loading, initialized: tasksInitialized } = useSelector(state => state.tasks);
-  const { user, token, initialized: authInitialized } = useAuth();
+  const { tasks, tags, loading } = useSelector(state => state.tasks);
   const { refreshAchievements } = useAchievements();
 
   const TITLE_REGEX = /^[a-zA-Z0-9\s\-_.,!?áéíóúÁÉÍÓÚñÑ]+$/;
-  useEffect(() => {
-    if (user && !tasksInitialized) {
-      dispatch(fetchTasksRequest());
-    }
-  }, [dispatch, user, tasksInitialized]);
 
   const addTask = (e) => {
     e.preventDefault();
@@ -160,7 +152,7 @@ const MissionLog = ({ showAd }) => {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
               {editingTaskId === task.id ? (
                 <input
-                  ref={inputRef} value={editingText}
+                  value={editingText}
                   onChange={(e) => setEditingText(e.target.value)}
                   onBlur={() => saveEdit(task.id, task.isOffline)}
                   onKeyDown={(e) => e.key === 'Enter' && saveEdit(task.id, task.isOffline)}
