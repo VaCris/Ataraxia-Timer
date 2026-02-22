@@ -46,5 +46,15 @@ export const authService = {
             }
             throw error;
         }
+    },
+
+    forgotPassword: async (email: string) => {
+        const response = await apiClient.post(ENDPOINTS.FORGOT_PASSWORD, { email });
+        return response.data;
+    },
+
+    resetPassword: async (token: string, newPassword: string) => {
+        const response = await apiClient.post(ENDPOINTS.RESET_PASSWORD, { token, newPassword: newPassword });
+        return response.data;
     }
 };
