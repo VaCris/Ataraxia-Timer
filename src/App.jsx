@@ -23,6 +23,7 @@ import LeftDock from './components/layout/LeftDock';
 import RightDock from './components/layout/RightDock';
 import PipPortal from './components/timer/PipPortal';
 import MaintenancePage from './components/layout/MaintenancePage';
+import ResetPassword from './components/auth/ResetPassword';
 import AchievementHub from './components/achievements/AchievementHub';
 
 import './styles/global.css';
@@ -107,6 +108,7 @@ function App() {
         }} />
 
         <Routes>
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/maintenance" element={<MaintenancePage />} />
           <Route path="/callback" element={<SpotifyCallback />} />
 

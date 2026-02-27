@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useAuth } from '../../context/auth-context';
 import toast from 'react-hot-toast';
 import { Loader2, Mail, Lock, User, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { forgotPasswordRequest } from '../../store/slices/authSlice';
 
 const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
+    const dispatch = useDispatch();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [username, setUsername] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [isForgotPassword, setIsForgotPassword] = useState(false);
 
     const { login, register } = useAuth();
 
@@ -18,6 +22,30 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
         setIsLoading(true);
 
         const cleanEmail = email.trim().toLowerCase();
+        if (isForgotPassword) {
+            if (!cleanEmail) {
+                toast.error('Please enter your email address');
+                setIsLoading(false);
+                return;
+            }
+
+            const promise = new Promise((resolve) => {
+                dispatch(forgotPasswordRequest({ email: cleanEmail, resolve }));
+            });
+
+            toast.promise(promise, {
+                loading: 'Sending recovery email...',
+                success: 'Check your email to reset your password',
+                error: (err) => err.error || 'Failed to send recovery email'
+            });
+
+            promise.then(res => {
+                if (res.success) setIsForgotPassword(false);
+            }).finally(() => {
+                setIsLoading(false);
+            });
+            return;
+        }
 
         if (!isLogin && password !== confirmPassword) {
             toast.error('Passwords do not match');
@@ -31,8 +59,7 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
             if (isLogin) {
                 result = await login(cleanEmail, password);
             } else {
-                const deviceId =
-                    localStorage.getItem('device_id') || crypto.randomUUID();
+                const deviceId = localStorage.getItem('device_id') || crypto.randomUUID();
 
                 result = await register({
                     username: username.trim(),
@@ -80,13 +107,13 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                         letterSpacing: '-0.02em'
                     }}
                 >
-                    {isLogin ? 'Sign In' : 'Create Account'}
+                    {isForgotPassword ? 'Reset Password' : (isLogin ? 'Sign In' : 'Create Account')}
                 </h2>
 
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                    {isLogin
-                        ? 'Enter your credentials'
-                        : 'Join the focus journey'}
+                    {isForgotPassword
+                        ? 'Enter your email to receive a reset link'
+                        : (isLogin ? 'Enter your credentials' : 'Join the focus journey')}
                 </p>
             </div>
 
@@ -98,7 +125,7 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                     gap: '12px'
                 }}
             >
-                {!isLogin && (
+                {!isLogin && !isForgotPassword && (
                     <div
                         className="input-group"
                         style={{ position: 'relative' }}
@@ -113,7 +140,7 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                                 onChange={(e) =>
                                     setUsername(e.target.value)
                                 }
-                                required={!isLogin}
+                                required={!isLogin && !isForgotPassword}
                                 style={{
                                     ...inputBaseStyle,
                                     paddingLeft: '44px'
@@ -142,44 +169,46 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                     />
                 </div>
 
-                <div
-                    className="input-group"
-                    style={{ position: 'relative' }}
-                >
-                    <Lock size={18} style={iconStyle} />
-
-                    <input
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Password"
-                        className="input-text"
-                        style={{
-                            ...inputBaseStyle,
-                            paddingLeft: '44px',
-                            paddingRight: '44px'
-                        }}
-                        value={password}
-                        onChange={(e) =>
-                            setPassword(e.target.value)
-                        }
-                        required
-                    />
-
-                    <button
-                        type="button"
-                        onClick={() =>
-                            setShowPassword((v) => !v)
-                        }
-                        style={eyeButtonStyle}
+                {!isForgotPassword && (
+                    <div
+                        className="input-group"
+                        style={{ position: 'relative' }}
                     >
-                        {showPassword ? (
-                            <EyeOff size={18} />
-                        ) : (
-                            <Eye size={18} />
-                        )}
-                    </button>
-                </div>
+                        <Lock size={18} style={iconStyle} />
 
-                {!isLogin && (
+                        <input
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="Password"
+                            className="input-text"
+                            style={{
+                                ...inputBaseStyle,
+                                paddingLeft: '44px',
+                                paddingRight: '44px'
+                            }}
+                            value={password}
+                            onChange={(e) =>
+                                setPassword(e.target.value)
+                            }
+                            required
+                        />
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setShowPassword((v) => !v)
+                            }
+                            style={eyeButtonStyle}
+                        >
+                            {showPassword ? (
+                                <EyeOff size={18} />
+                            ) : (
+                                <Eye size={18} />
+                            )}
+                        </button>
+                    </div>
+                )}
+
+                {!isLogin && !isForgotPassword && (
                     <div
                         className="input-group"
                         style={{ position: 'relative' }}
@@ -218,6 +247,25 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                     </div>
                 )}
 
+                {isLogin && !isForgotPassword && (
+                    <div style={{ textAlign: 'right', marginTop: '-4px' }}>
+                        <button
+                            type="button"
+                            onClick={() => setIsForgotPassword(true)}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--primary-color)',
+                                fontSize: '0.85rem',
+                                cursor: 'pointer',
+                                padding: 0
+                            }}
+                        >
+                            Forgot your password?
+                        </button>
+                    </div>
+                )}
+
                 <button
                     type="submit"
                     className="btn-save"
@@ -251,7 +299,7 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                         />
                     ) : (
                         <>
-                            {isLogin ? 'Sign In' : 'Sign Up'}
+                            {isForgotPassword ? 'Send Link' : (isLogin ? 'Sign In' : 'Sign Up')}
                             <ArrowRight size={18} />
                         </>
                     )}
@@ -261,30 +309,46 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
             <div
                 style={{ marginTop: '24px', textAlign: 'center' }}
             >
-                <button
-                    onClick={toggleMode}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text-muted)',
-                        cursor: 'pointer',
-                        fontSize: '0.85rem'
-                    }}
-                >
-                    {isLogin
-                        ? 'New to Ataraxia? '
-                        : 'Already have an account? '}
-                    <span
+                {isForgotPassword ? (
+                    <button
+                        onClick={() => setIsForgotPassword(false)}
                         style={{
-                            color: 'var(--primary-color)',
-                            fontWeight: '600'
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--text-muted)',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            textDecoration: 'underline'
+                        }}
+                    >
+                        Back to Sign In
+                    </button>
+                ) : (
+                    <button
+                        onClick={toggleMode}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--text-muted)',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem'
                         }}
                     >
                         {isLogin
-                            ? 'Create account'
-                            : 'Sign in'}
-                    </span>
-                </button>
+                            ? 'New to Ataraxia? '
+                            : 'Already have an account? '}
+                        <span
+                            style={{
+                                color: 'var(--primary-color)',
+                                fontWeight: '600'
+                            }}
+                        >
+                            {isLogin
+                                ? 'Create account'
+                                : 'Sign in'}
+                        </span>
+                    </button>
+                )}
             </div>
         </div>
     );

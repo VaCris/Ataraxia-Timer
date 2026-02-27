@@ -9,13 +9,22 @@ import { rootSaga } from './rootSaga';
 
 const sagaMiddleware = createSagaMiddleware();
 
+const appReducer = combineReducers({
+    auth: authReducer,
+    timer: timerReducer,
+    tasks: tasksReducer,
+    settings: settingsReducer
+});
+
+const rootReducer = (state, action) => {
+    if (action.type === 'auth/logout') {
+        state = undefined;
+    }
+    return appReducer(state, action);
+};
+
 export const store = configureStore({
-    reducer: {
-        auth: authReducer,
-        timer: timerReducer,
-        tasks: tasksReducer,
-        settings: settingsReducer
-    },
+    reducer: rootReducer,
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({ thunk: false, serializableCheck: false }).concat(sagaMiddleware),
 });
