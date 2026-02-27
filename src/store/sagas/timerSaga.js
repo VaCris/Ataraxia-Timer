@@ -16,6 +16,8 @@ const playAlarm = (volume) => {
 };
 
 function* runTimerSaga() {
+    let lastTickTime = Date.now();
+
     while (true) {
         const { isActive, timeLeft } = yield select(state => state.timer);
 
@@ -27,7 +29,13 @@ function* runTimerSaga() {
         }
 
         yield delay(1000);
-        yield put(tick());
+        const now = Date.now();
+        const deltaSeconds = Math.round((now - lastTickTime) / 1000);
+
+        if (deltaSeconds > 0) {
+            yield put(tick(deltaSeconds));
+            lastTickTime = now;
+        }
     }
 }
 
