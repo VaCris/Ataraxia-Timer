@@ -40,9 +40,10 @@ const timerSlice = createSlice({
             state.isActive = false;
             state.timeLeft = state.settings[state.mode] * 60;
         },
-        tick: (state) => {
+        tick: (state, action) => {
+            const secondsPassed = action.payload || 1;
             if (state.timeLeft > 0) {
-                state.timeLeft -= 1;
+                state.timeLeft = Math.max(0, state.timeLeft - secondsPassed);
             }
         },
         switchMode: (state, action) => {
