@@ -1,4 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import createSagaMiddleware from 'redux-saga';
 import authReducer from './slices/authSlice';
 import timerReducer from './slices/timerSlice';
@@ -20,6 +20,7 @@ const rootReducer = (state, action) => {
     if (action.type === 'auth/logout') {
         state = undefined;
     }
+
     return appReducer(state, action);
 };
 
