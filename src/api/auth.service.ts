@@ -21,16 +21,11 @@ export const authService = {
     guestLogin: async (data: GuestLoginDto): Promise<AuthResponse> => {
         try {
             const response = await apiClient.post<AuthResponse>(ENDPOINTS.GUEST, data);
-            localStorage.setItem('user_data', JSON.stringify(response.data.user));
-            localStorage.setItem('access_token', response.data.access_token);
-
             return response.data;
         } catch (error: any) {
             if (!error.response) {
-                console.warn("Modo Offline: Generando sesión temporal.");
-
-                const fallbackResponse: AuthResponse = {
-                    access_token: `offline_token_${data.deviceId || 'new_user'}`,
+                return {
+                    access_token: `offline_token_${data.deviceId || Date.now()}`,
                     refresh_token: 'offline_refresh',
                     user: {
                         id: `local_${data.deviceId || Date.now()}`,
@@ -39,22 +34,16 @@ export const authService = {
                         isGuest: true
                     }
                 };
-
-                localStorage.setItem('access_token', fallbackResponse.access_token);
-
-                return fallbackResponse;
             }
             throw error;
         }
     },
-
     forgotPassword: async (email: string) => {
         const response = await apiClient.post(ENDPOINTS.FORGOT_PASSWORD, { email });
         return response.data;
     },
-
     resetPassword: async (token: string, newPassword: string) => {
-        const response = await apiClient.post(ENDPOINTS.RESET_PASSWORD, { token, newPassword: newPassword });
+        const response = await apiClient.post(ENDPOINTS.RESET_PASSWORD, { token, newPassword });
         return response.data;
     }
 };
