@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 
 import { useAchievements } from '../../context/achievement-context';
 import AdBanner from '../layout/AdBanner';
+import { showToast } from '../../utils/customToast';
 
 import {
   addTaskRequest, updateTaskRequest, deleteTaskRequest
@@ -21,7 +22,8 @@ const MissionLog = ({ showAd }) => {
   const [editingText, setEditingText] = useState('');
 
   const dispatch = useDispatch();
-  const { tasks, tags, loading } = useSelector(state => state.tasks);
+
+  const { items: tasks = [], tags = [], loading } = useSelector(state => state.tasks);
   const { refreshAchievements } = useAchievements();
 
   const TITLE_REGEX = /^[a-zA-Z0-9\s\-_.,!?áéíóúÁÉÍÓÚñÑ]+$/;
@@ -29,7 +31,14 @@ const MissionLog = ({ showAd }) => {
   const addTask = (e) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
-    if (!TITLE_REGEX.test(newTaskTitle)) return toast.error("Title contains invalid characters");
+
+    if (!TITLE_REGEX.test(newTaskTitle)) {
+      return showToast({
+        title: 'Invalid Title',
+        type: 'warning',
+        message: 'Mission title contains forbidden characters.'
+      });
+    }
 
     const tempId = `temp-${Date.now()}`;
     dispatch(addTaskRequest({
@@ -43,31 +52,26 @@ const MissionLog = ({ showAd }) => {
     }));
 
     setNewTaskTitle('');
-    toast.success('Mission assigned!');
     refreshAchievements();
   };
 
   const toggleTask = (task) => {
-    if (task.isOptimistic) return;
-
     dispatch(updateTaskRequest({
       id: task.id,
       updates: { completed: !task.completed }
     }));
 
     if (!task.completed) {
-      toast.success('Mission accomplished!');
       refreshAchievements();
     }
   };
 
   const deleteTask = (id) => {
     dispatch(deleteTaskRequest(id));
-    toast.success('Mission deleted');
   };
 
   const saveEdit = (id, isOffline) => {
-    if (isOffline) return toast.error("Cannot edit offline missions");
+    if (isOffline) return;
 
     const currentTask = tasks.find(t => t.id === id);
     if (!currentTask || editingText === currentTask.title || !editingText.trim()) {
@@ -76,7 +80,6 @@ const MissionLog = ({ showAd }) => {
     }
 
     dispatch(updateTaskRequest({ id, updates: { title: editingText } }));
-    toast.success('Mission updated');
     setEditingTaskId(null);
   };
 
@@ -100,7 +103,7 @@ const MissionLog = ({ showAd }) => {
         Mission Log
         <span style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           {loading && <RefreshCw size={12} className="animate-spin" />}
-          {tasks.filter(t => t.completed).length}/{tasks.length}
+          {tasks.filter(t => t && t.completed).length}/{tasks.length}
         </span>
       </h3>
 
@@ -136,7 +139,6 @@ const MissionLog = ({ showAd }) => {
         </div>
       </form>
 
-      {/* Lista de Tareas */}
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {tasks.map((task) => (
           <div key={task.id} className="task-item" style={{
