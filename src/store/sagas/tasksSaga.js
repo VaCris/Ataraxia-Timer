@@ -1,98 +1,65 @@
-import { call, put, takeLatest, select, all } from 'redux-saga/effects';
+import { call, put, takeLatest, take, fork, actionChannel, all } from 'redux-saga/effects';
 import { tasksService } from '../../api/tasks.service';
 import { tagsService } from '../../api/tags.service';
 import {
     fetchTasksRequest, fetchTasksSuccess, fetchTasksFailure,
     addTaskRequest, addTaskSuccess, addTaskFailure,
-    updateTaskRequest, updateTaskSuccess,
-    deleteTaskRequest, deleteTaskFailure,
-    addTagSuccess
+    updateTaskRequest, updateTaskSuccess, updateTaskFailure,
+    deleteTaskRequest, deleteTaskSuccess, deleteTaskFailure
 } from '../slices/tasksSlice';
-import { syncManager } from '../../api/sync.manager';
+import { showToast } from '../../utils/customToast';
 
-function* safeGetTasks() {
-    try { return yield call(tasksService.getAll); }
-    catch (e) { return []; }
-}
-
-function* safeGetTags() {
-    try { return yield call(tagsService.getAll); }
-    catch (e) { return []; }
-}
-
-function* fetchTasksSaga() {
+function* fetchTasksWorker() {
     try {
         const [tasks, tags] = yield all([
-            call(safeGetTasks),
-            call(safeGetTags)
+            call(tasksService.getAll),
+            call(tagsService.getAll)
         ]);
-
         yield put(fetchTasksSuccess({ tasks, tags }));
     } catch (error) {
-        console.error({ error: "Fetch tasks failed" });
         yield put(fetchTasksFailure(error.message));
     }
 }
 
-function* addTaskSaga(action) {
-    const { id: tempId, title, tag, tagColor } = action.payload;
-    try {
-        if (navigator.onLine) {
-            const currentTags = yield select(state => state.tasks.tags);
-            const exists = currentTags.find(t => t.name.toLowerCase() === tag.toLowerCase());
+function* watchTaskMutations() {
+    const taskChannel = yield actionChannel([
+        addTaskRequest.type,
+        updateTaskRequest.type,
+        deleteTaskRequest.type
+    ]);
 
-            if (!exists) {
-                try {
-                    const newTag = yield call(tagsService.create, { name: tag, color: tagColor });
-                    yield put(addTagSuccess(newTag));
-                } catch (error) {
-                    console.warn({ error: "Tag creation failed, proceeding without tag" });
-                }
+    while (true) {
+        const action = yield take(taskChannel);
+        try {
+            if (action.type === addTaskRequest.type) {
+                const result = yield call(tasksService.create, action.payload);
+                yield put(addTaskSuccess({ tempId: action.payload.id, realTask: result }));
+            } else if (action.type === updateTaskRequest.type) {
+                const { id, updates } = action.payload;
+                const result = yield call(tasksService.update, id, updates);
+                yield put(updateTaskSuccess(result));
+            } else if (action.type === deleteTaskRequest.type) {
+                yield call(tasksService.delete, action.payload);
+                yield put(deleteTaskSuccess(action.payload));
             }
+        } catch (error) {
+            const msg = error.response?.data?.message || "Operation failed";
+            if (action.type === addTaskRequest.type) yield put(addTaskFailure(msg));
+            if (action.type === updateTaskRequest.type) yield put(updateTaskFailure(msg));
+            if (action.type === deleteTaskRequest.type) yield put(deleteTaskFailure(msg));
+
+            showToast({
+                title: 'Sync Error',
+                type: 'error',
+                message: Array.isArray(msg) ? msg[0] : msg
+            });
         }
-
-        const taskPayload = { title: title.trim(), tag: tag.trim() };
-
-        const result = yield call(tasksService.create, taskPayload);
-
-        yield put(addTaskSuccess({ tempId, realTask: result }));
-
-    } catch (error) {
-        console.error({ error: "Add task failed" });
-        yield put(addTaskFailure({ tempId, error: error.message }));
-    }
-}
-
-function* updateTaskSaga(action) {
-    const { id, updates } = action.payload;
-    try {
-        const result = yield call(tasksService.update, id, updates);
-        yield put(updateTaskSuccess(result));
-    } catch (error) {
-        console.error({ error: "Update task failed" });
-    }
-}
-
-function* deleteTaskSaga(action) {
-    const id = action.payload;
-    const isOfflineTask = id.toString().startsWith('temp_');
-
-    try {
-        if (isOfflineTask) {
-            yield call([syncManager, 'removeFromQueue'], 'outbox_tasks', id);
-        } else {
-            yield call(tasksService.delete, id);
-        }
-    } catch (error) {
-        yield put(deleteTaskFailure(error.message));
     }
 }
 
 export function* tasksSaga() {
     yield all([
-        takeLatest(fetchTasksRequest.type, fetchTasksSaga),
-        takeLatest(addTaskRequest.type, addTaskSaga),
-        takeLatest(updateTaskRequest.type, updateTaskSaga),
-        takeLatest(deleteTaskRequest.type, deleteTaskSaga),
+        takeLatest(fetchTasksRequest.type, fetchTasksWorker),
+        fork(watchTaskMutations)
     ]);
 }
