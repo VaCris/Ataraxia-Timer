@@ -1,88 +1,182 @@
-import React, { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { Trophy, Users, Award, Lock, Loader2 } from 'lucide-react';
-import { fetchAchievementsRequest, fetchLeaderboardRequest } from '../../store/slices/achievementsSlice';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Trophy, Medal, Target, TrendingUp, Users, Loader2 } from 'lucide-react';
+import {
+    fetchStatsRequest,
+    fetchLeaderboardRequest,
+    fetchAchievementsRequest
+} from '../../store/slices/achievementsSlice';
 
 const AchievementHub = () => {
-    const [activeTab, setActiveTab] = useState('medals');
     const dispatch = useDispatch();
-    const { list, unlockedIds, leaderboard, stats, loading } = useSelector(state => state.achievements);
+    const { items, stats, leaderboard, loading } = useSelector(state => state.achievements);
 
     useEffect(() => {
-        dispatch(fetchAchievementsRequest());
+        dispatch(fetchStatsRequest());
         dispatch(fetchLeaderboardRequest());
+        dispatch(fetchAchievementsRequest());
     }, [dispatch]);
 
+    if (loading && items.length === 0) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+                <Loader2 className="animate-spin" size={32} color="var(--primary-color)" />
+            </div>
+        );
+    }
+
     return (
-        <div className="achievement-hub">
-            <div className="hub-stats">
-                <div className="stat-item">
-                    <span className="label">Streak</span>
-                    <span className="value">{stats.currentStreak} 🔥</span>
+        <div className="achievement-hub" style={{ color: 'white', padding: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '30px' }}>
+
+                <div className="stat-card" style={statCardStyle}>
+                    <TrendingUp size={20} color="#34d399" />
+                    <div>
+                        <div style={labelStyle}>Current Streak</div>
+                        <div style={valueStyle}>{stats.streak} Days</div>
+                    </div>
                 </div>
-                <div className="stat-item">
-                    <span className="label">Total XP</span>
-                    <span className="value">{stats.totalExperience}</span>
+
+                <div className="stat-card" style={statCardStyle}>
+                    <Target size={20} color="#8b5cf6" />
+                    <div>
+                        <div style={labelStyle}>User Level</div>
+                        <div style={valueStyle}>Level {stats.level}</div>
+                    </div>
                 </div>
+
+                <div className="stat-card" style={statCardStyle}>
+                    <Trophy size={20} color="#fbbf24" />
+                    <div>
+                        <div style={labelStyle}>Achievements</div>
+                        <div style={valueStyle}>{items.length} Unlocked</div>
+                    </div>
+                </div>
+
             </div>
 
-            {/* Tab Selector */}
-            <div className="tabs-navigation">
-                <button
-                    className={activeTab === 'medals' ? 'active' : ''}
-                    onClick={() => setActiveTab('medals')}
-                >
-                    <Award size={18} /> My Medals
-                </button>
-                <button
-                    className={activeTab === 'ranking' ? 'active' : ''}
-                    onClick={() => setActiveTab('ranking')}
-                >
-                    <Users size={18} /> Ranking
-                </button>
-            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
 
-            <div className="tab-content">
-                {loading && <Loader2 className="mx-auto my-4 animate-spin" />}
+                <section>
+                    <h3 style={sectionTitleStyle}>
+                        <Medal size={18} /> Your Achievements
+                    </h3>
 
-                {activeTab === 'medals' ? (
-                    <div className="medals-grid">
-                        {list.map(ach => (
-                            <div key={ach.id} className={`medal-card ${unlockedIds.includes(ach.id) ? 'unlocked' : 'locked'}`}>
-                                {unlockedIds.includes(ach.id) ? <Award /> : <Lock />}
-                                <h4>{ach.name}</h4>
-                                <p>{ach.description}</p>
-                                <span className="points">+{ach.points} XP</span>
+                    <div style={listContainerStyle}>
+                        {items.length > 0 ? items.map(achievement => (
+                            <div key={achievement.id} style={itemStyle}>
+                                <div style={iconContainerStyle}>🏆</div>
+                                <div>
+                                    <div style={{ fontWeight: 600 }}>
+                                        {achievement.name}
+                                    </div>
+
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                        {achievement.description}
+                                    </div>
+                                </div>
+                            </div>
+                        )) : (
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                You haven't unlocked any achievements yet.
+                            </p>
+                        )}
+                    </div>
+
+                </section>
+
+                <section>
+
+                    <h3 style={sectionTitleStyle}>
+                        <Users size={18} /> Global Ranking
+                    </h3>
+
+                    <div style={listContainerStyle}>
+                        {leaderboard.map((user, index) => (
+                            <div
+                                key={user.id}
+                                style={{
+                                    ...itemStyle,
+                                    borderLeft: index < 3
+                                        ? '4px solid #fbbf24'
+                                        : 'none'
+                                }}
+                            >
+
+                                <span style={{ fontWeight: 700, minWidth: '24px' }}>
+                                    #{index + 1}
+                                </span>
+
+                                <div style={{ flex: 1, marginLeft: '10px' }}>
+                                    {user.username}
+                                </div>
+
+                                <div style={{ fontWeight: 600, color: 'var(--primary-color)' }}>
+                                    Lvl {user.level}
+                                </div>
+
                             </div>
                         ))}
                     </div>
-                ) : (
-                    <div className="ranking-list">
-                        {leaderboard.map((user) => (
-                            <div key={user.userId} className={`ranking-item rank-${user.rank}`}>
-                                <span className="position">#{user.rank}</span>
-                                <span className="username">{user.username}</span>
-                                <span className="xp">{user.experience} XP</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
 
-            <style>{`
-            .achievement-hub { background: #1a1a1a; border-radius: 12px; padding: 20px; color: white; }
-            .tabs-navigation { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-            .tabs-navigation button { background: none; border: none; color: #666; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-            .tabs-navigation button.active { color: #ffd700; font-weight: bold; }
-            .medals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-            .medal-card { padding: 15px; border-radius: 8px; text-align: center; background: #222; border: 1px solid #333; transition: transform 0.2s; }
-            .medal-card.locked { opacity: 0.5; filter: grayscale(1); }
-            .medal-card.unlocked { border-color: #ffd700; box-shadow: 0 0 10px rgba(255, 215, 0, 0.1); }
-            .ranking-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #222; align-items: center; }
-            .rank-1 { color: #ffd700; font-weight: bold; }
-        `}</style>
+                </section>
+
+            </div>
         </div>
     );
+};
+
+const statCardStyle = {
+    background: 'rgba(255,255,255,0.05)',
+    padding: '16px',
+    borderRadius: '16px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px'
+};
+
+const labelStyle = {
+    fontSize: '0.75rem',
+    color: 'var(--text-muted)',
+    textTransform: 'uppercase'
+};
+
+const valueStyle = {
+    fontSize: '1.2rem',
+    fontWeight: 700
+};
+
+const sectionTitleStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginBottom: '16px',
+    fontSize: '1.1rem'
+};
+
+const listContainerStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px'
+};
+
+const itemStyle = {
+    background: 'rgba(255,255,255,0.03)',
+    padding: '12px',
+    borderRadius: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px'
+};
+
+const iconContainerStyle = {
+    width: '40px',
+    height: '40px',
+    background: 'rgba(139, 92, 246, 0.2)',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
 };
 
 export default AchievementHub;
