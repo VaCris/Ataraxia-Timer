@@ -3,59 +3,42 @@ import { createSlice } from '@reduxjs/toolkit';
 const achievementsSlice = createSlice({
     name: 'achievements',
     initialState: {
-        list: [],
-        unlockedIds: [],
+        items: [],
         leaderboard: [],
-        stats: {
-            totalExperience: 0,
-            currentStreak: 0,
-            totalPomodoros: 0
-        },
+        stats: { streak: 0, level: 1, xp: 0, nextLevelXp: 100 },
         loading: false,
-        error: null,
-        lastUnlocked: null
+        initialized: false,
+        error: null
     },
     reducers: {
-        fetchAchievementsRequest: (state) => { state.loading = true; },
-        fetchLeaderboardRequest: (state) => { state.loading = true; },
-
-        fetchDataSuccess: (state, action) => {
+        fetchStatsRequest: (state) => { state.loading = true; },
+        fetchStatsSuccess: (state, action) => {
             state.loading = false;
-            state.list = action.payload.available;
-            state.unlockedIds = action.payload.unlocked.map(ua => ua.achievement.id);
-            state.stats = action.payload.stats;
+            state.stats = action.payload;
+            state.initialized = true;
         },
-
+        fetchStatsFailure: (state, action) => {
+            state.loading = false;
+            state.error = action.payload;
+            state.initialized = true;
+        },
+        fetchLeaderboardRequest: (state) => { state.loading = true; },
         fetchLeaderboardSuccess: (state, action) => {
             state.loading = false;
             state.leaderboard = action.payload;
         },
-
-        fetchError: (state, action) => {
+        fetchAchievementsRequest: (state) => { state.loading = true; },
+        fetchAchievementsSuccess: (state, action) => {
             state.loading = false;
-            state.error = action.payload;
-        },
-
-        unlockAchievement: (state, action) => {
-            const achievement = action.payload;
-            if (!state.unlockedIds.includes(achievement.id)) {
-                state.unlockedIds.push(achievement.id);
-                state.lastUnlocked = achievement;
-            }
-        },
-
-        clearNotification: (state) => { state.lastUnlocked = null; }
+            state.items = action.payload;
+        }
     }
 });
 
 export const {
-    fetchAchievementsRequest,
-    fetchLeaderboardRequest,
-    fetchDataSuccess,
-    fetchLeaderboardSuccess,
-    fetchError,
-    unlockAchievement,
-    clearNotification
+    fetchStatsRequest, fetchStatsSuccess, fetchStatsFailure,
+    fetchLeaderboardRequest, fetchLeaderboardSuccess,
+    fetchAchievementsRequest, fetchAchievementsSuccess
 } = achievementsSlice.actions;
 
 export default achievementsSlice.reducer;
