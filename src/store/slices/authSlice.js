@@ -5,7 +5,7 @@ const initialState = {
     user: JSON.parse(localStorage.getItem('dw-user')) || null,
     loading: false,
     error: null,
-    initialized: !!localStorage.getItem('access_token') && !localStorage.getItem('access_token').startsWith('offline_token_'),
+    initialized: !!localStorage.getItem('access_token')
 };
 
 const authSlice = createSlice({
