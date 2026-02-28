@@ -1,58 +1,43 @@
-import { call, put, takeLatest, select, debounce } from 'redux-saga/effects';
-import toast from 'react-hot-toast';
+import { call, put, takeLatest, all } from 'redux-saga/effects';
 import { settingsService } from '../../api/settings.service';
 import {
     fetchSettingsRequest, fetchSettingsSuccess, fetchSettingsFailure,
-    updateSettings, updateTimerSettings
+    updateSettingsRequest, updateSettingsSuccess, updateSettingsFailure
 } from '../slices/settingsSlice';
+import { showToast } from '../../utils/customToast';
 
-function* fetchSettingsSaga() {
+function* fetchSettingsWorker() {
     try {
         const settings = yield call(settingsService.getSettings);
         yield put(fetchSettingsSuccess(settings));
     } catch (error) {
-        console.warn({error:"Error fetching settings:"});
         yield put(fetchSettingsFailure(error.message));
     }
 }
 
-function* saveSettingsSaga() {
+function* updateSettingsWorker(action) {
     try {
-        const state = yield select(state => state.settings);
-        const { timerSettings, autoStart, longBreakInterval, accentColor, bgImage , is24Hour} = state;
-
-        localStorage.setItem('dw-color', accentColor);
-        if (bgImage) {
-            localStorage.setItem('dw-background', bgImage);
-        } else {
-            localStorage.removeItem('dw-background');
-        }
-
-        const payload = {
-            focusDuration: Number(timerSettings.work),
-            shortBreakDuration: Number(timerSettings.short),
-            longBreakDuration: Number(timerSettings.long),
-            longBreakInterval: Number(longBreakInterval),
-            autoStartPomodoros: Boolean(autoStart),
-            theme: 'dark',
-            platform: 'web'
-        };
-
-        yield call(settingsService.saveSettings, payload);
-        toast.success('Settings synced'); 
-
+        const settings = yield call(settingsService.updateSettings, action.payload);
+        yield put(updateSettingsSuccess(settings));
+        showToast({
+            title: 'Settings Saved',
+            type: 'success',
+            message: 'Your preferences have been updated.'
+        });
     } catch (error) {
-        console.error({error:"Error saving settings:"});
-        if (error.code === "ERR_NETWORK") {
-            toast.error("Offline: Settings saved locally", { id: 'network-error' });
-        }
+        const msg = error.response?.data?.message;
+        yield put(updateSettingsFailure(error.message));
+        showToast({
+            title: 'Settings Error',
+            type: 'error',
+            message: Array.isArray(msg) ? msg[0] : (msg || 'Could not save changes')
+        });
     }
 }
 
 export function* settingsSaga() {
-    yield takeLatest(fetchSettingsRequest.type, fetchSettingsSaga);
-    yield debounce(1000, [
-        updateSettings.type,
-        updateTimerSettings.type
-    ], saveSettingsSaga);
+    yield all([
+        takeLatest(fetchSettingsRequest.type, fetchSettingsWorker),
+        takeLatest(updateSettingsRequest.type, updateSettingsWorker)
+    ]);
 }
