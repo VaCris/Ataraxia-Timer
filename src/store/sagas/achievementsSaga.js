@@ -1,34 +1,77 @@
-import { takeLatest, call, put, all } from 'redux-saga/effects';
+import { call, put, takeLatest, all } from 'redux-saga/effects';
 import { achievementsService } from '../../api/achievements.service';
 import {
-    fetchAchievementsRequest,
-    fetchLeaderboardRequest,
-    fetchDataSuccess,
-    fetchLeaderboardSuccess,
-    fetchError
+    fetchStatsRequest, fetchStatsSuccess, fetchStatsFailure,
+    fetchLeaderboardRequest, fetchLeaderboardSuccess, fetchLeaderboardFailure,
+    fetchAchievementsRequest, fetchAchievementsSuccess, fetchAchievementsFailure,
+    checkAchievementsRequest,
+    registerActivityRequest
 } from '../slices/achievementsSlice';
+import { showToast } from '../../utils/customToast';
 
-function* handleFetchAchievements() {
+function* fetchStatsSaga() {
     try {
-        const data = yield call(achievementsService.getMyProgress);
-        yield put(fetchDataSuccess(data));
+        const stats = yield call(achievementsService.getStats);
+        yield put(fetchStatsSuccess(stats));
     } catch (error) {
-        yield put(fetchError(error.message));
+        yield put(fetchStatsFailure(error.message));
     }
 }
 
-function* handleFetchLeaderboard() {
+function* fetchLeaderboardSaga() {
     try {
-        const data = yield call(achievementsService.getLeaderboard, { sortBy: 'experience', limit: 10 });
-        yield put(fetchLeaderboardSuccess(data));
+        const leaderboard = yield call(achievementsService.getLeaderboard);
+        yield put(fetchLeaderboardSuccess(leaderboard));
     } catch (error) {
-        yield put(fetchError(error.message));
+        yield put(fetchLeaderboardFailure(error.message));
+    }
+}
+
+function* fetchAchievementsSaga() {
+    try {
+        const items = yield call(achievementsService.getUnlockedAchievements);
+        yield put(fetchAchievementsSuccess(items));
+    } catch (error) {
+        yield put(fetchAchievementsFailure(error.message));
+    }
+}
+
+function* checkAchievementsSaga() {
+    try {
+        const newUnlocks = yield call(achievementsService.checkAchievements);
+        if (newUnlocks && newUnlocks.length > 0) {
+            yield put(fetchAchievementsRequest());
+            showToast({
+                title: 'New Achievements!',
+                type: 'success',
+                message: `You've unlocked ${newUnlocks.length} new achievements.`
+            });
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+function* registerActivitySaga(action) {
+    try {
+        yield call(achievementsService.registerActivity, action.payload);
+        yield put(fetchStatsRequest());
+        yield put(checkAchievementsRequest());
+    } catch (error) {
+        showToast({
+            title: 'Activity Error',
+            type: 'error',
+            message: 'Daily activity could not be recorded.'
+        });
     }
 }
 
 export function* achievementsSaga() {
     yield all([
-        takeLatest(fetchAchievementsRequest.type, handleFetchAchievements),
-        takeLatest(fetchLeaderboardRequest.type, handleFetchLeaderboard),
+        takeLatest(fetchStatsRequest.type, fetchStatsSaga),
+        takeLatest(fetchLeaderboardRequest.type, fetchLeaderboardSaga),
+        takeLatest(fetchAchievementsRequest.type, fetchAchievementsSaga),
+        takeLatest(checkAchievementsRequest.type, checkAchievementsSaga),
+        takeLatest(registerActivityRequest.type, registerActivitySaga)
     ]);
 }
