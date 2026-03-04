@@ -1,72 +1,27 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+// __dirname - módulos ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: 'auto',
-      devOptions: {
-        enabled: false,
-        type: 'module',
-      },
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg', 'sounds/*.mp3'],
-      manifest: {
-        id: '/',
-        name: 'Ataraxia Timer',
-        short_name: 'Ataraxia',
-        description: 'Focus timer with Spotify integration and offline support',
-        theme_color: '#1a1a1a',
-        background_color: '#050505',
-        display: 'standalone',
-        start_url: '/',
-        icons: [
-          {
-            src: 'Logo_192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: 'Logo_512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: 'Logo_512_maskable.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
-          }
-        ],
-        screenshots: [
-          {
-            src: 'screenshot-mobile.png',
-            sizes: '1080x1920',
-            type: 'image/png',
-            form_factor: 'narrow',
-            label: 'Ataraxia on Mobile'
-          },
-          {
-            src: 'screenshot-desktop.png',
-            sizes: '1920x1080',
-            type: 'image/png',
-            form_factor: 'wide',
-            label: 'Ataraxia on Desktop'
-          }
-        ]
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,mp3,jpg}'],
-        navigateFallbackDenylist: [/^\/api/],
-        maximumFileSizeToCacheInBytes: 5000000,
-      }
-    })
-  ],
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@context': path.resolve(__dirname, './src/context'),
+      '@hooks': path.resolve(__dirname, './src/hooks'),
+      '@utils': path.resolve(__dirname, './src/utils'),
+      '@assets': path.resolve(__dirname, './src/assets'),
+      '@styles': path.resolve(__dirname, './src/styles'),
+      '@api': path.resolve(__dirname, './src/api'),
+    },
+  },
   server: {
     host: '127.0.0.1',
     port: 5173

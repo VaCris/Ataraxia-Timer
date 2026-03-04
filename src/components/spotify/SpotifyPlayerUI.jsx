@@ -1,92 +1,59 @@
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music2 } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react';
 
 const SpotifyPlayerUI = ({ currentTrack, isPaused, togglePlay, volume, setVolume }) => {
-    const trackName = currentTrack?.name || "Ready to Play";
-    const artistName = currentTrack?.artists?.map(a => a.name).join(', ') || "Select a song";
-    const albumImage = currentTrack?.album?.images?.[0]?.url;
+    const track = currentTrack || {
+        name: "No track playing",
+        artists: [{ name: "Open Spotify to start" }],
+        album: { images: [{ url: "https://via.placeholder.com/150" }] }
+    };
 
     return (
-        <div className="spotify-player-ui">
-            <div className="track-info">
-                {albumImage ? (
-                    <img src={albumImage} alt={trackName} className="album-art" />
-                ) : (
-                    <div className="album-art-placeholder">
-                        <Music2 size={24} color="rgba(255,255,255,0.5)" />
-                    </div>
-                )}
-                <div className="track-details">
-                    <span className="track-name">{trackName}</span>
-                    <span className="artist-name">{artistName}</span>
+        <div className="space-y-5 w-full">
+            {/* Info de la canción */}
+            <div className="flex items-center gap-4">
+                <div className="shadow-lg border border-white/10 rounded-xl w-14 h-14 overflow-hidden shrink-0">
+                    <img src={track.album?.images[0]?.url} alt="Cover" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <h4 className="font-black text-white text-xs truncate uppercase tracking-tight">
+                        {track.name}
+                    </h4>
+                    <p className="mt-0.5 font-bold text-[10px] text-accent truncate uppercase tracking-widest">
+                        {track.artists[0].name}
+                    </p>
                 </div>
             </div>
 
-            <div className="player-controls">
-                <button className="control-btn-sm"><SkipBack size={20} /></button>
-                <button className="play-btn" onClick={togglePlay}>
-                    {isPaused ? <Play size={24} fill="black" className="play-icon" /> : <Pause size={24} fill="black" className="play-icon" />}
+            {/* Controles Principales */}
+            <div className="flex justify-center items-center gap-8">
+                <button className="text-white/20 hover:text-white transition-colors">
+                    <SkipBack size={20} fill="currentColor" />
                 </button>
-                <button className="control-btn-sm"><SkipForward size={20} /></button>
+
+                <button
+                    onClick={togglePlay}
+                    className="flex justify-center items-center bg-white shadow-glow-white rounded-full w-12 h-12 text-black hover:scale-110 active:scale-95 transition-all"
+                >
+                    {isPaused ? <Play size={20} fill="black" className="ml-1" /> : <Pause size={20} fill="black" />}
+                </button>
+
+                <button className="text-white/20 hover:text-white transition-colors">
+                    <SkipForward size={20} fill="currentColor" />
+                </button>
             </div>
 
-            <div className="volume-controls">
-                <button onClick={() => setVolume(volume === 0 ? 0.5 : 0)} className="control-btn-sm">
-                    {volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                </button>
+            {/* Volumen Sutil */}
+            <div className="group flex items-center gap-3 px-2">
+                <Volume2 size={12} className="text-white/20 group-hover:text-accent transition-colors" />
                 <input
                     type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
+                    min="0" max="100"
                     value={volume}
-                    onChange={(e) => setVolume(parseFloat(e.target.value))}
-                    className="volume-slider"
-                    style={{ backgroundSize: `${volume * 100}% 100%` }}
+                    onChange={(e) => setVolume(e.target.value)}
+                    className="flex-1 bg-white/5 rounded-full h-1 accent-accent appearance-none cursor-pointer"
                 />
             </div>
-
-            <style>{`
-                .spotify-player-ui {
-                    display: flex; flex-direction: column; gap: 16px;
-                    padding: 16px; background: rgba(0,0,0,0.3);
-                    border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);
-                }
-                .track-info { display: flex; align-items: center; gap: 12px; }
-                .album-art { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; }
-                .album-art-placeholder { 
-                    width: 48px; height: 48px; border-radius: 8px; background: rgba(255,255,255,0.1);
-                    display: flex; align-items: center; justify-content: center;
-                }
-                .track-details { display: flex; flex-direction: column; overflow: hidden; }
-                .track-name { color: white; font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                .artist-name { color: rgba(255,255,255,0.7); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                
-                .player-controls { display: flex; align-items: center; justify-content: center; gap: 16px; }
-                .control-btn-sm { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; transition: color 0.2s; }
-                .control-btn-sm:hover { color: white; }
-                .play-btn {
-                    width: 40px; height: 40px; border-radius: 50%;
-                    background: white; border: none; color: black;
-                    display: flex; align-items: center; justify-content: center;
-                    cursor: pointer; transition: transform 0.2s;
-                }
-                .play-btn:hover { transform: scale(1.05); }
-                .play-icon { position: relative; left: 1px; }
-
-                .volume-controls { display: flex; align-items: center; gap: 8px; }
-                .volume-slider {
-                    flex: 1; -webkit-appearance: none; height: 4px; border-radius: 2px;
-                    background: rgba(255,255,255,0.1); outline: none;
-                    background-image: linear-gradient(#1db954, #1db954);
-                    background-repeat: no-repeat; cursor: pointer;
-                }
-                .volume-slider::-webkit-slider-thumb {
-                    -webkit-appearance: none; width: 12px; height: 12px;
-                    background: white; border-radius: 50%; cursor: pointer;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                }
-            `}</style>
         </div>
     );
 };

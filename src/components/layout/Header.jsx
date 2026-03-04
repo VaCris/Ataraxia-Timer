@@ -1,87 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { Clock, Download } from 'lucide-react';
-import { useInstallPrompt } from '../../hooks/useInstallPrompt'; 
+import React from 'react';
+import { usePomodoro } from '../../context/PomodoroContext';
+import { User } from 'lucide-react';
 
-const Header = ({ is24Hour }) => {
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const { showInstallBtn, installApp } = useInstallPrompt();
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+const Header = () => {
+    const { state } = usePomodoro();
+    // const xpInCurrentLevel = state.stats.xp % 100;
 
-  const formattedTime = currentTime.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: !is24Hour
-  });
+    return (
+        <header className="flex justify-between items-center px-8 py-6 w-full">
+            <div>
+                <h1 className="font-bold text-xl tracking-tight">ATARAXIA <span className="text-accent text-xs align-top">V2</span></h1>
+                <p className="font-medium text-white/40 text-xs uppercase tracking-widest">System Active</p>
+            </div>
 
-  return (
-    <header style={{ 
-      display: 'flex', 
-      justifyContent: 'space-between', 
-      alignItems: 'center', 
-      padding: '1.5rem 0', 
-      width: '100%', 
-      maxWidth: '1200px' 
-    }}>
+            <div className="flex items-center gap-6">
+                {/* <div className="hidden sm:block text-right">
+                    <div className="flex justify-end items-center gap-2 mb-1">
+                        <span className="font-bold text-[10px] text-white/40 uppercase tracking-tighter">Level</span>
+                        <span className="font-bold text-accent text-sm">{state.stats.level}</span>
+                    </div>
+                    <div className="bg-white/5 rounded-full w-32 h-1 overflow-hidden">
+                        <div
+                            className="bg-accent shadow-glow h-full transition-all duration-1000 ease-out"
+                            style={{ width: `${xpInCurrentLevel}%` }}
+                        />
+                    </div>
+                </div> */}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Ataraxia</h1>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        {showInstallBtn && (
-          <button 
-            onClick={installApp}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%)',
-              color: 'white',
-              padding: '8px 16px',
-              borderRadius: '20px',
-              border: 'none',
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: '0 4px 15px rgba(109, 40, 217, 0.3)',
-              transition: 'transform 0.2s'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            <Download size={14} />
-            Install App
-          </button>
-        )}
-
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          background: 'rgba(255,255,255,0.05)',
-          padding: '8px 12px',
-          borderRadius: '20px',
-          border: '1px solid var(--glass-border)'
-        }}>
-          <Clock size={14} color="var(--text-muted)" />
-          <span style={{ 
-            fontSize: '0.9rem', 
-            fontWeight: 600, 
-            fontVariantNumeric: 'tabular-nums', 
-            minWidth: '65px', 
-            textAlign: 'center' 
-          }}>
-            {formattedTime}
-          </span>
-        </div>
-      </div>
-    </header>
-  );
+                <div className="flex justify-center items-center bg-surface border border-white/10 hover:border-accent/50 rounded-xl w-10 h-10 text-white/60 transition-colors cursor-pointer">
+                    <User size={20} />
+                </div>
+            </div>
+        </header>
+    );
 };
 
 export default Header;

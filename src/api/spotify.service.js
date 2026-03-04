@@ -1,108 +1,66 @@
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
-const BASE_URL = window.location.origin.includes('localhost')
-    ? 'http://127.0.0.1:5173'
-    : window.location.origin;
-const REDIRECT_URI = `${BASE_URL}/callback`;
-const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
+const REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI;
+const SCOPES = import.meta.env.VITE_SPOTIFY_SCOPES;
+
+const BRIDGE_URL = 'https://spotify-bridge.chowdero304.workers.dev/';
+
 const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
+const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
 const PROFILE_ENDPOINT = "https://api.spotify.com/v1/me";
 
-const SCOPES = [
-    "streaming",
-    "user-read-email",
-    "user-read-private",
-    "user-read-playback-state",
-    "user-modify-playback-state"
-];
-
-function generateCodeVerifier() {
-    const array = new Uint8Array(64);
-    window.crypto.getRandomValues(array);
-    return Array.from(array, b =>
-        ('0' + b.toString(16)).slice(-2)
-    ).join('');
-}
-
-async function generateCodeChallenge(verifier) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(verifier);
-    const digest = await window.crypto.subtle.digest("SHA-256", data);
-
-    return btoa(
-        String.fromCharCode(...new Uint8Array(digest))
-    )
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/, "");
-}
-
-export async function loginWithSpotify() {
-    const verifier = generateCodeVerifier();
-    localStorage.setItem("spotify_verifier", verifier);
-
-    const challenge = await generateCodeChallenge(verifier);
-
+export const loginWithSpotify = () => {
     const params = new URLSearchParams({
         client_id: CLIENT_ID,
         response_type: "code",
         redirect_uri: REDIRECT_URI,
-        scope: SCOPES.join(" "),
-        code_challenge_method: "S256",
-        code_challenge: challenge
+        scope: SCOPES,
+        show_dialog: "true"
     });
 
-    window.location.href = `${AUTH_ENDPOINT}?${params.toString()}`;
-}
+    window.location.href = `https://accounts.spotify.com/authorize?${params.toString()}`;
+};
 
-export async function getAccessToken(code) {
-    const verifier = localStorage.getItem("spotify_verifier");
+export const getAccessToken = async (code) => {
+    try {
+        const res = await fetch(BRIDGE_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code })
+        });
 
-    const body = new URLSearchParams({
-        client_id: CLIENT_ID,
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: REDIRECT_URI,
-        code_verifier: verifier
-    });
+        const data = await res.json();
 
-    const res = await fetch(TOKEN_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body
-    });
-
-    const data = await res.json();
-
-    if (data.access_token) {
-        localStorage.setItem("spotify_access_token", data.access_token);
-        if (data.refresh_token) {
-            localStorage.setItem("spotify_refresh_token", data.refresh_token);
+        if (data.access_token) {
+            localStorage.setItem("spotify_access_token", data.access_token);
+            if (data.refresh_token) {
+                localStorage.setItem("spotify_refresh_token", data.refresh_token);
+            }
+            return data.access_token;
         }
-        return data.access_token;
-    } else {
         throw new Error("No access token returned");
+    } catch (error) {
+        console.error("Error en intercambio:", error);
+        throw error;
     }
-}
+};
 
-export async function refreshAccessToken() {
+export const refreshAccessToken = async () => {
     const refreshToken = localStorage.getItem("spotify_refresh_token");
     if (!refreshToken) return null;
 
     try {
-        const res = await fetch(TOKEN_ENDPOINT, {
+        const res = await fetch(BRIDGE_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({
-                client_id: CLIENT_ID,
-                grant_type: "refresh_token",
-                refresh_token: refreshToken
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                refresh_token: refreshToken,
+                grant_type: 'refresh_token'
             })
         });
 
         const data = await res.json();
 
         if (data.access_token) {
-            console.log("Token refrescado con éxito");
             localStorage.setItem("spotify_access_token", data.access_token);
             if (data.refresh_token) {
                 localStorage.setItem("spotify_refresh_token", data.refresh_token);
@@ -110,45 +68,41 @@ export async function refreshAccessToken() {
             return data.access_token;
         }
     } catch (error) {
-        console.error("Error al refrescar token:", error);
+        console.error("Error al refrescar:", error);
     }
     return null;
-}
+};
 
-export async function getSpotifyProfile() {
-    let token = localStorage.getItem("spotify_access_token");
+export const getSpotifyProfile = async () => {
+    const token = localStorage.getItem("spotify_access_token");
     if (!token) return null;
 
     try {
-        let res = await fetch(PROFILE_ENDPOINT, {
-            headers: { Authorization: `Bearer ${token}` }
+        const res = await fetch(PROFILE_ENDPOINT, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
         });
 
         if (res.status === 401) {
-            console.warn("Token expirado. Intentando refrescar...");
-            token = await refreshAccessToken();
+            const newToken = await refreshAccessToken();
+            if (!newToken) return null;
 
-            if (token) {
-                window.dispatchEvent(new Event('spotify-token-updated'));
-                res = await fetch(PROFILE_ENDPOINT, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-            } else {
-                console.warn("No se pudo refrescar. Cerrando sesión.");
-                localStorage.removeItem("spotify_access_token");
-                localStorage.removeItem("spotify_refresh_token");
-                return null;
-            }
+            const retryRes = await fetch(PROFILE_ENDPOINT, {
+                headers: { Authorization: `Bearer ${newToken}` }
+            });
+            return await retryRes.json();
         }
 
-        if (!res.ok) return null;
-        return await res.json();
+        if (!res.ok) throw new Error("Error fetching profile");
 
+        return await res.json();
     } catch (error) {
-        console.error("Error obteniendo perfil:", error);
+        console.error("Spotify Profile Error:", error);
         return null;
     }
-}
+};
 
 export const spotifyService = {
     loginWithSpotify,
