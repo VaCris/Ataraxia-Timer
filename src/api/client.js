@@ -1,11 +1,11 @@
 import axios from 'axios';
 
 const api = axios.create({
-    // URL de tu futuro backend (Node.js, Go, Python, etc.)
     baseURL: import.meta.env.VITE_API_URL,
     headers: {
         'Content-Type': 'application/json'
-    }
+    },
+    withCredentials: true 
 });
 
 api.interceptors.request.use((config) => {
@@ -15,5 +15,12 @@ api.interceptors.request.use((config) => {
     }
     return config;
 });
+
+api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        return Promise.reject(error);
+    }
+);
 
 export default api;

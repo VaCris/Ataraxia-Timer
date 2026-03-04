@@ -1,10 +1,40 @@
-import React from 'react';
-import { Layout, Settings, Coffee, Heart, Music } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Layout, Settings, Coffee, Heart, Music, Keyboard } from 'lucide-react';
 import Tooltip from './Tooltip';
-import { useMusic } from '@context/MusicContext';
+import { useMusic } from '../../context/MusicContext';
+import { usePomodoro } from '@context/PomodoroContext';
 
 const Sidebar = ({ onOpenSettings, onOpenSupport }) => {
-    const { openModal, isModalOpen } = useMusic();
+    const { openModal, isModalOpen, closeModal } = useMusic();
+    const { dispatch } = usePomodoro();
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (
+                document.activeElement.tagName === 'INPUT' || 
+                document.activeElement.tagName === 'TEXTAREA'
+            ) return;
+
+            const key = e?.key?.toLowerCase();
+
+            if (key === 'm') {
+                isModalOpen ? closeModal() : openModal();
+            }
+            if (key === 's') {
+                onOpenSettings();
+            }
+            if (key === 'h') {
+                onOpenSupport();
+            }
+            if (e.code === 'Space') {
+                e.preventDefault();
+                dispatch({ type: 'TOGGLE_TIMER' });
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isModalOpen, openModal, closeModal, onOpenSettings, onOpenSupport, dispatch]);
 
     return (
         <aside className="hidden z-50 relative md:flex flex-col items-center bg-black/20 backdrop-blur-xl py-8 border-white/5 border-r w-24 h-full shrink-0">
@@ -19,7 +49,7 @@ const Sidebar = ({ onOpenSettings, onOpenSupport }) => {
                     </button>
                 </Tooltip>
 
-                <Tooltip text="Player">
+                <Tooltip text="Player (M)">
                     <button
                         onClick={openModal}
                         className={`p-3 transition-all rounded-xl ${isModalOpen ? 'text-accent bg-accent/10 shadow-glow' : 'text-white/30 hover:text-white'}`}
@@ -30,13 +60,19 @@ const Sidebar = ({ onOpenSettings, onOpenSupport }) => {
             </nav>
 
             <div className="flex flex-col gap-4">
-                <Tooltip text="Support">
+                <Tooltip text="M: Music | S: Settings | H: Support | Space: Timer">
+                    <div className="p-3 text-accent/40 cursor-help">
+                        <Keyboard size={24} />
+                    </div>
+                </Tooltip>
+
+                <Tooltip text="Support (H)">
                     <button onClick={onOpenSupport} className="p-3 text-white/30 hover:text-accent transition-colors">
                         <Heart size={24} />
                     </button>
                 </Tooltip>
 
-                <Tooltip text="Settings">
+                <Tooltip text="Settings (S)">
                     <button onClick={onOpenSettings} className="p-3 text-white/30 hover:text-white hover:rotate-45 transition-all">
                         <Settings size={24} />
                     </button>

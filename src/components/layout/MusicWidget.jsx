@@ -1,58 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Volume2, CloudRain, Coffee, Trees, Trash2, Radio, Upload, Play, Pause, Music } from 'lucide-react';
-import { useMusic } from '@context/MusicContext';
-import { useAudio } from '@context/AudioContext';
-
-const RADIO_STATIONS = [
-    { id: 'lofi', name: 'Lofi Hip Hop', url: 'https://stream.zeno.fm/0r0xa792kwzuv' },
-    { id: 'jazz', name: 'Coffee Shop Jazz', url: 'https://cafe-de-paris.stream.publicradio.pro/cafe-de-paris' },
-    { id: 'synth', name: 'Synthwave Relax', url: 'https://nightride.fm/stream/nightride.mp3' },
-];
+import { motion } from 'framer-motion';
+import { X, Volume2, CloudRain, Coffee, Trees, Waves, Maximize2 } from 'lucide-react';
+import { useMusic } from '../../context/MusicContext';
+import { useAudio } from '../../context/AudioContext';
 
 const AMBIENT_SOUNDS = [
-    { id: 'rain', name: 'Rain', icon: <CloudRain size={20} />, url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-    { id: 'cafe', name: 'Café', icon: <Coffee size={20} />, url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-    { id: 'forest', name: 'Forest', icon: <Trees size={20} />, url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
+    { id: 'rain', name: 'Rain', icon: <CloudRain size={18} />, url: 'https://www.soundjay.com/nature/rain-07.mp3' },
+    { id: 'cafe', name: 'Cafe', icon: <Coffee size={18} />, url: 'https://codeskulptor-demos.commondatastorage.googleapis.com/descent/background%20music.mp3' },
+    { id: 'forest', name: 'Forest', icon: <Trees size={18} />, url: 'https://www.soundjay.com/nature/forest-wind-01.mp3' },
+    { id: 'waves', name: 'Ocean', icon: <Waves size={18} />, url: 'https://www.soundjay.com/nature/ocean-wave-1.mp3' },
 ];
 
 const MusicWidget = () => {
-    const { isModalOpen: isOpen, closeModal: onClose, currentTrack, setCurrentTrack } = useMusic();
+    const { isModalOpen: isOpen, closeModal: onClose } = useMusic();
     const { masterVolume, setMasterVolume } = useAudio();
-    const [activeTab, setActiveTab] = useState('radio');
-    const [isPlaying, setIsPlaying] = useState(false);
     const [playingAmbience, setPlayingAmbience] = useState(null);
-    const [localFile, setLocalFile] = useState(null);
-
-    const mainAudioRef = useRef(new Audio());
     const ambienceAudioRef = useRef(new Audio());
 
     useEffect(() => {
-        mainAudioRef.current.volume = masterVolume;
         ambienceAudioRef.current.volume = masterVolume;
     }, [masterVolume]);
-
-    const toggleMainMusic = (track) => {
-        if (currentTrack?.url === track.url && isPlaying) {
-            mainAudioRef.current.pause();
-            setIsPlaying(false);
-        } else {
-            mainAudioRef.current.src = track.url;
-            mainAudioRef.current.play();
-            setCurrentTrack(track);
-            setIsPlaying(true);
-        }
-    };
-
-    const handleFileUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const url = URL.createObjectURL(file);
-            const newTrack = { name: file.name, url, type: 'local' };
-            setLocalFile(newTrack);
-            toggleMainMusic(newTrack);
-        }
-    };
 
     const toggleAmbience = (sound) => {
         if (playingAmbience?.id === sound.id) {
@@ -67,107 +34,71 @@ const MusicWidget = () => {
     };
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    className="bottom-24 left-28 z-50 fixed"
-                >
-                    <div className="flex flex-col bg-black/90 shadow-2xl backdrop-blur-3xl border border-white/10 rounded-[2.5rem] w-[450px] h-[500px] overflow-hidden glass">
+        <motion.div
+            initial={false}
+            animate={{
+                opacity: isOpen ? 1 : 0,
+                scale: isOpen ? 1 : 0.95,
+                y: isOpen ? 0 : 40,
+                pointerEvents: isOpen ? 'auto' : 'none',
+                visibility: isOpen ? 'visible' : 'hidden'
+            }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="bottom-24 left-28 z-50 fixed"
+        >
+            <div className="flex flex-col bg-black/95 shadow-2xl backdrop-blur-3xl border border-white/10 rounded-[2.5rem] w-[550px] h-[600px] overflow-hidden glass">
 
-                        <div className="flex justify-between items-center p-6 border-white/5 border-b">
-                            <div className="flex gap-6">
-                                {['radio', 'local', 'atmosphere'].map((tab) => (
-                                    <button
-                                        key={tab}
-                                        onClick={() => setActiveTab(tab)}
-                                        className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === tab ? 'text-accent' : 'text-white/30 hover:text-white'}`}
-                                    >
-                                        {tab}
-                                    </button>
-                                ))}
-                            </div>
-                            <button onClick={onClose} className="p-2 text-white/20 hover:text-white"><X size={18} /></button>
-                        </div>
+                <div className="flex justify-between items-center p-6 border-white/5 border-b">
+                    <span className="font-black text-[9px] text-white/20 uppercase tracking-[0.3em]">Lofi.cafe Player</span>
+                    <div className="flex items-center gap-4">
+                        <a href="https://www.lofi.cafe/" target="_blank" rel="noreferrer" className="text-white/20 hover:text-white transition-colors">
+                            <Maximize2 size={16} />
+                        </a>
+                        <button onClick={onClose} className="text-white/20 hover:text-white"><X size={18} /></button>
+                    </div>
+                </div>
 
-                        <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
-                            {activeTab === 'radio' && (
-                                <div className="space-y-3">
-                                    {RADIO_STATIONS.map((station) => (
-                                        <button
-                                            key={station.id}
-                                            onClick={() => toggleMainMusic(station)}
-                                            className={`w-full flex items-center justify-between p-5 rounded-2xl border transition-all ${currentTrack?.url === station.url && isPlaying ? 'bg-accent/20 border-accent text-accent' : 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10'}`}
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <Radio size={18} />
-                                                <span className="font-bold text-xs uppercase tracking-widest">{station.name}</span>
-                                            </div>
-                                            {currentTrack?.url === station.url && isPlaying ? <Pause size={16} /> : <Play size={16} />}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            {activeTab === 'local' && (
-                                <div className="space-y-6">
-                                    <label className="flex flex-col justify-center items-center gap-4 hover:bg-white/5 border-2 border-white/5 border-dashed rounded-[2rem] h-40 transition-all cursor-pointer">
-                                        <Upload size={24} className="text-white/20" />
-                                        <span className="px-10 font-black text-[10px] text-white/30 text-center uppercase tracking-widest">Upload MP3 from device</span>
-                                        <input type="file" accept="audio/*" onChange={handleFileUpload} hidden />
-                                    </label>
-
-                                    {localFile && (
-                                        <div className="flex justify-between items-center bg-accent/10 p-5 border border-accent/20 rounded-2xl">
-                                            <div className="flex items-center gap-4 overflow-hidden">
-                                                <Music size={18} className="text-accent" />
-                                                <span className="font-bold text-[10px] text-accent truncate uppercase">{localFile.name}</span>
-                                            </div>
-                                            <button onClick={() => toggleMainMusic(localFile)} className="text-accent">
-                                                {isPlaying && currentTrack.type === 'local' ? <Pause size={16} /> : <Play size={16} />}
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {activeTab === 'atmosphere' && (
-                                <div className="gap-4 grid grid-cols-3">
-                                    {AMBIENT_SOUNDS.map((sound) => (
-                                        <button
-                                            key={sound.id}
-                                            onClick={() => toggleAmbience(sound)}
-                                            className={`flex flex-col items-center justify-center p-6 rounded-[2rem] border transition-all ${playingAmbience?.id === sound.id ? 'bg-accent/20 border-accent text-accent shadow-glow' : 'bg-white/5 border-white/5 text-white/20 hover:bg-white/10'}`}
-                                        >
-                                            <div className="mb-3">{sound.icon}</div>
-                                            <span className="font-black text-[9px] uppercase tracking-widest">{sound.name}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="bg-white/5 p-8 border-white/5 border-t">
-                            <div className="flex items-center gap-6">
-                                <Volume2 size={18} className="text-white/20" />
-                                <div className="group relative flex-1 bg-white/10 rounded-full h-1.5">
-                                    <input
-                                        type="range" min="0" max="1" step="0.01" value={masterVolume}
-                                        onChange={(e) => setMasterVolume(parseFloat(e.target.value))}
-                                        className="z-10 absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                                    />
-                                    <div className="top-0 left-0 absolute bg-accent shadow-glow rounded-full h-full transition-all" style={{ width: `${masterVolume * 100}%` }} />
-                                    <div className="top-1/2 absolute bg-white opacity-0 group-hover:opacity-100 shadow-xl rounded-full w-4 h-4 transition-opacity -translate-y-1/2" style={{ left: `calc(${masterVolume * 100}% - 8px)` }} />
-                                </div>
-                                <span className="w-8 font-black text-[10px] text-white/20">{Math.round(masterVolume * 100)}%</span>
-                            </div>
+                <div className="relative flex-1 bg-black">
+                    <iframe
+                        src="https://www.lofi.cafe/"
+                        className="border-none w-full h-full"
+                        title="Lofi Cafe"
+                        allow="autoplay; encrypted-media"
+                    />
+                    <div className="right-4 bottom-4 left-4 absolute pointer-events-none">
+                        <div className="bg-black/60 backdrop-blur-md p-2 border border-white/5 rounded-xl font-bold text-[8px] text-white/40 text-center uppercase tracking-tighter">
+                            Use ← → keys to change station | Space to Pause
                         </div>
                     </div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+                </div>
+
+                <div className="space-y-6 bg-white/5 p-6 border-white/5 border-t">
+                    {/* <div className="flex justify-between items-center gap-4">
+                        {AMBIENT_SOUNDS.map((sound) => (
+                            <button
+                                key={sound.id}
+                                onClick={() => toggleAmbience(sound)}
+                                className={`flex-1 flex flex-col items-center justify-center py-3 rounded-2xl border transition-all ${playingAmbience?.id === sound.id ? 'bg-accent/10 border-accent text-accent' : 'bg-white/5 border-white/5 text-white/20 hover:bg-white/10'}`}
+                            >
+                                {sound.icon}
+                            </button>
+                        ))}
+                    </div> */}
+
+                    <div className="flex items-center gap-6">
+                        {/* <Volume2 size={16} className="text-white/20" />
+                        <div className="group relative flex-1 bg-white/10 rounded-full h-1">
+                            <input
+                                type="range" min="0" max="1" step="0.01" value={masterVolume}
+                                onChange={(e) => setMasterVolume(parseFloat(e.target.value))}
+                                className="z-10 absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                            />
+                            <div className="top-0 left-0 absolute bg-accent rounded-full h-full transition-all" style={{ width: `${masterVolume * 100}%` }} />
+                        </div> */}
+                    </div>
+                </div>
+            </div>
+        </motion.div>
     );
 };
 

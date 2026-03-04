@@ -4,25 +4,20 @@ import { usePomodoro } from '@context/PomodoroContext';
 
 const TimerDial = () => {
     const { state } = usePomodoro();
-
-    // Lógica de tiempo
+    
     const minutes = Math.floor(state.timeLeft / 60);
     const seconds = state.timeLeft % 60;
 
-    // Lógica del círculo de progreso
     const totalSeconds = state.settings[state.mode] * 60;
     const progress = ((totalSeconds - state.timeLeft) / totalSeconds);
 
-    // Propiedades del SVG
     const radius = 45;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - progress * circumference;
 
     return (
         <div className="relative flex justify-center items-center w-64 md:w-80 h-64 md:h-80">
-            {/* SVG del Círculo */}
             <svg className="drop-shadow-2xl w-full h-full -rotate-90 transform">
-                {/* Círculo de fondo (Rastro) */}
                 <circle
                     cx="50%"
                     cy="50%"
@@ -30,7 +25,7 @@ const TimerDial = () => {
                     className="fill-none stroke-white/5"
                     strokeWidth="2"
                 />
-                {/* Círculo de progreso (Activo) */}
+
                 <motion.circle
                     cx="50%"
                     cy="50%"
@@ -48,7 +43,6 @@ const TimerDial = () => {
                 />
             </svg>
 
-            {/* Números del Contador */}
             <div className="absolute flex flex-col items-center">
                 <motion.div
                     key={state.timeLeft}
@@ -66,7 +60,6 @@ const TimerDial = () => {
                 </span>
             </div>
 
-            {/* Efecto de resplandor ambiental */}
             <div className={`absolute inset-0 rounded-full bg-accent/5 blur-3xl transition-opacity duration-1000 ${state.isActive ? 'opacity-100' : 'opacity-0'}`} />
         </div>
     );

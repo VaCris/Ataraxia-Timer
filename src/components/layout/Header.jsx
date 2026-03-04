@@ -1,9 +1,11 @@
-import React from 'react';
-import { usePomodoro } from '../../context/PomodoroContext';
-import { User } from 'lucide-react';
-
+import React,{ Suspense } from 'react';
+import { useState } from 'react';
+import { usePomodoro } from '@context/PomodoroContext';
+import { User, Bell } from 'lucide-react';
+const AuthModal = React.lazy(() => import('@components/modals/AuthModal'));
 const Header = () => {
     const { state } = usePomodoro();
+    const [isAuthOpen, setIsAuthOpen] = useState(false);
     // const xpInCurrentLevel = state.stats.xp % 100;
 
     return (
@@ -13,7 +15,7 @@ const Header = () => {
                 <p className="font-medium text-white/40 text-xs uppercase tracking-widest">System Active</p>
             </div>
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
                 {/* <div className="hidden sm:block text-right">
                     <div className="flex justify-end items-center gap-2 mb-1">
                         <span className="font-bold text-[10px] text-white/40 uppercase tracking-tighter">Level</span>
@@ -27,10 +29,24 @@ const Header = () => {
                     </div>
                 </div> */}
 
-                <div className="flex justify-center items-center bg-surface border border-white/10 hover:border-accent/50 rounded-xl w-10 h-10 text-white/60 transition-colors cursor-pointer">
-                    <User size={20} />
-                </div>
+                <button className="relative flex justify-center items-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl w-12 h-12 text-white/20 hover:text-white transition-all">
+                    <Bell size={20} />
+                    <span className="top-3 right-3 absolute bg-accent shadow-glow rounded-full w-2 h-2" />
+                </button>
+
+                <button
+                    onClick={() => setIsAuthOpen(true)}
+                    className="group flex justify-center items-center bg-white/5 hover:bg-accent/20 border border-white/10 hover:border-accent/50 rounded-2xl w-12 h-12 text-white/40 hover:text-accent transition-all"
+                >
+                    <User size={20} className="group-hover:scale-110 transition-transform" />
+                </button>
             </div>
+
+            <Suspense fallback={null}>
+                {isAuthOpen && (
+                    <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+                )}
+            </Suspense>
         </header>
     );
 };
