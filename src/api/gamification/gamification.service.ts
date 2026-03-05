@@ -1,4 +1,4 @@
-import api from '../Client';
+import api from '@api/Client';
 import { GetLeaderboardDto } from '@api/shared/dto/app.dto';
 
 export const gamificationService = {

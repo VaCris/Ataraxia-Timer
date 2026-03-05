@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
             try {
                 const token = localStorage.getItem('token');
                 const refreshToken = localStorage.getItem('refreshToken');
-                if (token) {
+                if (token || refreshToken) {
                     const profile = await authService.getProfile();
                     setUser(profile);
                     setIsAuthenticated(true);
@@ -84,13 +84,17 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = async () => {
+        try {
+            await authService.logout();
+        } catch (e) {
+            console.error(e);
+        }
         setUser(null);
         setIsAuthenticated(false);
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         window.location.reload(); 
     };
-
     if (loading) {
         return (
             <div className="flex justify-center items-center bg-[#0a0a0a] w-screen h-screen font-bold text-white/50 text-sm tracking-widest">

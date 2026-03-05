@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useAudio } from './AudioContext';
 
@@ -35,6 +35,8 @@ function reducer(state, action) {
             return { ...state, timeLeft: state.timeLeft - 1 };
         case 'TOGGLE_TIMER':
             return { ...state, isActive: !state.isActive };
+        case 'START_TIMER':
+            return { ...state, isActive: true };
         case 'SET_MODE':
             return {
                 ...state,
@@ -69,14 +71,14 @@ export const PomodoroProvider = ({ children }) => {
     const { autoStartBreak, autoStartFocus } = useSelector(state => state.settings) || {};
     const { masterVolume, alarmVolume } = useAudio();
 
-    const handleSwitchMode = (nextMode) => {
+    const handleSwitchMode = useCallback((nextMode) => {
         dispatch({ type: 'SET_MODE', payload: nextMode });
         if (nextMode === 'FOCUS' && autoStartFocus) {
             dispatch({ type: 'START_TIMER' });
         } else if ((nextMode === 'SHORT_BREAK' || nextMode === 'LONG_BREAK') && autoStartBreak) {
             dispatch({ type: 'START_TIMER' });
         }
-    };
+    }, [autoStartFocus, autoStartBreak]);
 
     const playAlarm = () => {
         const alarm = new Audio('/sounds/alarm-digital.mp3');
@@ -94,6 +96,36 @@ export const PomodoroProvider = ({ children }) => {
         }
         return () => clearInterval(interval);
     }, [state.isActive, state.timeLeft]);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+            switch (e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    dispatch({ type: 'TOGGLE_TIMER' });
+                    break;
+                case 'KeyR':
+                    dispatch({ type: 'RESET_TIMER' });
+                    break;
+                case 'KeyF':
+                    handleSwitchMode('FOCUS');
+                    break;
+                case 'KeyS':
+                    handleSwitchMode('SHORT_BREAK');
+                    break;
+                case 'KeyL':
+                    handleSwitchMode('LONG_BREAK');
+                    break;
+                default:
+                    break;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleSwitchMode]);
 
     return (
         <PomodoroContext.Provider value={{ state, dispatch, handleSwitchMode }}>
