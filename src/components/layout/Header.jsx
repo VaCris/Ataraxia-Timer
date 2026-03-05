@@ -1,5 +1,4 @@
-import React,{ Suspense } from 'react';
-import { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { usePomodoro } from '@context/PomodoroContext';
 import { User, Bell } from 'lucide-react';
 const AuthModal = React.lazy(() => import('@components/modals/AuthModal'));

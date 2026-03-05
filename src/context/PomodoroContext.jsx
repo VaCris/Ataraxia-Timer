@@ -8,20 +8,7 @@ const initialState = {
     mode: 'FOCUS',
     timeLeft: 25 * 60,
     isActive: false,
-    tags: JSON.parse(localStorage.getItem('tags')) || [
-        { name: 'General', color: '#8b5cf6' },
-        { name: 'Work', color: '#3b82f6' },
-        { name: 'Study', color: '#10b981' }
-    ],
-    tasks: JSON.parse(localStorage.getItem('tasks')) || [],
-    stats: JSON.parse(localStorage.getItem('stats')) || {
-        xp: 0,
-        level: 1,
-        sessionsCompleted: 0,
-        tasksCompleted: 0,
-        streak: 0,
-    },
-    settings: JSON.parse(localStorage.getItem('settings')) || {
+    settings: {
         FOCUS: 25,
         SHORT_BREAK: 5,
         LONG_BREAK: 15,
@@ -69,44 +56,6 @@ function reducer(state, action) {
             };
         case 'TOGGLE_PLAY':
             return { ...state, music: { ...state.music, isPlaying: !state.music.isPlaying } };
-        case 'ADD_TASK':
-            const tagExists = state.tags.find(t => t.name.toLowerCase() === action.payload.tag.toLowerCase());
-            const newTags = tagExists
-                ? state.tags
-                : [...state.tags, { name: action.payload.tag, color: action.payload.tagColor }];
-            return {
-                ...state,
-                tasks: [action.payload, ...state.tasks],
-                tags: newTags
-            };
-        case 'DELETE_TASK':
-            return { ...state, tasks: state.tasks.filter(t => t.id !== action.payload) };
-        case 'TOGGLE_TASK':
-            const isCompleting = !state.tasks.find(t => t.id === action.payload).completed;
-            return {
-                ...state,
-                tasks: state.tasks.map(t => t.id === action.payload ? { ...t, completed: !t.completed } : t),
-                stats: {
-                    ...state.stats,
-                    tasksCompleted: isCompleting ? state.stats.tasksCompleted + 1 : state.stats.tasksCompleted - 1,
-                    xp: isCompleting ? state.stats.xp + 50 : Math.max(0, state.stats.xp - 50)
-                }
-            };
-
-        case 'COMPLETE_SESSION':
-            const xpGained = state.mode === 'FOCUS' ? 25 : 5;
-            const totalXp = state.stats.xp + xpGained;
-            return {
-                ...state,
-                isActive: false,
-                stats: {
-                    ...state.stats,
-                    xp: totalXp,
-                    level: Math.floor(totalXp / 100) + 1,
-                    sessionsCompleted: state.mode === 'FOCUS' ? state.stats.sessionsCompleted + 1 : state.stats.sessionsCompleted
-                }
-            };
-
         case 'UPDATE_SETTINGS':
             return { ...state, settings: { ...state.settings, ...action.payload } };
 
@@ -117,7 +66,7 @@ function reducer(state, action) {
 
 export const PomodoroProvider = ({ children }) => {
     const [state, dispatch] = useReducer(reducer, initialState);
-    const { autoStartBreak, autoStartFocus } = useSelector(state => state.settings);
+    const { autoStartBreak, autoStartFocus } = useSelector(state => state.settings) || {};
     const { masterVolume, alarmVolume } = useAudio();
 
     const handleSwitchMode = (nextMode) => {
@@ -136,23 +85,18 @@ export const PomodoroProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        localStorage.setItem('tasks', JSON.stringify(state.tasks));
-        localStorage.setItem('stats', JSON.stringify(state.stats));
-        localStorage.setItem('settings', JSON.stringify(state.settings));
-    }, [state.tasks, state.stats, state.settings]);
-
-    useEffect(() => {
         let interval = null;
         if (state.isActive && state.timeLeft > 0) {
             interval = setInterval(() => dispatch({ type: 'TICK' }), 1000);
         } else if (state.timeLeft === 0 && state.isActive) {
-            dispatch({ type: 'COMPLETE_SESSION' });
+            dispatch({ type: 'TOGGLE_TIMER' });
+            playAlarm();
         }
         return () => clearInterval(interval);
     }, [state.isActive, state.timeLeft]);
 
     return (
-        <PomodoroContext.Provider value={{ state, dispatch }}>
+        <PomodoroContext.Provider value={{ state, dispatch, handleSwitchMode }}>
             {children}
         </PomodoroContext.Provider>
     );

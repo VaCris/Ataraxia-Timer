@@ -1,31 +1,31 @@
 import React from 'react';
-import { usePomodoro } from '../../context/PomodoroContext';
-import { Flame, CheckCircle, Trophy } from 'lucide-react';
+import { useStats } from '@hooks/useStats';
 
 const StatsOverview = () => {
-    const { state } = usePomodoro();
+    const { progress, loading } = useStats();
 
-    const stats = [
-        //{ label: 'Current Streak', value: state.stats.streak, icon: Flame, color: 'text-orange-500' },
-        //{ label: 'Sessions', value: state.stats.sessionsCompleted, icon: Trophy, color: 'text-accent' },
-        //{ label: 'Tasks Done', value: state.stats.tasksCompleted || 0, icon: CheckCircle, color: 'text-blue-500' },
-    ];
+    if (loading || !progress) {
+        return <div className="bg-white/5 rounded-3xl h-24 animate-pulse" />;
+    }
 
     return (
-        <div className="gap-4 grid grid-cols-3 mb-8">
-            {stats.map((stat, i) => (
-                <div key={i} className="bg-surface/50 backdrop-blur-sm p-4 border border-white/5 rounded-2xl">
-                    <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg bg-black/40 ${stat.color}`}>
-                            <stat.icon size={18} />
-                        </div>
-                        <div>
-                            <p className="font-bold text-[10px] text-white/30 uppercase tracking-widest">{stat.label}</p>
-                            <p className="font-bold text-xl">{stat.value}</p>
-                        </div>
-                    </div>
-                </div>
-            ))}
+        <div className="gap-4 grid grid-cols-2 md:grid-cols-4">
+            <div className="p-4 border border-white/5 rounded-3xl glass">
+                <p className="font-bold text-[10px] text-white/40 uppercase">Nivel Actual</p>
+                <p className="font-black text-accent text-2xl">{progress.level || 1}</p>
+            </div>
+            <div className="p-4 border border-white/5 rounded-3xl glass">
+                <p className="font-bold text-[10px] text-white/40 uppercase">Experiencia (XP)</p>
+                <p className="font-black text-2xl">{progress.xp || 0}</p>
+            </div>
+            <div className="p-4 border border-white/5 rounded-3xl glass">
+                <p className="font-bold text-[10px] text-white/40 uppercase">Racha de Enfoque</p>
+                <p className="font-black text-orange-400 text-2xl">{progress.currentStreak || 0} 🔥</p>
+            </div>
+            <div className="p-4 border border-white/5 rounded-3xl glass">
+                <p className="font-bold text-[10px] text-white/40 uppercase">Total Pomodoros</p>
+                <p className="font-black text-blue-400 text-2xl">{progress.totalPomodoros || 0}</p>
+            </div>
         </div>
     );
 };

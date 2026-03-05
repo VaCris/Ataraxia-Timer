@@ -10,31 +10,18 @@ const Sidebar = ({ onOpenSettings, onOpenSupport }) => {
 
     useEffect(() => {
         const handleKeyDown = (e) => {
-            if (
-                document.activeElement.tagName === 'INPUT' || 
-                document.activeElement.tagName === 'TEXTAREA'
-            ) return;
-
-            const key = e?.key?.toLowerCase();
-
-            if (key === 'm') {
-                isModalOpen ? closeModal() : openModal();
-            }
-            if (key === 's') {
+            if (e.ctrlKey && e.key?.toLowerCase() === 's') {
+                e.preventDefault();
                 onOpenSettings();
             }
-            if (key === 'h') {
+            if (e.ctrlKey && e.key?.toLowerCase() === 'h') {
+                e.preventDefault();
                 onOpenSupport();
             }
-            if (e.code === 'Space') {
-                e.preventDefault();
-                dispatch({ type: 'TOGGLE_TIMER' });
-            }
         };
-
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isModalOpen, openModal, closeModal, onOpenSettings, onOpenSupport, dispatch]);
+    }, [onOpenSettings, onOpenSupport]);
 
     return (
         <aside className="hidden z-50 relative md:flex flex-col items-center bg-black/20 backdrop-blur-xl py-8 border-white/5 border-r w-24 h-full shrink-0">

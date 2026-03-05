@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authService } from '@api/auth/auth.service';
 
 const AuthContext = createContext();
 
@@ -8,47 +9,95 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('ataraxia_user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-            setIsAuthenticated(true);
-        }
-        setLoading(false);
+        const initializeSession = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const refreshToken = localStorage.getItem('refreshToken');
+                if (token) {
+                    const profile = await authService.getProfile();
+                    setUser(profile);
+                    setIsAuthenticated(true);
+                } else {
+                    let deviceId = localStorage.getItem('deviceId');
+                    if (!deviceId) {
+                        deviceId = crypto.randomUUID();
+                        localStorage.setItem('deviceId', deviceId);
+                    }
+
+                    const response = await authService.guestLogin(deviceId);
+
+                    localStorage.setItem('token', response.access_token);
+                    localStorage.setItem('refreshToken', response.refresh_token);
+                    setUser(response.user);
+                    setIsAuthenticated(true);
+                }
+            } catch (error) {
+                console.error("Error initializing session:", error);
+
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
+                setUser(null);
+                setIsAuthenticated(false);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        initializeSession();
     }, []);
 
     const login = async (email, password) => {
         try {
-            const mockUser = { email, username: email.split('@')[0], id: '123' };
+            setLoading(true);
+            const response = await authService.login(email, password);
 
-            setUser(mockUser);
+            localStorage.setItem('token', response.access_token);
+            localStorage.setItem('refreshToken', response.refresh_token);
+            setUser(response.user);
             setIsAuthenticated(true);
-            localStorage.setItem('ataraxia_user', JSON.stringify(mockUser));
 
             return { success: true };
         } catch (error) {
-            return { success: false, error: 'Invalid credentials' };
+            return { success: false, error: error.response?.data?.message || 'Invalid credentials' };
+        } finally {
+            setLoading(false);
         }
     };
 
-    const register = async ({ username, email, password, deviceId }) => {
+    const register = async ({ username, email, password }) => {
         try {
-            const newUser = { username, email, id: deviceId };
+            setLoading(true);
+            const deviceId = localStorage.getItem('deviceId');
 
-            setUser(newUser);
+            const response = await authService.register(username, email, password, deviceId);
+
+            localStorage.setItem('token', response.access_token);
+            setUser(response.user);
             setIsAuthenticated(true);
-            localStorage.setItem('ataraxia_user', JSON.stringify(newUser));
 
             return { success: true };
         } catch (error) {
-            return { success: false, error: 'Could not create account' };
+            return { success: false, error: error.response?.data?.message || 'Could not create account' };
+        } finally {
+            setLoading(false);
         }
     };
 
-    const logout = () => {
+    const logout = async () => {
         setUser(null);
         setIsAuthenticated(false);
-        localStorage.removeItem('ataraxia_user');
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        window.location.reload(); 
     };
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center bg-[#0a0a0a] w-screen h-screen font-bold text-white/50 text-sm tracking-widest">
+                STARTING ATARAXIA...
+            </div>
+        );
+    }
 
     return (
         <AuthContext.Provider value={{
@@ -59,7 +108,7 @@ export const AuthProvider = ({ children }) => {
             logout,
             loading
         }}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     );
 };

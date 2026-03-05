@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import EmptyTasks from './EmptyTasks';
-import { usePomodoro } from '../../context/PomodoroContext';
+import { usePomodoro } from '@context/PomodoroContext';
+import { useTasks } from '@hooks/useTasks';
 import { Plus, Trash2, CheckCircle2, Circle, Tag as TagIcon, Hash } from 'lucide-react';
 
 const TaskManager = () => {
@@ -10,9 +11,12 @@ const TaskManager = () => {
     const [tagName, setTagName] = useState('General');
     const [tagColor, setTagColor] = useState('#e11d48');
 
-    const handleSubmit = (e) => {
+    const { tasks, loading, addTask, toggleTask, removeTask } = useTasks();
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (name.trim().length < 2) return;
+        await addTask(name.trim(), '', []);
 
         dispatch({
             type: 'ADD_TASK',
@@ -26,9 +30,19 @@ const TaskManager = () => {
                 createdAt: new Date().toISOString()
             }
         });
+
         setName('');
         setEst(1);
     };
+
+    if (loading) {
+        return (
+            <div className="flex flex-col justify-center items-center bg-surface/20 backdrop-blur-md p-6 border border-white/5 rounded-[2.5rem] h-full">
+                <p className="text-white/40">Loading Mission Log...</p>
+            </div>
+        );
+    }
+
 
     return (
         <div className="flex flex-col bg-surface/20 backdrop-blur-md p-6 border border-white/5 rounded-[2.5rem] h-full">
@@ -92,33 +106,33 @@ const TaskManager = () => {
             </form>
 
             <div className="flex-1 space-y-3 px-2 overflow-y-auto custom-scrollbar">
-                {state.tasks.length === 0 ? (
+                {tasks.length === 0 ? (
                     <EmptyTasks />
                 ) : (
-                    state.tasks.map(task => (
-                        <div key={task.id} className={`group flex items-center justify-between p-5 rounded-2xl border transition-all ${task.completed ? 'bg-black/20 border-white/5 opacity-50' : 'bg-surface border-white/10 hover:border-accent/30'
+                    tasks.map(task => (
+                        <div key={task.id} className={`group flex items-center justify-between p-5 rounded-2xl border transition-all ${task.isCompleted ? 'bg-black/20 border-white/5 opacity-50' : 'bg-surface border-white/10 hover:border-accent/30'
                             }`}>
                             <div className="flex items-center gap-4">
                                 <button
-                                    onClick={() => dispatch({ type: 'TOGGLE_TASK', payload: task.id })}
+                                    onClick={() => toggleTask(task.id, task.isCompleted)} // Usa la función del hook API
                                     className="active:scale-90 transition-transform"
                                 >
-                                    {task.completed ? <CheckCircle2 className="text-accent" /> : <Circle className="text-white/20" />}
+                                    {task.isCompleted ? <CheckCircle2 className="text-accent" /> : <Circle className="text-white/20" />}
                                 </button>
                                 <div>
-                                    <p className={`text-sm font-medium ${task.completed ? 'line-through' : ''}`}>{task.name}</p>
+                                    <p className={`text-sm font-medium ${task.isCompleted ? 'line-through' : ''}`}>{task.title}</p>
                                     <div className="flex items-center gap-3 mt-1.5">
                                         <div className="flex gap-1">
-                                            {[...Array(task.estPomos)].map((_, i) => (
+                                            {[...Array(task.estPomos || 1)].map((_, i) => (
                                                 <div key={i} className="bg-white/10 rounded-full w-1.5 h-1.5" />
                                             ))}
                                         </div>
                                         {task.tag && (
                                             <span
                                                 className="flex items-center gap-1 font-black text-[9px] uppercase tracking-tighter"
-                                                style={{ color: task.tagColor }}
+                                                style={{ color: task.tagColor || '#ccc' }}
                                             >
-                                                <div className="rounded-full w-1 h-1" style={{ backgroundColor: task.tagColor }} />
+                                                <div className="rounded-full w-1 h-1" style={{ backgroundColor: task.tagColor || '#ccc' }} />
                                                 {task.tag}
                                             </span>
                                         )}
@@ -126,7 +140,7 @@ const TaskManager = () => {
                                 </div>
                             </div>
                             <button
-                                onClick={() => dispatch({ type: 'DELETE_TASK', payload: task.id })}
+                                onClick={() => removeTask(task.id)} // Llama a la API para eliminar
                                 className="opacity-0 group-hover:opacity-100 p-2 text-white/20 hover:text-red-500 transition-all"
                             >
                                 <Trash2 size={16} />

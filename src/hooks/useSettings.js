@@ -12,7 +12,8 @@ export const useSettings = () => {
             try {
                 const data = await settingsService.getSettings();
                 setSettings(data);
-            } catch (error) {;
+            } catch (error) {
+                ;
                 toast.error("Error obtaining configuration");
             } finally {
                 setLoading(false);
@@ -26,9 +27,9 @@ export const useSettings = () => {
             const dto = CreateUpdateSettingDto(newConfig);
             const updated = await settingsService.updateSettings(dto);
             setSettings(updated);
-            toast.success("Configuración guardada");
+            toast.success("Saved settings successfully");
         } catch (error) {
-            toast.error("Error al guardar cambios");
+            toast.error("Error saving changes to settings");
         }
     };
 

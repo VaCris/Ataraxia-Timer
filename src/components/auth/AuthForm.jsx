@@ -84,7 +84,7 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                     <>
                         <div className="relative">
                             <Lock size={18} style={iconStyle} />
-                            <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="input-field" style={{ ...inputBaseStyle, paddingRight: '44px' }} required />
+                            <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="input-field" style={{ ...inputBaseStyle, paddingRight: '44px' }} required  autoComplete="current-password"/>
                             <button type="button" onClick={() => setShowPassword(!showPassword)} style={eyeButtonStyle}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
                         </div>
 
@@ -102,7 +102,7 @@ const AuthForm = ({ isLogin, onSuccess, toggleMode }) => {
                             <div className="space-y-2">
                                 <div className="relative">
                                     <Lock size={18} style={iconStyle} />
-                                    <input type={showPassword ? 'text' : 'password'} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="input-field" style={{ ...inputBaseStyle, paddingRight: '44px' }} required />
+                                    <input type={showPassword ? 'text' : 'password'} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="input-field" style={{ ...inputBaseStyle, paddingRight: '44px' }} required autoComplete="current-password" />
                                     <button type="button" onClick={() => setShowPassword(!showPassword)} style={eyeButtonStyle}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
                                 </div>
                                 {confirmPassword.length > 0 && (
