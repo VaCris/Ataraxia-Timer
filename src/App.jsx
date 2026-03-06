@@ -6,6 +6,9 @@ import { AudioProvider } from '@context/AudioContext';
 import { AuthProvider } from '@context/AuthContext';
 import Dashboard from '@components/layout/Dashboard';
 import ResetPassword from '@components/auth/ResetPassword';
+import UpdatePrompt from '@components/layout/UpdatePrompt';
+import InstallPrompt from '@components/layout/InstallPrompt';
+import CookieConsent from '@components/layout/CookieConsent';
 import { Toaster } from 'react-hot-toast';
 import { processSyncQueue } from '@api/syncManager';
 import Maintenance from '@pages/Maintenance';
@@ -25,7 +28,6 @@ function App() {
     }
     const handleOnline = () => processSyncQueue();
     window.addEventListener('online', handleOnline);
-
     return () => window.removeEventListener('online', handleOnline);
   }, []);
 
@@ -68,6 +70,9 @@ function App() {
           },
         }}
       />
+      <UpdatePrompt />
+      <InstallPrompt />
+      <CookieConsent />
       <AudioProvider>
         <PomodoroProvider>
           <MusicProvider>
