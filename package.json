@@ -9,8 +9,12 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "overrides": {
+    "serialize-javascript": "^7.0.4"
+  },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",
+    "@rollup/plugin-terser": "^1.0.0",
     "@tailwindcss/postcss": "^4.2.1",
     "axios": "^1.13.6",
     "framer-motion": "^12.34.4",
@@ -19,12 +23,23 @@
     "react-dom": "^19.2.0",
     "react-hot-toast": "^2.6.0",
     "react-redux": "^9.2.0",
-    "react-router-dom": "^7.13.1"
+    "react-router-dom": "^7.13.1",
+    "serialize-javascript": "^7.0.4",
+    "workbox-build": "^7.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@types/babel__core": "^7.20.5",
+    "@types/babel__generator": "^7.27.0",
+    "@types/babel__template": "^7.4.4",
+    "@types/babel__traverse": "^7.28.0",
+    "@types/estree": "^1.0.8",
+    "@types/json-schema": "^7.0.15",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@types/resolve": "^1.20.6",
+    "@types/trusted-types": "^2.0.7",
+    "@types/use-sync-external-store": "^1.5.0",
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.4.27",
     "eslint": "^9.39.1",
@@ -33,6 +48,7 @@
     "globals": "^16.5.0",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.1",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vite-plugin-pwa": "^1.2.0"
   }
 }
