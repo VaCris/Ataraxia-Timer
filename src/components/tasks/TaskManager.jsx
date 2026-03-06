@@ -16,23 +16,32 @@ const TaskManager = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (name.trim().length < 2) return;
-        await addTask(name.trim(), '', []);
 
-        dispatch({
-            type: 'ADD_TASK',
-            payload: {
-                id: crypto.randomUUID(),
-                name: name.trim(),
-                estPomos: est,
-                completed: false,
-                tag: tagName || 'General',
-                tagColor: tagColor,
-                createdAt: new Date().toISOString()
-            }
-        });
+        const taskData = {
+            title: name.trim(),
+            tag: tagName.trim() || 'General' 
+        };
 
-        setName('');
-        setEst(1);
+        try {
+            await addTask(taskData);
+            dispatch({
+                type: 'ADD_TASK',
+                payload: {
+                    id: crypto.randomUUID(),
+                    title: taskData.title,
+                    estPomos: est,
+                    isCompleted: false,
+                    tag: taskData.tag,
+                    createdAt: new Date().toISOString()
+                }
+            });
+
+            setName('');
+            setEst(1);
+            
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     if (loading) {
@@ -127,20 +136,20 @@ const TaskManager = () => {
                                                 <div key={i} className="bg-white/10 rounded-full w-1.5 h-1.5" />
                                             ))}
                                         </div>
-                                        {task.tag && (
+                                        {task.tag && task.tag.name && (
                                             <span
                                                 className="flex items-center gap-1 font-black text-[9px] uppercase tracking-tighter"
-                                                style={{ color: task.tagColor || '#ccc' }}
+                                                style={{ color: task.tag.color || '#ccc' }}
                                             >
-                                                <div className="rounded-full w-1 h-1" style={{ backgroundColor: task.tagColor || '#ccc' }} />
-                                                {task.tag}
+                                                <div className="rounded-full w-1 h-1" style={{ backgroundColor: task.tag.color || '#ccc' }} />
+                                                {task.tag.name}
                                             </span>
                                         )}
                                     </div>
                                 </div>
                             </div>
                             <button
-                                onClick={() => removeTask(task.id)} // Llama a la API para eliminar
+                                onClick={() => removeTask(task.id)} 
                                 className="opacity-0 group-hover:opacity-100 p-2 text-white/20 hover:text-red-500 transition-all"
                             >
                                 <Trash2 size={16} />

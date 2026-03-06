@@ -7,7 +7,6 @@ const SupportModal = ({ isOpen, onClose }) => {
 
     return (
         <div className="z-[110] fixed inset-0 flex justify-center items-center p-4">
-            {/* Backdrop */}
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -16,7 +15,6 @@ const SupportModal = ({ isOpen, onClose }) => {
                 className="absolute inset-0 bg-black/80 backdrop-blur-xl"
             />
 
-            {/* Contenido */}
             <motion.div
                 initial={{ scale: 0.9, opacity: 0, y: 30 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -38,11 +36,10 @@ const SupportModal = ({ isOpen, onClose }) => {
 
                 <h2 className="mb-2 font-black text-2xl italic tracking-tighter">SUPPORT ATARAXIA</h2>
                 <p className="mb-8 px-4 font-bold text-white/40 text-xs uppercase leading-relaxed tracking-widest">
-                    Ayúdanos a mantener este espacio libre de distracciones y en constante evolución.
+                    Help us keep this space free of distractions and constantly evolving.
                 </p>
 
                 <div className="space-y-3">
-                    {/* Opción: Buy me a coffee */}
                     <a
                         href="#"
                         target="_blank"
@@ -55,7 +52,6 @@ const SupportModal = ({ isOpen, onClose }) => {
                         <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                     </a>
 
-                    {/* Opción: GitHub */}
                     <a
                         href="#"
                         target="_blank"

@@ -31,16 +31,17 @@ export const useTasks = () => {
         fetchTasks();
     }, [fetchTasks]);
 
-    const addTask = async (title, description, tagIds) => {
+    const addTask = async (taskData) => {
         if (!user?.id) return toast.error("You must log in to create tasks");
-        
+
         try {
-            const dto = CreateTaskDto(title, user.id, description, tagIds);
-            const newTask = await tasksService.create(dto);
+            //const dto = CreateTaskDto(title, user.id, description, tagIds);
+            const newTask = await tasksService.create(taskData);
             setTasks(prev => [...prev, newTask]);
             toast.success("Task created successfully");
         } catch (error) {
-            toast.error("The task could not be created. Try again later.");
+            console.error(error.response?.data || error.message);
+            toast.error(error.response?.data?.message?.[0] || "The task could not be created. Try again later.");
         }
     };
 

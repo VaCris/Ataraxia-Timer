@@ -12,8 +12,7 @@ export const AuthProvider = ({ children }) => {
         const initializeSession = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const refreshToken = localStorage.getItem('refreshToken');
-                if (token || refreshToken) {
+                if (token) {
                     const profile = await authService.getProfile();
                     setUser(profile);
                     setIsAuthenticated(true);
@@ -23,17 +22,13 @@ export const AuthProvider = ({ children }) => {
                         deviceId = crypto.randomUUID();
                         localStorage.setItem('deviceId', deviceId);
                     }
-
                     const response = await authService.guestLogin(deviceId);
-
                     localStorage.setItem('token', response.access_token);
                     localStorage.setItem('refreshToken', response.refresh_token);
                     setUser(response.user);
                     setIsAuthenticated(true);
                 }
             } catch (error) {
-                console.error("Error initializing session:", error);
-
                 localStorage.removeItem('token');
                 localStorage.removeItem('refreshToken');
                 setUser(null);
@@ -42,7 +37,6 @@ export const AuthProvider = ({ children }) => {
                 setLoading(false);
             }
         };
-
         initializeSession();
     }, []);
 
@@ -50,12 +44,10 @@ export const AuthProvider = ({ children }) => {
         try {
             setLoading(true);
             const response = await authService.login(email, password);
-
             localStorage.setItem('token', response.access_token);
             localStorage.setItem('refreshToken', response.refresh_token);
             setUser(response.user);
             setIsAuthenticated(true);
-
             return { success: true };
         } catch (error) {
             return { success: false, error: error.response?.data?.message || 'Invalid credentials' };
@@ -68,13 +60,10 @@ export const AuthProvider = ({ children }) => {
         try {
             setLoading(true);
             const deviceId = localStorage.getItem('deviceId');
-
             const response = await authService.register(username, email, password, deviceId);
-
             localStorage.setItem('token', response.access_token);
             setUser(response.user);
             setIsAuthenticated(true);
-
             return { success: true };
         } catch (error) {
             return { success: false, error: error.response?.data?.message || 'Could not create account' };
@@ -84,17 +73,41 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = async () => {
-        try {
-            await authService.logout();
-        } catch (e) {
-            console.error(e);
-        }
+        try { await authService.logout(); } catch (e) {}
         setUser(null);
         setIsAuthenticated(false);
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         window.location.reload(); 
     };
+
+    const forgotPassword = async (email) => {
+        try {
+            setLoading(true);
+            const response = await authService.forgotPassword(email);
+            return { success: true, message: response.message };
+        } catch (error) {
+            return { 
+                success: false, 
+                error: error.response?.data?.message || 'Server error' 
+            };
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const resetPassword = async (token, newPassword) => {
+        try {
+            setLoading(true);
+            const response = await authService.resetPassword(token, newPassword);
+            return { success: true, message: response.message };
+        } catch (error) {
+            return { success: false, error: error.response?.data?.message || 'Error resetting password' };
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center bg-[#0a0a0a] w-screen h-screen font-bold text-white/50 text-sm tracking-widest">
@@ -105,12 +118,7 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={{
-            user,
-            isAuthenticated,
-            login,
-            register,
-            logout,
-            loading
+            user, isAuthenticated, login, register, logout, forgotPassword, resetPassword, loading
         }}>
             {children}
         </AuthContext.Provider>
@@ -119,8 +127,6 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
+    if (!context) throw new Error('useAuth must be used within an AuthProvider');
     return context;
 };

@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
 
-import { useTasks } from '@hooks/useTasks';
 import { useStats } from '@hooks/useStats';
 import { useSettings as useApiSettings } from '@hooks/useSettings';
 import { usePip } from '@hooks/usePip';
+import { usePomodoro } from '@context/PomodoroContext';
+import { useTimer } from '@hooks/useTimer';
 
-import PipPortal from '@components/timer/PipPortal';
 import Sidebar from '@components/layout/Sidebar';
 import Header from '@components/layout/Header';
 import StatsOverview from '@components/layout/StatsOverview';
@@ -18,55 +18,89 @@ import SettingsModal from '@components/layout/SettingsModal';
 import SupportModal from '@components/layout/SupportModal';
 import MusicWidget from '@components/layout/MusicWidget';
 import Toast from '@components/layout/Toast';
+import PipPortal from '@components/timer/PipPortal';
 
-import { usePomodoro } from '@context/PomodoroContext';
-import { timersService } from '@api/timers/timers.service';
-import { CreateTimerDto } from '@api/timers/dto/timer.dto';
+const hexToRgb = (hex) => {
+    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || '#e11d48');
+    return result ? `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}` : '225 29 72';
+};
 
 const Dashboard = () => {
-    const { state, dispatch } = usePomodoro();
-    const { isPipActive, pipWindow, togglePip } = usePip();
-    
-    const { refresh: refreshTasks } = useTasks();
     const { progress, refresh: refreshStats } = useStats();
     const { settings: apiSettings } = useApiSettings();
+    const { pipContainer, togglePip } = usePip();
+    
+    const { state, dispatch } = useTimer(refreshStats);
 
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isSupportOpen, setIsSupportOpen] = useState(false);
 
-    const { bgImage, blurIntensity } = useSelector(state => state.settings);
+    const { bgImage, blurIntensity, accentColor } = useSelector(state => state.settings);
+    const accentRgb = useMemo(() => hexToRgb(accentColor), [accentColor]);
+
+    const handleTogglePip = async () => {
+        if (pipContainer && pipWindowRef.current) {
+            pipWindowRef.current.close();
+            return;
+        }
+
+        try {
+            const pip = await window.documentPictureInPicture.requestWindow({
+                width: 400,
+                height: 450,
+            });
+
+            const style = pip.document.createElement('style');
+            style.textContent = `body { margin: 0; padding: 0; background: #050505; overflow: hidden; }`;
+            pip.document.head.appendChild(style);
+
+            pip.addEventListener("pagehide", () => {
+                pipWindowRef.current = null;
+                setPipContainer(null);
+            });
+
+            pipWindowRef.current = pip;
+            setPipContainer(pip.document.body);
+        } catch (error) {
+            console.error("PiP failed:", error);
+        }
+    };
 
     useEffect(() => {
         const syncSessionWithApi = async () => {
             if (state.timeLeft === 0 && !state.isActive) {
                 try {
-                    const dto = CreateTimerDto(
-                        state.mode.toLowerCase(),
-                        state.initialTime / 60,
-                        state.currentTaskId
-                    );
+                    const dto = {
+                        mode: state.mode.toLowerCase(),
+                        duration: state.initialTime / 60,
+                        taskId: state.currentTaskId || null
+                    };
+
                     await timersService.create(dto);
-                    
-                    refreshStats(); 
-                    
-                    dispatch({ 
-                        type: 'SHOW_TOAST', 
-                        payload: `¡Sesión guardada! +${state.mode === 'FOCUS' ? '25' : '5'} XP` 
+                    refreshStats();
+
+                    dispatch({
+                        type: 'SHOW_TOAST',
+                        payload: `Session saved! +${state.mode === 'FOCUS' ? '25' : '5'} XP`
                     });
                 } catch (error) {
-                    console.error("Error al sincronizar sesión:", error);
+                    console.error("Error synchronising session:", error);
                 }
             }
         };
 
         syncSessionWithApi();
-    }, [state.timeLeft, state.isActive]);
+    }, [state.timeLeft, state.isActive, state.mode, state.initialTime, state.currentTaskId, refreshStats, dispatch]);
 
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="relative flex w-screen h-screen overflow-hidden text-cream"
+            style={{
+                '--color-accent': accentColor || '#e11d48',
+                '--color-accent-rgb': accentRgb
+            }}
         >
             <div
                 className="fixed inset-0 transition-all duration-1000 ease-in-out pointer-events-none"
@@ -80,30 +114,25 @@ const Dashboard = () => {
                 }}
             />
 
-            <div className="z-0 fixed inset-0 bg-black/10 pointer-events-none" />
-
             <Sidebar
                 onOpenSettings={() => setIsSettingsOpen(true)}
                 onOpenSupport={() => setIsSupportOpen(true)}
             />
 
             <main className="z-10 relative flex flex-col flex-1 h-full overflow-hidden">
-                <div className="top-0 right-0 -z-10 absolute bg-accent/5 blur-[120px] rounded-full w-[40vw] h-[40vw] pointer-events-none" />
-
                 <Header userStats={progress} />
 
                 <div className="flex flex-col flex-1 px-4 md:px-8 pb-4 md:pb-6 min-h-0">
-                    <div className="mb-4 shrink-0">
+                    {/* <div className="mb-4 shrink-0">
                         <StatsOverview data={progress} />
-                    </div>
+                    </div> */}
 
                     <div className="flex-1 gap-6 grid grid-cols-1 lg:grid-cols-12 min-h-0">
                         <section className="relative flex flex-col justify-center items-center lg:col-span-7 shadow-2xl p-6 rounded-[2.5rem] min-h-0 overflow-hidden glass">
                             <button
-                                onClick={togglePip}
-                                className={`absolute top-6 right-6 p-2.5 rounded-xl transition-all z-10 ${
-                                    isPipActive ? 'bg-accent text-white shadow-glow' : 'bg-white/5 text-white/20 hover:text-white'
-                                }`}
+                                onClick={handleTogglePip}
+                                className={`absolute top-6 right-6 p-2.5 rounded-xl transition-all z-10 ${pipContainer ? 'bg-accent text-white shadow-glow' : 'bg-white/5 text-white/20 hover:text-white'
+                                    }`}
                             >
                                 <ExternalLink size={16} />
                             </button>
@@ -113,11 +142,10 @@ const Dashboard = () => {
                                     <button
                                         key={m}
                                         onClick={() => dispatch({ type: 'SET_MODE', payload: m })}
-                                        className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${
-                                            state.mode === m
+                                        className={`px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${state.mode === m
                                                 ? 'bg-surface text-accent shadow-glow border border-white/10'
                                                 : 'text-white/30 hover:text-white/60'
-                                        }`}
+                                            }`}
                                     >
                                         {m.replace('_', ' ')}
                                     </button>
@@ -125,17 +153,16 @@ const Dashboard = () => {
                             </div>
 
                             <div className="scale-90 xl:scale-100 transition-transform">
-                                <TimerDial />
+                                <TimerDial isPipMode={false} />
                             </div>
 
                             <div className="flex items-center gap-4 mt-8">
                                 <button
                                     onClick={() => dispatch({ type: 'TOGGLE_TIMER' })}
-                                    className={`px-10 py-4 rounded-2xl font-black text-xs tracking-[0.2em] transition-all hover:scale-105 active:scale-95 ${
-                                        state.isActive
+                                    className={`px-10 py-4 rounded-2xl font-black text-xs tracking-[0.2em] transition-all hover:scale-105 active:scale-95 ${state.isActive
                                             ? 'bg-transparent border-2 border-accent text-accent'
                                             : 'bg-accent text-white shadow-glow'
-                                    }`}
+                                        }`}
                                 >
                                     {state.isActive ? 'PAUSE' : 'START SESSION'}
                                 </button>
@@ -165,8 +192,8 @@ const Dashboard = () => {
                 </div>
             </main>
 
-            <PipPortal pipWindow={pipWindow} />
-
+            <PipPortal pipContainer={pipContainer} accentColor={accentColor} accentRgb={accentRgb} />
+            
             <Toast
                 isOpen={state.toast.isOpen}
                 message={state.toast.message}
@@ -175,9 +202,9 @@ const Dashboard = () => {
 
             <AnimatePresence>
                 {isSettingsOpen && (
-                    <SettingsModal 
-                        isOpen={isSettingsOpen} 
-                        onClose={() => setIsSettingsOpen(false)} 
+                    <SettingsModal
+                        isOpen={isSettingsOpen}
+                        onClose={() => setIsSettingsOpen(false)}
                         initialData={apiSettings}
                     />
                 )}

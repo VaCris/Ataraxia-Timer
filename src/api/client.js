@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { addToSyncQueue } from './syncManager';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
@@ -20,6 +21,20 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
+
+        if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
+            if (['post', 'put', 'patch', 'delete'].includes(originalRequest.method)) {
+                if (!originalRequest.url.includes('/auth/')) {
+                    addToSyncQueue({
+                        method: originalRequest.method,
+                        url: originalRequest.url,
+                        data: originalRequest.data ? JSON.parse(originalRequest.data) : null,
+                    });
+                    
+                    return Promise.resolve({ data: { success: true, offline: true } });
+                }
+            }
+        }
 
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;

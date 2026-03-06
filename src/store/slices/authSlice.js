@@ -9,7 +9,7 @@ const authSlice = createSlice({
     reducers: {
         forgotPasswordRequest: (state, action) => {
             const { email, resolve } = action.payload;
-            console.log(`Solicitando recuperación para: ${email}`);
+            //console.log(`Requesting recovery for: ${email}`);
             setTimeout(() => {
                 resolve({ success: true });
             }, 2000);

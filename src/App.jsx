@@ -1,14 +1,58 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PomodoroProvider } from '@context/PomodoroContext';
 import { MusicProvider } from '@context/MusicContext';
-import { AudioProvider } from './context/AudioContext';
-import { AuthProvider } from './context/AuthContext';
+import { AudioProvider } from '@context/AudioContext';
+import { AuthProvider } from '@context/AuthContext';
 import Dashboard from '@components/layout/Dashboard';
-import SpotifyCallback from '@components/auth/SpotifyCallback';
+import ResetPassword from '@components/auth/ResetPassword';
 import { Toaster } from 'react-hot-toast';
+import { processSyncQueue } from '@api/syncManager';
+import Maintenance from '@pages/Maintenance';
+import ComingSoon from '@pages/ComingSoon';
+import Restricted from '@pages/Restricted';
 
 function App() {
+  const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
+  const isComingSoonEnv = import.meta.env.VITE_COMING_SOON_MODE === 'true';
+  const isRestricted = import.meta.env.VITE_RESTRICT_ACCESS === 'true';
+
+  const [activeView, setActiveView] = useState('main');
+
+  useEffect(() => {
+    if (navigator.onLine) {
+      processSyncQueue();
+    }
+    const handleOnline = () => processSyncQueue();
+    window.addEventListener('online', handleOnline);
+
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
+
+  if (isRestricted) return <Restricted />;
+  if (isMaintenance) return <Maintenance />;
+
+  const renderHomeContent = () => {
+    if (isComingSoonEnv) return <ComingSoon />;
+
+    if (['games', 'stats', 'achievements'].includes(activeView)) {
+      return (
+        <ComingSoon 
+          type={activeView} 
+          onBack={() => setActiveView('main')} 
+        />
+      );
+    }
+
+    return (
+      <Dashboard 
+        onOpenGames={() => setActiveView('games')} 
+        onOpenStats={() => setActiveView('stats')} 
+        onOpenAchievements={() => setActiveView('achievements')} 
+      />
+    );
+  };
+
   return (
     <AuthProvider>
       <Toaster
@@ -29,8 +73,8 @@ function App() {
           <MusicProvider>
             <BrowserRouter>
               <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/callback" element={<SpotifyCallback />} />
+                <Route path="/" element={renderHomeContent()} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </BrowserRouter>

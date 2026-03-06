@@ -1,4 +1,4 @@
-import api from '@api/Client';
+import api from '@api/client';
 import { UpdateSettingDto } from './dto/settings.dto';
 
 export const settingsService = {

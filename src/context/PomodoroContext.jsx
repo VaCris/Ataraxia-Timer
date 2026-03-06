@@ -103,19 +103,22 @@ export const PomodoroProvider = ({ children }) => {
 
             switch (e.code) {
                 case 'Space':
-                    e.preventDefault();
+                    e.preventDefault(); 
                     dispatch({ type: 'TOGGLE_TIMER' });
                     break;
                 case 'KeyR':
                     dispatch({ type: 'RESET_TIMER' });
                     break;
-                case 'KeyF':
+                case 'Digit1':
+                case 'Numpad1':
                     handleSwitchMode('FOCUS');
                     break;
-                case 'KeyS':
+                case 'Digit2':
+                case 'Numpad2':
                     handleSwitchMode('SHORT_BREAK');
                     break;
-                case 'KeyL':
+                case 'Digit3':
+                case 'Numpad3':
                     handleSwitchMode('LONG_BREAK');
                     break;
                 default:

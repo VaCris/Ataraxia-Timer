@@ -1,43 +1,47 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 export const usePip = () => {
-    const [pipWindow, setPipWindow] = useState(null);
+    const pipWindowRef = useRef(null);
+    const [pipContainer, setPipContainer] = useState(null);
 
     const togglePip = useCallback(async () => {
-        if (pipWindow) {
-            pipWindow.close();
-            setPipWindow(null);
+        if (pipContainer && pipWindowRef.current) {
+            pipWindowRef.current.close();
             return;
         }
 
         try {
-            // Abrir la ventana Picture-in-Picture
-            const dw = await window.documentPictureInPicture.requestWindow({
-                width: 300,
-                height: 350,
+            const pip = await window.documentPictureInPicture.requestWindow({
+                width: 400,
+                height: 450,
             });
 
-            // Copiar estilos al nuevo documento para que Tailwind funcione
+            // Copiar estilos para que se vea el diseño (Tailwind/CSS)
             [...document.styleSheets].forEach((styleSheet) => {
                 try {
                     const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
-                    const style = document.createElement('style');
+                    const style = pip.document.createElement('style');
                     style.textContent = cssRules;
-                    dw.document.head.appendChild(style);
+                    pip.document.head.appendChild(style);
                 } catch (e) {
-                    const link = document.createElement('link');
+                    const link = pip.document.createElement('link');
                     link.rel = 'stylesheet';
                     link.href = styleSheet.href;
-                    dw.document.head.appendChild(link);
+                    pip.document.head.appendChild(link);
                 }
             });
 
-            dw.addEventListener('pagehide', () => setPipWindow(null));
-            setPipWindow(dw);
-        } catch (err) {
-            console.error('PiP no soportado o error:', err);
-        }
-    }, [pipWindow]);
+            pip.addEventListener("pagehide", () => {
+                pipWindowRef.current = null;
+                setPipContainer(null);
+            });
 
-    return { isPipActive: !!pipWindow, pipWindow, togglePip };
+            pipWindowRef.current = pip;
+            setPipContainer(pip.document.body);
+        } catch (error) {
+            console.error("PiP failed:", error);
+        }
+    }, [pipContainer]);
+
+    return { pipContainer, togglePip };
 };

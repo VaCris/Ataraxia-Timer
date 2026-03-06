@@ -9,11 +9,11 @@ export default {
             colors: {
                 background: "#0a0a0a",
                 surface: "#141414",
-                accent: "#e11d48",
+                accent: "rgb(var(--color-accent-rgb) / <alpha-value>)",
                 cream: "#f5f5f7",
             },
             boxShadow: {
-                'glow': '0 0 20px -5px rgba(225, 29, 72, 0.3)',
+                'glow': '0 0 20px -5px rgb(var(--color-accent-rgb) / 0.4)',
             }
         },
     },

@@ -1,4 +1,3 @@
-// src/components/auth/SpotifyCallback.jsx
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,12 +5,10 @@ const SpotifyCallback = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // 1. Extraer el código de la URL (?code=...)
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
 
         if (code) {
-            // 2. Llamar a tu Cloudflare Worker
             fetch('https://spotify-bridge.chowdero304.workers.dev/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -22,7 +19,6 @@ const SpotifyCallback = () => {
                     return res.json();
                 })
                 .then(data => {
-                    // 3. Guardar los tokens recibidos del Worker
                     localStorage.setItem('spotify_access_token', data.access_token);
                     if (data.refresh_token) {
                         localStorage.setItem('spotify_refresh_token', data.refresh_token);

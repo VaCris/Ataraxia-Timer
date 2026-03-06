@@ -1,4 +1,4 @@
-import api from '@api/Client';
+import api from '@api/client';
 import { CreateTagDto, UpdateTagDto } from './dto/tag.dto';
 
 export const tagsService = {

@@ -3,12 +3,19 @@ import { usePomodoro } from '@context/PomodoroContext';
 import { User, Bell, LogOut } from 'lucide-react';
 import { useAuth } from '@context/AuthContext';
 const AuthModal = React.lazy(() => import('@components/modals/AuthModal'));
+
+
 const Header = () => {
     const { state } = usePomodoro();
     const { user, logout } = useAuth();
     const [isAuthOpen, setIsAuthOpen] = useState(false);
     const isRealUser = user && !user.isGuest;
-    // const xpInCurrentLevel = state.stats.xp % 100;
+
+    const validUsername = (() => {
+        const name = user?.username || user?.name;
+        if (!name || name.includes('@')) return null;
+        return name;
+    })();
 
     return (
         <header className="flex justify-between items-center px-8 py-6 w-full">
@@ -23,12 +30,17 @@ const Header = () => {
                     <span className="top-3 right-3 absolute bg-accent shadow-glow rounded-full w-2 h-2" />
                 </button>
 
-                {/* 5. Renderizado Condicional: Muestra el nombre si está logueado, si no, muestra el botón de entrar */}
                 {isRealUser ? (
                     <div className="flex items-center gap-3 bg-white/5 py-1.5 pr-2 pl-5 border border-white/10 rounded-2xl">
-                        <span className="pr-2 font-bold text-white/80 text-xs">
-                            {user.name}
-                        </span>
+                        <div className="flex justify-center items-center min-w-[24px]">
+                            {validUsername ? (
+                                <span className="pr-2 font-bold text-white/80 text-xs uppercase tracking-wider">
+                                    {validUsername}
+                                </span>
+                            ) : (
+                                <User size={20} className="mr-2 text-white/40" />
+                            )}
+                        </div>
                         <button
                             onClick={logout}
                             title="Cerrar sesión"

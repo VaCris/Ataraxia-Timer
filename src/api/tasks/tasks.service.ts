@@ -1,4 +1,4 @@
-import api from '@api/Client';
+import api from '@api/client';
 import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
 
 export const tasksService = {

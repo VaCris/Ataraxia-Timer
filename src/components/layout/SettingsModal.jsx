@@ -12,8 +12,9 @@ const SettingsModal = ({ isOpen, onClose }) => {
 
     const currentSettings = useSelector(state => state.settings);
     const {
-        timerSettings = { work: 25, short: 5, long: 15 },
-        autoStart,
+        timerSettings = { FOCUS: 25, SHORT_BREAK: 5, LONG_BREAK: 15 },
+        autoStartBreak,
+        autoStartFocus,
         longBreakInterval,
         accentColor,
         bgImage,
@@ -68,9 +69,9 @@ const SettingsModal = ({ isOpen, onClose }) => {
                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="relative flex flex-col shadow-2xl p-6 md:p-10 border border-white/10 rounded-[3rem] w-full max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar glass"
+                className="relative flex flex-col shadow-2xl p-6 md:p-8 border border-white/10 rounded-[3rem] w-full max-w-lg max-h-[90vh] overflow-hidden glass"
             >
-                <div className="top-0 z-10 sticky flex justify-between items-center bg-black/20 backdrop-blur-md -mx-2 mb-8 px-2 pb-4">
+                <div className="flex justify-between items-center mb-6 shrink-0">
                     <h2 className="flex items-center gap-3 font-black text-2xl tracking-tighter">
                         <span className="text-accent" style={{ color: accentColor }}>/</span> CONFIGURATION
                     </h2>
@@ -79,16 +80,16 @@ const SettingsModal = ({ isOpen, onClose }) => {
                     </button>
                 </div>
 
-                <div className="space-y-10 pb-6">
+                <div className="flex-1 space-y-10 pr-2 pb-4 overflow-y-auto custom-scrollbar">
 
                     <section>
                         <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.3em]">
                             <Clock size={14} /> Timer (Minutes)
                         </div>
                         <div className="gap-4 grid grid-cols-3 bg-white/5 p-6 border border-white/5 rounded-[2rem]">
-                            <TimeInput label="Focus" value={timerSettings.work} onChange={(v) => handleTimerChange({ ...timerSettings, work: v })} accent={accentColor} />
-                            <TimeInput label="Short Break" value={timerSettings.short} onChange={(v) => handleTimerChange({ ...timerSettings, short: v })} accent={accentColor} />
-                            <TimeInput label="Long Break" value={timerSettings.long} onChange={(v) => handleTimerChange({ ...timerSettings, long: v })} accent={accentColor} />
+                            <TimeInput label="Focus" value={timerSettings.FOCUS} onChange={(v) => handleTimerChange({ ...timerSettings, FOCUS: v })} accent={accentColor} />
+                            <TimeInput label="Short Break" value={timerSettings.SHORT_BREAK} onChange={(v) => handleTimerChange({ ...timerSettings, SHORT_BREAK: v })} accent={accentColor} />
+                            <TimeInput label="Long Break" value={timerSettings.LONG_BREAK} onChange={(v) => handleTimerChange({ ...timerSettings, long: v })} accent={accentColor} />
                         </div>
                     </section>
 
@@ -98,8 +99,12 @@ const SettingsModal = ({ isOpen, onClose }) => {
                         </div>
                         <div className="space-y-4 bg-white/5 p-6 border border-white/5 rounded-[2rem]">
                             <div className="flex justify-between items-center font-medium text-white/80 text-sm">
+                                <span>Auto-start Breaks</span>
+                                <Switch checked={autoStartBreak} onChange={() => handleSettingChange('autoStartBreak', !autoStartBreak)} accent={accentColor} />
+                            </div>
+                            <div className="flex justify-between items-center font-medium text-white/80 text-sm">
                                 <span>Auto-start Cycles</span>
-                                <Switch checked={autoStart} onChange={() => handleSettingChange('autoStart', !autoStart)} accent={accentColor} />
+                                <Switch checked={autoStartFocus} onChange={() => handleSettingChange('autoStartFocus', !autoStartFocus)} accent={accentColor} />
                             </div>
                             <div className="flex justify-between items-center font-medium text-white/80 text-sm">
                                 <span>Long Break Interval</span>
@@ -192,7 +197,8 @@ const SettingsModal = ({ isOpen, onClose }) => {
                     </section>
                 </div>
 
-                <div className="mt-auto pt-6 border-white/10 border-t">
+                {/* FOOTER FIJO (El botón nunca se pierde de vista) */}
+                <div className="mt-4 pt-6 border-white/10 border-t shrink-0">
                     <button
                         onClick={handleSave}
                         disabled={isSaving}
@@ -207,6 +213,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
     );
 };
 
+// ... COMPONENTES SECUNDARIOS (TimeInput, Switch) se mantienen igual
 const TimeInput = ({ label, value, onChange, accent }) => {
     const handleChange = (e) => {
         const val = e.target.value;
@@ -220,7 +227,7 @@ const TimeInput = ({ label, value, onChange, accent }) => {
                 type="number" min="1" value={value} max={label === "Focus" ? "120" : undefined}
                 onChange={handleChange} onBlur={() => { if (value === '') onChange(1); }}
                 className="bg-black/40 px-2 py-3 border border-white/10 rounded-xl outline-none w-full font-medium text-white text-lg text-center transition-all"
-                style={{ ':focus': { borderColor: accent || '#8b5cf6' } }} // Fallback for focus color logic
+                style={{ ':focus': { borderColor: accent || '#8b5cf6' } }}
             />
             <label className="font-bold text-[9px] text-white/40 text-center uppercase leading-tight tracking-widest">
                 {label}
