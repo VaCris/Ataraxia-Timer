@@ -1,4 +1,4 @@
-import api from '@api/Client';
+import api from '@api/client';
 import { CreateTimerDto } from './dto/timer.dto';
 
 export const timersService = {
