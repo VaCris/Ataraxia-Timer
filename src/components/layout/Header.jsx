@@ -1,15 +1,37 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { usePomodoro } from '@context/PomodoroContext';
-import { User, Bell, LogOut } from 'lucide-react';
+import { User, Bell, BellOff, LogOut, Clock } from 'lucide-react';
 import { useAuth } from '@context/AuthContext';
-const AuthModal = React.lazy(() => import('@components/modals/AuthModal'));
+import { useNotifications } from '@hooks/useNotifications';
+import { useSelector } from 'react-redux';
 
+const AuthModal = React.lazy(() => import('@components/modals/AuthModal'));
 
 const Header = () => {
     const { state } = usePomodoro();
     const { user, logout } = useAuth();
+    const { permission, requestPermission } = useNotifications();
     const [isAuthOpen, setIsAuthOpen] = useState(false);
+    const [currentTime, setCurrentTime] = useState(new Date());
+    
+    const is24Hour = useSelector(state => state.settings.is24Hour);
+    const accentColor = useSelector(state => state.settings.accentColor);
     const isRealUser = user && !user.isGuest;
+    const isGranted = permission === 'granted';
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const formatTime = (date) => {
+        return date.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: !is24Hour
+        });
+    };
 
     const validUsername = (() => {
         const name = user?.username || user?.name;
@@ -19,15 +41,34 @@ const Header = () => {
 
     return (
         <header className="flex justify-between items-center px-8 py-6 w-full">
-            <div>
-                <h1 className="font-bold text-xl tracking-tight">ATARAXIA <span className="text-accent text-xs align-top">V2</span></h1>
-                <p className="font-medium text-white/40 text-xs uppercase tracking-widest">System Active</p>
+            <div className="flex items-center gap-6">
+                <div>
+                    <h1 className="font-bold text-white text-xl tracking-tight">ATARAXIA <span className="text-accent text-xs align-top" style={{ color: accentColor }}>V2</span></h1>
+                    <p className="font-medium text-[10px] text-white/40 uppercase tracking-[0.2em]">System Active</p>
+                </div>
+
+                <div className="hidden md:flex items-center gap-3 bg-white/5 shadow-glow backdrop-blur-md px-4 py-2 border border-white/5 rounded-2xl" style={{ boxShadow: `0 0 15px ${accentColor}15` }}>
+                    <Clock size={14} style={{ color: accentColor }} className="animate-pulse" />
+                    <span className="font-black tabular-nums text-white/70 text-xs tracking-widest">
+                        {formatTime(currentTime)}
+                    </span>
+                </div>
             </div>
 
             <div className="flex items-center gap-4">
-                <button className="relative flex justify-center items-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl w-12 h-12 text-white/20 hover:text-white transition-all">
-                    <Bell size={20} />
-                    <span className="top-3 right-3 absolute bg-accent shadow-glow rounded-full w-2 h-2" />
+                <button 
+                    onClick={requestPermission}
+                    className={`relative flex justify-center items-center border rounded-2xl w-12 h-12 transition-all ${
+                        isGranted 
+                        ? 'bg-accent/10 border-accent/30 text-accent shadow-glow' 
+                        : 'bg-white/5 border-white/10 text-white/20 hover:text-white'
+                    }`}
+                    style={isGranted ? { color: accentColor, borderColor: `${accentColor}40` } : {}}
+                >
+                    {isGranted ? <Bell size={20} /> : <BellOff size={20} />}
+                    {isGranted && (
+                        <span className="top-3 right-3 absolute rounded-full w-2 h-2 animate-pulse" style={{ backgroundColor: accentColor, boxShadow: `0 0 10px ${accentColor}` }} />
+                    )}
                 </button>
 
                 {isRealUser ? (
@@ -43,7 +84,6 @@ const Header = () => {
                         </div>
                         <button
                             onClick={logout}
-                            title="Cerrar sesión"
                             className="group flex justify-center items-center bg-black/40 hover:bg-red-500/20 border border-white/5 hover:border-red-500/50 rounded-xl w-9 h-9 text-white/40 hover:text-red-500 transition-all"
                         >
                             <LogOut size={16} className="group-hover:scale-110 transition-transform" />
@@ -53,6 +93,7 @@ const Header = () => {
                     <button
                         onClick={() => setIsAuthOpen(true)}
                         className="group flex justify-center items-center bg-white/5 hover:bg-accent/20 border border-white/10 hover:border-accent/50 rounded-2xl w-12 h-12 text-white/40 hover:text-accent transition-all"
+                        style={{ '--hover-color': accentColor }}
                     >
                         <User size={20} className="group-hover:scale-110 transition-transform" />
                     </button>
