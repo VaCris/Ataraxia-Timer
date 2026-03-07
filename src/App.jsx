@@ -4,6 +4,7 @@ import { PomodoroProvider } from '@context/PomodoroContext';
 import { MusicProvider } from '@context/MusicContext';
 import { AudioProvider } from '@context/AudioContext';
 import { AuthProvider } from '@context/AuthContext';
+import { useNotifications } from '@hooks/useNotifications';
 import Dashboard from '@components/layout/Dashboard';
 import ResetPassword from '@components/auth/ResetPassword';
 import UpdatePrompt from '@components/layout/UpdatePrompt';
@@ -14,6 +15,36 @@ import { processSyncQueue } from '@api/syncManager';
 import Maintenance from '@pages/Maintenance';
 import ComingSoon from '@pages/ComingSoon';
 import Restricted from '@pages/Restricted';
+
+const VersionManager = () => {
+  const { sendUpdateNotification, permission } = useNotifications();
+
+  useEffect(() => {
+    const checkUpdates = async () => {
+      try {
+        const response = await fetch('/version.json?v=' + Date.now());
+        if (!response.ok) return;
+        const data = await response.json();
+        const savedVersion = localStorage.getItem('ataraxia_version');
+
+        if (data.version !== savedVersion && permission === 'granted') {
+          sendUpdateNotification(
+            `System Update V${data.version}`,
+            data.changelog,
+            data.targetUrl
+          );
+          localStorage.setItem('ataraxia_version', data.version);
+        }
+      } catch (error) {
+        console.error("Update check failed");
+      }
+    };
+
+    checkUpdates();
+  }, [permission]);
+
+  return null;
+};
 
 function App() {
   const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
@@ -77,6 +108,7 @@ function App() {
         <PomodoroProvider>
           <MusicProvider>
             <BrowserRouter>
+              <VersionManager />
               <Routes>
                 <Route path="/" element={renderHomeContent()} />
                 <Route path="/reset-password" element={<ResetPassword />} />

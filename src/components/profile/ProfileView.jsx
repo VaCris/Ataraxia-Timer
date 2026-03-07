@@ -14,7 +14,6 @@ const ProfileView = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [newUsername, setNewUsername] = useState(user?.username || '');
 
-    // Cálculos de progreso
     const currentLevel = state.stats.level || 1;
     const currentXP = state.stats.xp || 0;
     const xpToNextLevel = 100;
@@ -24,7 +23,6 @@ const ProfileView = () => {
         if (newUsername.length < 3) {
             return toast.error('Username too short');
         }
-        // Aquí iría la llamada a tu API para actualizar el perfil
         toast.success('Profile updated successfully');
         setIsEditing(false);
     };
@@ -35,7 +33,6 @@ const ProfileView = () => {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-8 mx-auto p-8 w-full max-w-5xl"
         >
-            {/* Header del Perfil */}
             <div className="flex md:flex-row flex-col items-center gap-8 bg-black/40 backdrop-blur-3xl p-10 border border-white/5 rounded-[3rem] glass">
                 <div className="relative">
                     <div className="flex justify-center items-center bg-accent/20 shadow-glow border-2 border-accent rounded-full w-32 h-32">

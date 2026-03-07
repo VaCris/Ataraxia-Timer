@@ -1,0 +1,11 @@
+{
+    "version": "2.0.0",
+    "date": "2026-04-07",
+    "changelog": [
+      "Integrated GitHub automated updates",
+      "New focus sounds added to the library",
+      "Improved PWA offline stability",
+      "Visual tweaks to the Timer Dial"
+    ],
+    "targetUrl": "/changelog"
+  }

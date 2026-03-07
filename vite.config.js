@@ -13,9 +13,15 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
+      injectRegister: 'auto',
+      devOptions: {
+        enabled: true
+        
+      },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
+        id: '/',
         name: 'Ataraxia Timer',
         short_name: 'Ataraxia',
         description: 'Focus, Productivity & Lofi Player',
@@ -25,15 +31,31 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
-            src: '/pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
+            "src": "pwa-192x192.png",
+            "type": "image/png",
+            "sizes": "192x192",
+            "purpose": "any"
           },
           {
-            src: '/pwa-512x512.png',
-            sizes: '512x512',
+            "src": "pwa-512x512.png",
+            "type": "image/png",
+            "sizes": "512x512",
+            "purpose": "maskable"
+          }
+        ],
+        screenshots: [
+          {
+            src: 'screenshot-desktop.png',
+            sizes: '1280x720',
             type: 'image/png',
-            purpose: 'any maskable'
+            form_factor: 'wide',
+            label: 'Ataraxia Desktop'
+          },
+          {
+            src: 'screenshot-mobile.png',
+            sizes: '720x1280',
+            type: 'image/png',
+            label: 'Ataraxia Mobile'
           }
         ]
       },
