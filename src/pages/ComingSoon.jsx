@@ -39,7 +39,7 @@ const ComingSoon = ({ onBack, type }) => {
                     <motion.div initial={{ width: "0%" }} animate={{ width: "75%" }} transition={{ duration: 2, ease: "easeOut" }} className="bg-accent shadow-glow h-full" />
                 </div>
                 <span className="mt-4 font-black text-[10px] text-accent uppercase tracking-widest animate-pulse">
-                    System Loading: 75%
+                    System Loading: 79%
                 </span>
             </main>
         </div>
