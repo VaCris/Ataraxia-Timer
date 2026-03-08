@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { gamificationService } from '@api/gamification/gamification.service';
-//import { CreateGetLeaderboardDto } from '@api/shared/dto/app.dto';
 import toast from 'react-hot-toast';
 
 export const useStats = () => {
@@ -10,11 +9,10 @@ export const useStats = () => {
     const loadData = useCallback(async () => {
         try {
             setLoading(true);
-            
             const progData = await gamificationService.getProgress();
-            setProgress(progData)
+            setProgress(progData);
         } catch (error) {
-            console.error("Error al cargar estadísticas", error);
+            console.error("Error loading statistics", error);
         } finally {
             setLoading(false);
         }
