@@ -40,17 +40,48 @@ const Header = () => {
 
     return (
         <header className="flex justify-between items-center px-8 py-6 w-full">
-            <div className="flex items-center gap-6">
-                <div>
-                    <h1 className="font-bold text-white text-xl tracking-tight">
-                        ATARAXIA <span className="text-accent text-xs align-top" style={{ color: accentColor }}><p>BETA</p> V2</span>
-                    </h1>
-                    <p className="font-medium text-[10px] text-white/40 uppercase tracking-[0.2em]">System Active</p>
+            <div className="flex items-center gap-8">
+                <div className="flex flex-col">
+                    <div className="flex items-baseline gap-2">
+                        <h1 className="font-black text-white text-2xl italic tracking-tighter">
+                            ATARAXIA
+                        </h1>
+                        <div
+                            className="flex items-center bg-accent/10 shadow-glow px-2 py-0.5 border border-accent/20 rounded-md"
+                            style={{ borderColor: `${accentColor}30`, backgroundColor: `${accentColor}10` }}
+                        >
+                            <span
+                                className="font-black text-[9px] uppercase leading-none tracking-widest"
+                                style={{ color: accentColor }}
+                            >
+                                Beta v2
+                            </span>
+                        </div>
+                    </div>
+
+
+                    <div className="flex items-center gap-2 mt-1">
+                        <span className="relative flex w-1.5 h-1.5">
+                            <span className="inline-flex absolute bg-emerald-400 opacity-75 rounded-full w-full h-full animate-ping"></span>
+                            <span className="inline-flex relative bg-emerald-500 rounded-full w-1.5 h-1.5"></span>
+                        </span>
+                        <p className="font-bold text-[9px] text-white/30 uppercase tracking-[0.3em]">
+                            System Active
+                        </p>
+                    </div>
                 </div>
 
-                <div className="hidden md:flex items-center gap-3 bg-white/5 shadow-glow backdrop-blur-md px-4 py-2 border border-white/5 rounded-2xl" style={{ boxShadow: `0 0 15px ${accentColor}15` }}>
-                    <Clock size={14} style={{ color: accentColor }} className="animate-pulse" />
-                    <span className="font-black tabular-nums text-white/70 text-xs tracking-widest">
+                <div
+                    className="group hidden md:flex items-center gap-3 bg-white/5 hover:bg-white/10 backdrop-blur-xl px-5 py-2.5 border border-white/5 rounded-2xl transition-all"
+                    style={{ boxShadow: `0 0 20px ${accentColor}10` }}
+                >
+                    <Clock
+                        size={14}
+                        style={{ color: accentColor }}
+                        className="group-hover:scale-110 transition-transform animate-pulse"
+                        strokeWidth={2.5}
+                    />
+                    <span className="font-black tabular-nums text-white/60 text-xs tracking-[0.2em]">
                         {formatTime(currentTime)}
                     </span>
                 </div>
