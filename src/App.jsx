@@ -6,6 +6,7 @@ import { AuthProvider } from '@context/AuthContext';
 import { PomodoroProvider } from '@context/PomodoroContext';
 import { MusicProvider } from '@context/MusicContext';
 import { AudioProvider } from '@context/AudioContext';
+import { processSyncQueue } from '@api/syncManager';
 
 import Dashboard from '@components/layout/Dashboard';
 import ResetPassword from '@components/auth/ResetPassword';
@@ -15,7 +16,6 @@ import CookieConsent from '@components/layout/CookieConsent';
 import Maintenance from '@pages/Maintenance';
 import ComingSoon from '@pages/ComingSoon';
 import Restricted from '@pages/Restricted';
-import { processSyncQueue } from '@api/syncManager';
 
 function App() {
   const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
@@ -25,24 +25,22 @@ function App() {
   const [activeView, setActiveView] = useState('main');
 
   useEffect(() => {
-    if (navigator.onLine) processSyncQueue();
-    const handleOnline = () => processSyncQueue();
-    window.addEventListener('online', handleOnline);
-    return () => window.removeEventListener('online', handleOnline);
-  }, []);
+    if (!isMaintenance && !isComingSoonEnv && !isRestricted) {
+      if (navigator.onLine) processSyncQueue();
+      const handleOnline = () => processSyncQueue();
+      window.addEventListener('online', handleOnline);
+      return () => window.removeEventListener('online', handleOnline);
+    }
+  }, [isMaintenance, isComingSoonEnv, isRestricted]);
 
   if (isRestricted) return <Restricted />;
   if (isMaintenance) return <Maintenance />;
 
   const renderHomeContent = () => {
     if (isComingSoonEnv) return <ComingSoon />;
+    
     if (['games', 'stats', 'achievements'].includes(activeView)) {
-      return (
-        <ComingSoon 
-          type={activeView} 
-          onBack={() => setActiveView('main')} 
-        />
-      );
+      return <ComingSoon type={activeView} onBack={() => setActiveView('main')} />;
     }
 
     return (
