@@ -40,7 +40,8 @@ const VersionManager = () => {
       }
     };
 
-    checkUpdates();
+    const timer = setTimeout(checkUpdates, 3000);
+    return () => clearTimeout(timer);
   }, [permission]);
 
   return null;
@@ -54,12 +55,17 @@ function App() {
   const [activeView, setActiveView] = useState('main');
 
   useEffect(() => {
-    if (navigator.onLine) {
-      processSyncQueue();
-    }
-    const handleOnline = () => processSyncQueue();
-    window.addEventListener('online', handleOnline);
-    return () => window.removeEventListener('online', handleOnline);
+    const initSync = () => {
+      if (navigator.onLine) processSyncQueue();
+    };
+
+    const timer = setTimeout(initSync, 5000);
+    window.addEventListener('online', initSync);
+    
+    return () => {
+      window.removeEventListener('online', initSync);
+      clearTimeout(timer);
+    };
   }, []);
 
   if (isRestricted) return <Restricted />;

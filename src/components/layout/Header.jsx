@@ -43,7 +43,7 @@ const Header = () => {
             <div className="flex items-center gap-6">
                 <div>
                     <h1 className="font-bold text-white text-xl tracking-tight">
-                        ATARAXIA <span className="text-accent text-xs align-top" style={{ color: accentColor }}>V2</span>
+                        ATARAXIA <span className="text-accent text-xs align-top" style={{ color: accentColor }}><p>BETA</p> V2</span>
                     </h1>
                     <p className="font-medium text-[10px] text-white/40 uppercase tracking-[0.2em]">System Active</p>
                 </div>

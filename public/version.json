@@ -1,11 +1,12 @@
 {
-    "version": "2.0.0",
-    "date": "2026-04-07",
-    "changelog": [
-      "Integrated GitHub automated updates",
-      "New focus sounds added to the library",
-      "Improved PWA offline stability",
-      "Visual tweaks to the Timer Dial"
-    ],
-    "targetUrl": "/changelog"
-  }
+  "version": "2.0.0",
+  "date": "2026-03-08",
+  "changelog": [
+    "v2",
+    "v2",
+    "feat(pwa): add install prompt component for PWA installation",
+    "feat(header): add realtime clock and notification permission control",
+    "feat: add update prompt and cookie consent components to app"
+  ],
+  "targetUrl": "/"
+}
