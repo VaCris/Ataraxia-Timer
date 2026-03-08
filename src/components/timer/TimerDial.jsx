@@ -38,7 +38,7 @@ const TimerDial = memo(() => {
             </svg>
 
             <div className="absolute flex flex-col items-center">
-                <div className="font-black text-white md:text-[9rem] text-8xl italic leading-none tracking-tighter">
+                <div className="font-black text-white md:text-[7rem] text-8xl italic leading-none tracking-tighter">
                     {minutes}<span style={{ color: accentColor }} className="mx-1 animate-pulse">:</span>{seconds}
                 </div>
                 <div className="flex flex-col items-center gap-2 mt-4">
