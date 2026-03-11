@@ -1,24 +1,35 @@
-export const CreateRegisterDto = (username, email, password, deviceId = null) => ({
-    username,
-    email,
-    password,
-    deviceId,
-});
+export interface RegisterDto {
+    username: string;
+    email: string;
+    password: string;
+    deviceId?: string;
+}
 
-export const CreateLoginDto = (email, password) => ({
-    email,
-    password,
-});
+export interface LoginDto {
+    email: string;
+    password: string;
+}
 
-export const CreateGuestLoginDto = (deviceId) => ({
-    deviceId,
-});
+export interface GuestLoginDto {
+    deviceId: string;
+}
+export interface ForgotPasswordDto {
+    email: string;
+}
+export interface ResetPasswordDto {
+    token: string;
+    newPassword: string;
+}
 
-export const CreateForgotPasswordDto = (email) => ({
-    email,
-});
+export interface AuthUser {
+    id: string;
+    email: string;
+    name: string;
+    isGuest: boolean;
+}
 
-export const CreateResetPasswordDto = (token, newPassword) => ({
-    token,
-    newPassword
-});
+export interface AuthResponse {
+    access_token: string;
+    refresh_token?: string;
+    user: AuthUser;
+}

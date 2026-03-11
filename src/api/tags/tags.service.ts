@@ -1,24 +1,28 @@
 import api from '@api/client';
-import { CreateTagDto, UpdateTagDto } from './dto/tag.dto';
+import { CreateTagDto, UpdateTagDto, TagResponse } from './dto/tag.dto';
 
 export const tagsService = {
-    getAll: async () => {
-        const { data } = await api.get('/tags');
-        return data;
+    getAll: async (): Promise<TagResponse[]> => {
+        const { data } = await api.get<TagResponse[]>('/tags')
+        return data
     },
 
-    create: async (tagData: CreateTagDto) => {
-        const { data } = await api.post('/tags', tagData);
-        return data;
+    getById: async (id: string): Promise<TagResponse> => {
+        const { data } = await api.get<TagResponse>(`/tags/${id}`)
+        return data
     },
 
-    update: async (id: string, updateData: UpdateTagDto) => {
-        const { data } = await api.patch(`/tags/${id}`, updateData);
-        return data;
+    create: async (tagData: CreateTagDto): Promise<TagResponse> => {
+        const { data } = await api.post<TagResponse>('/tags', tagData)
+        return data
     },
 
-    delete: async (id: string) => {
-        const { data } = await api.delete(`/tags/${id}`);
-        return data;
+    update: async (id: string, updateData: UpdateTagDto): Promise<TagResponse> => {
+        const { data } = await api.patch<TagResponse>(`/tags/${id}`, updateData)
+        return data
+    },
+
+    delete: async (id: string): Promise<void> => {
+        await api.delete(`/tags/${id}`)
     }
 };

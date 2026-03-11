@@ -1,20 +1,35 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #0a0a0a;
-  --color-surface: #141414;
+  --color-background: #050505;
+  --color-surface: #121212;
   --color-accent: #e11d48;
-  --color-cream: #f5f5f7;
+  --color-cream: #f8f8f8;
+  --breakpoint-xs: 480px;
+  --breakpoint-2xl: 1536px;
+  --breakpoint-3xl: 1920px;
+  --breakpoint-4k: 2560px;
 }
 
 @layer components {
   .glass {
-    @apply bg-surface/40 backdrop-blur-xl border border-white/5;
+    @apply bg-surface/30 backdrop-blur-3xl border border-white/10 shadow-2xl;
   }
 
   .shadow-glow {
-    box-shadow: 0 0 20px -5px rgba(225, 29, 72, 0.4);
+    box-shadow: 0 0 35px -5px rgb(var(--color-accent-rgb) / 0.5);
   }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+html, body {
+  background-color: var(--color-background);
+  color: var(--color-cream);
+  overflow-x: hidden;
+  height: 100%;
 }
 
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }

@@ -1,52 +1,36 @@
 import React from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
-import { RefreshCw, X } from 'lucide-react';
+import { RefreshCw, X, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const UpdatePrompt = () => {
-  const {
-    offlineReady: [offlineReady, setOfflineReady],
-    needRefresh: [needRefresh, setNeedRefresh],
-    updateServiceWorker,
-  } = useRegisterSW();
-
-  const close = () => {
-    setOfflineReady(false);
-    setNeedRefresh(false);
-  };
-
-  if (!offlineReady && !needRefresh) return null;
+  const { needRefresh: [needRefresh, setNeedRefresh], updateServiceWorker } = useRegisterSW();
+  const close = () => setNeedRefresh(false);
 
   return (
-    <div className="right-6 bottom-6 z-[100] fixed max-w-[320px]">
-      <div className="bg-[#18181b] shadow-2xl backdrop-blur-xl p-4 border border-white/10 rounded-2xl glass">
-        <div className="flex items-start gap-4">
-          <div className="bg-accent/10 p-2 rounded-xl text-accent">
-            <RefreshCw size={20} className={needRefresh ? "animate-spin" : ""} />
-          </div>
-          <div className="flex-1">
-            <h4 className="mb-1 font-bold text-white text-sm">
-              {needRefresh ? "Update Available" : "System Ready"}
-            </h4>
-            <p className="text-[11px] text-white/50 italic uppercase leading-relaxed tracking-wider">
-              {needRefresh ? "A new version of Ataraxia V2 is ready." : "App is ready to work offline."}
-            </p>
-            <div className="flex gap-3 mt-4">
-              {needRefresh && (
-                <button onClick={() => updateServiceWorker(true)} className="bg-accent shadow-glow px-4 py-2 rounded-lg font-black text-[10px] text-white uppercase tracking-widest hover:scale-105 transition-transform">
-                  Update Now
-                </button>
-              )}
-              <button onClick={close} className="bg-white/5 px-4 py-2 rounded-lg font-black text-[10px] text-white/40 uppercase tracking-widest">
-                Dismiss
-              </button>
+    <AnimatePresence>
+      {needRefresh && (
+        <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="right-4 sm:right-6 bottom-20 sm:bottom-6 z-[100] fixed max-w-[calc(100vw-2rem)] sm:max-w-[340px]">
+          <div className="relative bg-[#1a1a1b]/90 shadow-2xl backdrop-blur-2xl p-5 border border-white/10 rounded-2xl overflow-hidden">
+            <div className="relative flex items-start gap-4">
+              <div className="flex-shrink-0 bg-accent/20 p-2.5 rounded-xl text-accent"><RefreshCw size={20} className="animate-spin" /></div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-black text-white text-xs uppercase tracking-widest">Update Available</h4>
+                  <Sparkles size={12} className="text-accent animate-pulse" />
+                </div>
+                <p className="mb-4 text-[10px] text-white/50 uppercase leading-relaxed tracking-widest">New version of Ataraxia V2 is ready.</p>
+                <div className="flex gap-3">
+                  <button onClick={() => updateServiceWorker(true)} className="flex-1 bg-accent px-4 py-2.5 rounded-xl font-black text-[10px] text-white uppercase tracking-widest">Update Now</button>
+                  <button onClick={close} className="bg-white/5 px-4 py-2.5 rounded-xl font-black text-[10px] text-white/40 uppercase tracking-widest">Later</button>
+                </div>
+              </div>
+              <button onClick={close} className="text-white/10 hover:text-white/40"><X size={14} /></button>
             </div>
           </div>
-          <button onClick={close} className="text-white/20 hover:text-white">
-            <X size={16} />
-          </button>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

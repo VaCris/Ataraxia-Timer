@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useAuth } from '@context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { usePomodoro } from '@context/PomodoroContext';
 import {
     User, Mail, Trophy, Target, Clock,

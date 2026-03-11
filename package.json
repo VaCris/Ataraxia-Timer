@@ -26,6 +26,7 @@
     "react-hot-toast": "^2.6.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.13.1",
+    "redux-saga": "^1.4.2",
     "serialize-javascript": "^7.0.4",
     "workbox-build": "^7.4.0"
   },

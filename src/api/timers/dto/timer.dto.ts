@@ -1,15 +1,18 @@
 export interface CreateTimerDto {
-    type: 'work' | 'short_break' | 'long_break';
-    durationMinutes: number;
-    taskId?: string;
+    tag?: string
+    duration: number
+    taskId?: string
 }
 
-export const CreateTimerDto = (
-    type: 'work' | 'short_break' | 'long_break', 
-    durationMinutes: number, 
+export interface UpdateTimerDto extends Partial<CreateTimerDto> { }
+
+export interface TimerResponse {
+    id: string
+    userId: string
+    tag?: string
+    duration: number
+    startTime: string
+    endTime?: string
+    status: 'completed' | 'interrupted'
     taskId?: string
-): CreateTimerDto => ({
-    type,
-    durationMinutes,
-    taskId
-});
+}

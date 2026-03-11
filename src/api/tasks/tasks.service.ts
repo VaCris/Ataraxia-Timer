@@ -1,29 +1,28 @@
 import api from '@api/client';
-import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
+import { CreateTaskDto, UpdateTaskDto, TaskResponse } from './dto/task.dto';
 
 export const tasksService = {
-    getAll: async () => {
-        const { data } = await api.get('/tasks');
-        return data;
+    getAll: async (): Promise<TaskResponse[]> => {
+        const { data } = await api.get<TaskResponse[]>('/tasks')
+        return data
     },
 
-    getById: async (id: string) => {
-        const { data } = await api.get(`/tasks/${id}`);
-        return data;
+    getById: async (id: string): Promise<TaskResponse> => {
+        const { data } = await api.get<TaskResponse>(`/tasks/${id}`)
+        return data
     },
 
-    create: async (taskData: CreateTaskDto) => {
-        const { data } = await api.post('/tasks', taskData);
-        return data;
+    create: async (taskData: CreateTaskDto): Promise<TaskResponse> => {
+        const { data } = await api.post<TaskResponse>('/tasks', taskData)
+        return data
     },
 
-    update: async (id: string, updateData: UpdateTaskDto) => {
-        const { data } = await api.patch(`/tasks/${id}`, updateData);
-        return data;
+    update: async (id: string, updateData: UpdateTaskDto): Promise<TaskResponse> => {
+        const { data } = await api.patch<TaskResponse>(`/tasks/${id}`, updateData)
+        return data
     },
 
-    delete: async (id: string) => {
-        const { data } = await api.delete(`/tasks/${id}`);
-        return data;
+    delete: async (id: string): Promise<void> => {
+        await api.delete(`/tasks/${id}`)
     }
 };

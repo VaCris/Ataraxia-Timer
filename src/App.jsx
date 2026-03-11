@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
 // Contextos (Usando Alias @context definido en vite.config.js)
-import { AuthProvider } from '@context/AuthContext';
+import { AuthProvider } from '@/context/AuthContext';
 import { PomodoroProvider } from '@context/PomodoroContext';
 import { MusicProvider } from '@context/MusicContext';
 import { AudioProvider } from '@context/AudioContext';

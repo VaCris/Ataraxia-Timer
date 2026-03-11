@@ -1,26 +1,31 @@
-import { useState, useEffect, useCallback } from 'react';
-import { gamificationService } from '@api/gamification/gamification.service';
-import toast from 'react-hot-toast';
+import { useState, useEffect, useCallback } from 'react'
+import { gamificationService } from '@api/gamification/gamification.service'
 
 export const useStats = () => {
-    const [progress, setProgress] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [stats, setStats] = useState(null)
+    const [loading, setLoading] = useState(false)
 
     const loadData = useCallback(async () => {
         try {
-            setLoading(true);
-            const progData = await gamificationService.getProgress();
-            setProgress(progData);
+            setLoading(true)
+
+            const data = await gamificationService.getStats()
+
+            setStats(data)
         } catch (error) {
-            console.error("Error loading statistics", error);
+            console.error('Error loading statistics', error)
         } finally {
-            setLoading(false);
+            setLoading(false)
         }
-    }, []);
+    }, [])
 
     useEffect(() => {
-        loadData();
-    }, [loadData]);
+        loadData()
+    }, [loadData])
 
-    return { progress, leaderboard: [], loading, refresh: loadData };
-};
+    return {
+        stats,
+        loading,
+        refresh: loadData
+    }
+}

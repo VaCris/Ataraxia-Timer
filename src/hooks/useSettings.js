@@ -1,37 +1,37 @@
-import { useState, useEffect } from 'react';
-import { settingsService } from '@api/settings/settings.service';
-import { CreateUpdateSettingDto } from '@api/settings/dto/settings.dto';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from 'react'
+import { settingsService } from '@api/settings/settings.service'
+import toast from 'react-hot-toast'
 
 export const useSettings = () => {
-    const [settings, setSettings] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [settings, setSettings] = useState(null)
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const data = await settingsService.getSettings();
-                setSettings(data);
-            } catch (error) {
-                ;
-                toast.error("Error obtaining configuration");
+                const data = await settingsService.get()
+                setSettings(data)
+            } catch {
+                toast.error('Error obtaining configuration')
             } finally {
-                setLoading(false);
+                setLoading(false)
             }
-        };
-        fetchSettings();
-    }, []);
+        }
+
+        fetchSettings()
+    }, [])
 
     const updateSettings = async (newConfig) => {
         try {
-            const dto = CreateUpdateSettingDto(newConfig);
-            const updated = await settingsService.updateSettings(dto);
-            setSettings(updated);
-            toast.success("Saved settings successfully");
-        } catch (error) {
-            toast.error("Error saving changes to settings");
-        }
-    };
+            const updated = await settingsService.update(newConfig)
 
-    return { settings, loading, updateSettings };
-};
+            setSettings(updated)
+
+            toast.success('Saved settings successfully')
+        } catch {
+            toast.error('Error saving changes to settings')
+        }
+    }
+
+    return { settings, loading, updateSettings }
+}

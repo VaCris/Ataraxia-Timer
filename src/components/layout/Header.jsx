@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
-import { User, Bell, BellOff, LogOut, Clock, Download } from 'lucide-react';
-import { useAuth } from '@context/AuthContext';
+import { Bell, BellOff, LogOut, Clock, Download, User, ShieldCheck } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import { useNotifications } from '@hooks/useNotifications';
 import { useInstallPrompt } from '@hooks/useInstallPrompt';
 import { useSelector } from 'react-redux';
@@ -32,121 +32,53 @@ const Header = () => {
         });
     };
 
-    const validUsername = (() => {
-        const name = user?.username || user?.name;
-        if (!name || name.includes('@')) return null;
-        return name;
-    })();
-
     return (
-        <header className="flex justify-between items-center px-8 py-6 w-full">
-            <div className="flex items-center gap-8">
+        <header className="z-50 flex justify-between items-center px-6 sm:px-12 2xl:px-20 py-6 sm:py-10 w-full">
+            <div className="flex items-center gap-6 sm:gap-12">
                 <div className="flex flex-col">
-                    <div className="flex items-baseline gap-2">
-                        <h1 className="font-black text-white text-2xl italic tracking-tighter">
-                            ATARAXIA
-                        </h1>
-                        <div
-                            className="flex items-center bg-accent/10 shadow-glow px-2 py-0.5 border border-accent/20 rounded-md"
-                            style={{ borderColor: `${accentColor}30`, backgroundColor: `${accentColor}10` }}
-                        >
-                            <span
-                                className="font-black text-[9px] uppercase leading-none tracking-widest"
-                                style={{ color: accentColor }}
-                            >
-                                Beta v2
-                            </span>
+                    <div className="flex items-baseline gap-2 sm:gap-4">
+                        <h1 className="font-black text-white text-xl sm:text-3xl 2xl:text-5xl italic leading-none tracking-tighter">ATARAXIA</h1>
+                        <div className="hidden xs:block bg-accent/10 px-2 py-1 border border-accent/20 rounded-lg">
+                            <span className="font-black text-[9px] sm:text-xs 2xl:text-lg uppercase leading-none tracking-widest" style={{ color: accentColor }}>BETA V2</span>
                         </div>
                     </div>
-
-
-                    <div className="flex items-center gap-2 mt-1">
-                        <span className="relative flex w-1.5 h-1.5">
-                            <span className="inline-flex absolute bg-emerald-400 opacity-75 rounded-full w-full h-full animate-ping"></span>
-                            <span className="inline-flex relative bg-emerald-500 rounded-full w-1.5 h-1.5"></span>
+                    {/* <div className="flex items-center gap-2 mt-2">
+                        <span className="relative flex w-1.5 sm:w-2 h-1.5 sm:h-2">
+                            <span className="absolute bg-emerald-400 opacity-75 rounded-full w-full h-full animate-ping"></span>
+                            <span className="relative bg-emerald-500 rounded-full w-full h-full"></span>
                         </span>
-                        <p className="font-bold text-[9px] text-white/30 uppercase tracking-[0.3em]">
-                            System Active
-                        </p>
-                    </div>
+                        <p className="font-bold text-[8px] text-white/30 sm:text-[10px] 2xl:text-lg uppercase tracking-[0.3em]">System Active</p>
+                    </div> */}
                 </div>
-
-                <div
-                    className="group hidden md:flex items-center gap-3 bg-white/5 hover:bg-white/10 backdrop-blur-xl px-5 py-2.5 border border-white/5 rounded-2xl transition-all"
-                    style={{ boxShadow: `0 0 20px ${accentColor}10` }}
-                >
-                    <Clock
-                        size={14}
-                        style={{ color: accentColor }}
-                        className="group-hover:scale-110 transition-transform animate-pulse"
-                        strokeWidth={2.5}
-                    />
-                    <span className="font-black tabular-nums text-white/60 text-xs tracking-[0.2em]">
-                        {formatTime(currentTime)}
-                    </span>
+                <div className="hidden xl:flex items-center gap-4 bg-white/5 shadow-xl backdrop-blur-2xl px-6 py-3 border border-white/5 rounded-2xl">
+                    <Clock size={16} style={{ color: accentColor }} className="animate-pulse" strokeWidth={3} />
+                    <span className="font-black tabular-nums text-white/60 text-sm 2xl:text-2xl tracking-widest">{formatTime(currentTime)}</span>
                 </div>
             </div>
 
-            <div className="flex items-center gap-4">
-                {(isInstallable || true) && (
-                    <button
-                        onClick={handleInstallClick}
-                        className="group slide-in-from-right-4 flex items-center gap-2 bg-accent/10 hover:bg-accent/20 shadow-glow px-4 border border-accent/30 rounded-2xl h-12 text-accent transition-all animate-in fade-in"
-                        style={{
-                            color: accentColor,
-                            borderColor: `${accentColor}40`,
-                            boxShadow: `0 0 20px ${accentColor}20`
-                        }}
-                    >
-                        <Download size={18} className="animate-bounce" strokeWidth={2.5} />
-                        <div className="flex flex-col items-start leading-none">
-                            <span className="font-black text-[10px] uppercase tracking-tighter">Install</span>
-                            <span className="opacity-50 font-bold text-[8px] uppercase tracking-widest">Ataraxia</span>
-                        </div>
+            <div className="flex items-center gap-3 sm:gap-6">
+                {isInstallable && (
+                    <button onClick={handleInstallClick} className="flex justify-center items-center bg-accent/10 hover:bg-accent/20 shadow-glow px-0 sm:px-6 border border-accent/30 rounded-xl sm:rounded-2xl w-11 sm:w-auto h-11 sm:h-14 text-accent active:scale-95 transition-all">
+                        <Download size={20} className="animate-bounce" />
+                        <span className="hidden sm:block ml-3 font-black text-xs 2xl:text-xl uppercase">Install</span>
                     </button>
                 )}
-
-                <button
-                    onClick={requestPermission}
-                    className={`relative flex justify-center items-center border rounded-2xl w-12 h-12 transition-all ${isGranted
-                        ? 'bg-accent/10 border-accent/30 text-accent shadow-glow'
-                        : 'bg-white/5 border-white/10 text-white/20 hover:text-white'
-                        }`}
-                    style={isGranted ? { color: accentColor, borderColor: `${accentColor}40` } : {}}
-                >
-                    {isGranted ? <Bell size={20} /> : <BellOff size={20} />}
-                    {isGranted && (
-                        <span className="top-3 right-3 absolute rounded-full w-2 h-2 animate-pulse" style={{ backgroundColor: accentColor, boxShadow: `0 0 10px ${accentColor}` }} />
-                    )}
+                <button onClick={requestPermission} className={`flex justify-center items-center border rounded-xl sm:rounded-2xl w-11 sm:w-14 h-11 sm:h-14 transition-all active:scale-95 ${isGranted ? 'bg-accent/10 border-accent/30 text-accent shadow-glow' : 'bg-white/5 border-white/10 text-white/20'}`}>
+                    {isGranted ? <Bell size={22} /> : <BellOff size={22} />}
                 </button>
-
                 {isRealUser ? (
-                    <div className="flex items-center gap-3 bg-white/5 py-1.5 pr-2 pl-5 border border-white/10 rounded-2xl">
-                        <span className="font-bold text-white/80 text-xs uppercase tracking-wider">
-                            {validUsername}
-                        </span>
-                        <button
-                            onClick={logout}
-                            className="group flex justify-center items-center bg-black/40 hover:bg-red-500/20 border border-white/5 rounded-xl w-9 h-9 text-white/40 hover:text-red-500 transition-all"
-                        >
-                            <LogOut size={16} />
-                        </button>
+                    <div className="flex items-center gap-3 bg-white/5 shadow-lg py-2 pr-2 pl-4 sm:pl-8 border border-white/10 rounded-xl sm:rounded-2xl">
+                        <div className="hidden flex md:flex flex-col items-end">
+                            <span className="font-black text-[10px] text-white sm:text-xs 2xl:text-xl uppercase leading-none tracking-widest">{user.username || user.name}</span>
+                            <span className="flex items-center gap-1 mt-1 text-[8px] text-accent uppercase tracking-tighter"><ShieldCheck size={10} /> Verified User</span>
+                        </div>
+                        <button onClick={logout} className="flex justify-center items-center bg-black/40 hover:bg-red-500/10 border border-white/5 rounded-lg sm:rounded-xl w-8 sm:w-11 h-8 sm:h-11 text-white/20 hover:text-red-500 transition-all"><LogOut size={16} /></button>
                     </div>
                 ) : (
-                    <button
-                        onClick={() => setIsAuthOpen(true)}
-                        className="group flex justify-center items-center bg-white/5 hover:bg-accent/20 border border-white/10 hover:border-accent/50 rounded-2xl w-12 h-12 text-white/40 hover:text-accent transition-all"
-                    >
-                        <User size={20} />
-                    </button>
+                    <button onClick={() => setIsAuthOpen(true)} className="flex justify-center items-center bg-white/5 hover:bg-accent/10 shadow-xl border border-white/10 rounded-xl sm:rounded-2xl w-11 sm:w-14 h-11 sm:h-14 text-white/20 hover:text-accent transition-all"><User size={22} /></button>
                 )}
             </div>
-
-            <Suspense fallback={null}>
-                {isAuthOpen && (
-                    <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
-                )}
-            </Suspense>
+            <Suspense fallback={null}>{isAuthOpen && <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />}</Suspense>
         </header>
     );
 };

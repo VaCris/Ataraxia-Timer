@@ -7,12 +7,22 @@ import App from '@/App';
 import './index.css';
 import { registerSW } from 'virtual:pwa-register';
 
-registerSW({ immediate: true });
+if ('serviceWorker' in navigator) {
+  registerSW({
+    immediate: true,
+    onRegistered(r) {
+      r && setInterval(() => { r.update() }, 3600000);
+    },
+    onRegisterError(error) {
+      console.error(error);
+    }
+  });
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Provider store={store}>
-      <BrowserRouter> 
+      <BrowserRouter>
         <App />
       </BrowserRouter>
     </Provider>

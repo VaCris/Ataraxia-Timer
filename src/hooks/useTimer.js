@@ -6,27 +6,30 @@ export const useTimer = (refreshStats) => {
     const { state, dispatch } = usePomodoro();
 
     useEffect(() => {
-        const syncSessionWithApi = async () => {
-            if (state.timeLeft === 0 && !state.isActive) {
-                try {
-                    const dto = {
-                        mode: state.mode.toLowerCase(),
-                        duration: state.initialTime / 60,
-                        taskId: state.currentTaskId || null
-                    };
-                    await timersService.create(dto);
-                    if (refreshStats) refreshStats();
-                    dispatch({ 
-                        type: 'SHOW_TOAST', 
-                        payload: `Session saved! +${state.mode === 'FOCUS' ? '25' : '5'} XP` 
-                    });
-                } catch (error) {
-                    console.error("Error sync session:", error);
+        if (state.timeLeft !== 0 || state.isActive) return
+
+        const sync = async () => {
+            try {
+                const dto = {
+                    duration: state.initialTime,
+                    taskId: state.currentTaskId ?? undefined
                 }
+
+                await timersService.create(dto)
+
+                refreshStats?.()
+
+                dispatch({
+                    type: 'SHOW_TOAST',
+                    payload: `Session saved`
+                })
+            } catch (e) {
+                console.error(e)
             }
-        };
-        syncSessionWithApi();
-    }, [state.timeLeft, state.isActive]);
+        }
+
+        sync()
+    }, [state.timeLeft, state.isActive, state.initialTime, state.currentTaskId])
 
     return { state, dispatch };
 };

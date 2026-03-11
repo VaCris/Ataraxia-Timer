@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { authService } from '@api/auth/auth.service';
-import LogoSVG from '@assets/pwa-192x192.svg';
+import React, { createContext, useContext, useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { authService } from '@api/auth/auth.service'
+import LogoSVG from '@assets/pwa-192x192.svg'
 
-const AuthContext = createContext();
+const AuthContext = createContext(null)
 
 const SENECA_QUOTES = [
     "It is not that we have a short time to live, but that we waste a lot of it.",
@@ -14,97 +14,111 @@ const SENECA_QUOTES = [
     "Your mind is your most valuable possession. Protect it.",
     "Initializing serenity protocols...",
     "Establishing Ataraxia state..."
-];
+]
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [currentQuote, setCurrentQuote] = useState(0);
+    const [user, setUser] = useState(null)
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [loading, setLoading] = useState(true)
+    const [currentQuote, setCurrentQuote] = useState(0)
 
     useEffect(() => {
-        let quoteInterval;
+        let interval
         if (loading) {
-            quoteInterval = setInterval(() => {
-                setCurrentQuote(prev => (prev + 1) % SENECA_QUOTES.length);
-            }, 3000);
+            interval = setInterval(() => { setCurrentQuote(p => (p + 1) % SENECA_QUOTES.length) }, 3000)
         }
-        return () => clearInterval(quoteInterval);
-    }, [loading]);
+        return () => clearInterval(interval)
+    }, [loading])
 
     useEffect(() => {
-        const initializeSession = async () => {
-            const minLoadingTime = new Promise(resolve => setTimeout(resolve, 7000));
-            
+        const init = async () => {
+            const minLoading = new Promise(r => setTimeout(r, 2000))
+
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('token')
+
                 if (token) {
-                    const profile = await authService.getProfile();
-                    setUser(profile);
-                    setIsAuthenticated(true);
+                    const res = await authService.getProfile()
+                    setUser(res.user)
+                    setIsAuthenticated(true)
                 } else {
-                    let deviceId = localStorage.getItem('deviceId') || crypto.randomUUID();
-                    localStorage.setItem('deviceId', deviceId);
-                    
-                    const response = await authService.guestLogin(deviceId);
-                    localStorage.setItem('token', response.access_token);
-                    localStorage.setItem('refreshToken', response.refresh_token);
-                    setUser(response.user);
-                    setIsAuthenticated(true);
+                    let deviceId = localStorage.getItem('deviceId')
+                    if (!deviceId) {
+                        deviceId = crypto.randomUUID()
+                        localStorage.setItem('deviceId', deviceId)
+                    }
+
+                    const res = await authService.guestLogin({ deviceId })
+
+                    localStorage.setItem('token', res.access_token)
+                    if (res.refresh_token) localStorage.setItem('refreshToken', res.refresh_token)
+
+                    setUser(res.user)
+                    setIsAuthenticated(true)
                 }
-            } catch (error) {
-                localStorage.removeItem('token');
-                setUser(null);
-                setIsAuthenticated(false);
+
+            } catch {
+                localStorage.removeItem('token')
+                localStorage.removeItem('refreshToken')
+                setUser(null)
+                setIsAuthenticated(false)
             } finally {
-                await minLoadingTime;
-                setLoading(false);
+                await minLoading
+                setLoading(false)
             }
-        };
-        initializeSession();
-    }, []);
+        }
+
+        init()
+    }, [])
 
     const login = async (email, password) => {
         try {
-            setLoading(true);
-            const response = await authService.login(email, password);
-            localStorage.setItem('token', response.access_token);
-            localStorage.setItem('refreshToken', response.refresh_token);
-            setUser(response.user);
-            setIsAuthenticated(true);
-            return { success: true };
-        } catch (error) {
-            return { success: false, error: error.response?.data?.message || 'Invalid credentials' };
+            setLoading(true)
+
+            const res = await authService.login({ email, password })
+
+            localStorage.setItem('token', res.access_token)
+            if (res.refresh_token) localStorage.setItem('refreshToken', res.refresh_token)
+
+            setUser(res.user)
+            setIsAuthenticated(true)
+
+            return { success: true }
+        } catch (e) {
+            return { success: false, error: e.response?.data?.message || 'Invalid credentials' }
         } finally {
-            setLoading(false);
+            setLoading(false)
         }
-    };
+    }
 
     const logout = async () => {
-        try { await authService.logout(); } catch (e) {}
-        setUser(null);
-        setIsAuthenticated(false);
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        window.location.reload(); 
-    };
+        try { await authService.logout() } catch { }
+        localStorage.removeItem('token')
+        localStorage.removeItem('refreshToken')
+        setUser(null)
+        setIsAuthenticated(false)
+        window.location.reload()
+    }
 
     if (loading) {
         return (
             <div className="flex flex-col justify-center items-center bg-[#050505] px-6 w-screen h-screen overflow-hidden">
+
                 <div className="relative flex justify-center items-center mb-16 w-48 h-48">
+
                     <motion.div
                         animate={{ scale: [1, 1.4, 1], opacity: [0.1, 0.25, 0.1] }}
                         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                         className="absolute inset-0 bg-accent/20 blur-[90px] rounded-full"
                     />
-                    
+
                     <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 1.2, ease: "easeOut" }}
                         className="z-10 relative"
                     >
+
                         <motion.img
                             src={LogoSVG}
                             alt="Ataraxia Logo"
@@ -112,11 +126,14 @@ export const AuthProvider = ({ children }) => {
                             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                             className="drop-shadow-[0_0_25px_rgba(var(--color-accent-rgb),0.4)] brightness-110 w-28 h-28 object-contain"
                         />
+
                     </motion.div>
                 </div>
-                
+
                 <div className="flex flex-col items-center max-w-lg text-center">
+
                     <div className="flex justify-center items-center h-20">
+
                         <AnimatePresence mode="wait">
                             <motion.p
                                 key={currentQuote}
@@ -129,35 +146,40 @@ export const AuthProvider = ({ children }) => {
                                 "{SENECA_QUOTES[currentQuote]}"
                             </motion.p>
                         </AnimatePresence>
+
                     </div>
 
                     <div className="flex flex-col items-center gap-5 mt-12">
+
                         <span className="ml-[1em] font-black text-[10px] text-white/10 uppercase tracking-[1em]">
                             STARTING ATARAXIA...
                         </span>
+
                         <div className="relative bg-white/5 rounded-full w-56 h-[1px] overflow-hidden">
-                            <motion.div 
+
+                            <motion.div
                                 initial={{ left: "-100%" }}
                                 animate={{ left: "100%" }}
                                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                                 className="absolute inset-0 bg-gradient-to-r from-transparent via-accent to-transparent shadow-[0_0_10px_var(--color-accent)] w-2/3"
                             />
+
                         </div>
                     </div>
                 </div>
             </div>
-        );
+        )
     }
 
     return (
         <AuthContext.Provider value={{ user, isAuthenticated, login, logout, loading }}>
             {children}
         </AuthContext.Provider>
-    );
-};
+    )
+}
 
 export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) throw new Error('useAuth must be used within an AuthProvider');
-    return context;
-};
+    const ctx = useContext(AuthContext)
+    if (!ctx) throw new Error('useAuth must be used within AuthProvider')
+    return ctx
+}
