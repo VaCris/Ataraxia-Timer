@@ -1,12 +1,13 @@
 import { call, put, takeLatest } from 'redux-saga/effects'
 import { timersService } from '@api/timers/timers.service'
+import { toast } from 'react-hot-toast'
 import {
     fetchTimersRequest, fetchTimersSuccess, fetchTimersFailure,
     createTimerRequest, createTimerSuccess, createTimerFailure,
     updateTimerRequest, updateTimerSuccess, updateTimerFailure,
     deleteTimerRequest, deleteTimerSuccess, deleteTimerFailure
 } from '../slices/timerSlice'
-import { TimerResponse, CreateTimerDto, UpdateTimerDto } from '@/api/timers/dto/timer.dto'
+import { TimerResponse } from '@api/timers/dto/timer.dto'
 
 function* handleFetchTimers(): Generator<any, void, TimerResponse[]> {
     try {
@@ -19,10 +20,20 @@ function* handleFetchTimers(): Generator<any, void, TimerResponse[]> {
 
 function* handleCreateTimer(action: ReturnType<typeof createTimerRequest>): Generator<any, void, TimerResponse> {
     try {
-        const data: TimerResponse = yield call(timersService.create, action.payload)
-        yield put(createTimerSuccess(data))
+        const data: TimerResponse = yield call(timersService.create, action.payload);
+        yield put(createTimerSuccess(data));
+        toast.success("Session successfully saved");
     } catch (e: any) {
-        yield put(createTimerFailure(e.message))
+        if (e.message === 'OFFLINE_SAVED') {
+            yield put(createTimerFailure("Offline Mode")); 
+            toast.success("Session saved locally! It will be uploaded when you have internet access again", {
+                icon: '💾',
+                duration: 5000
+            });
+        } else {
+            yield put(createTimerFailure(e.message));
+            toast.error("Session could not be saved");
+        }
     }
 }
 
@@ -45,7 +56,14 @@ function* handleDeleteTimer(action: ReturnType<typeof deleteTimerRequest>): Gene
 }
 
 export default function* timerSaga(): Generator {
-    yield takeLatest(fetchTimersRequest.type, handleFetchTimers)
+    yield takeLatest(fetchTimersRequest.type, function* () {
+        try {
+            const data: TimerResponse[] = yield call(timersService.getAll)
+            yield put(fetchTimersSuccess(data))
+        } catch (e: any) {
+            yield put(fetchTimersFailure(e.message))
+        }
+    })
     yield takeLatest(createTimerRequest.type, handleCreateTimer)
     yield takeLatest(updateTimerRequest.type, handleUpdateTimer)
     yield takeLatest(deleteTimerRequest.type, handleDeleteTimer)

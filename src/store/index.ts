@@ -5,6 +5,7 @@ import settingsReducer from './slices/settingsSlice'
 import authReducer from './slices/authSlice'
 import tasksReducer from './slices/tasksSlice'
 import timerReducer from './slices/timerSlice'
+import tagReducer from './slices/tagsSlice'
 
 import rootSaga from './sagas'
 
@@ -15,9 +16,13 @@ export const store = configureStore({
     settings: settingsReducer,
     auth: authReducer,
     tasks: tasksReducer,
+    tags: tagReducer,
     timer: timerReducer
   },
   middleware: gDM => gDM({ thunk: false }).concat(sagaMiddleware)
 })
 
 sagaMiddleware.run(rootSaga)
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;

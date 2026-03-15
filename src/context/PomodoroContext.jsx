@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useAudio } from './AudioContext';
+import { createTimerRequest } from '@store/slices/timerSlice';
 
 const PomodoroContext = createContext();
 
@@ -46,21 +47,8 @@ function reducer(state, action) {
             };
         case 'RESET_TIMER':
             return { ...state, timeLeft: state.settings[state.mode] * 60, isActive: false };
-        case 'SHOW_TOAST':
-            return {
-                ...state,
-                toast: { isOpen: true, message: action.payload.message, type: action.payload.type || 'xp' }
-            };
-        case 'HIDE_TOAST':
-            return {
-                ...state,
-                toast: { ...state.toast, isOpen: false }
-            };
-        case 'TOGGLE_PLAY':
-            return { ...state, music: { ...state.music, isPlaying: !state.music.isPlaying } };
         case 'UPDATE_SETTINGS':
             return { ...state, settings: { ...state.settings, ...action.payload } };
-
         default:
             return state;
     }
@@ -68,6 +56,9 @@ function reducer(state, action) {
 
 export const PomodoroProvider = ({ children }) => {
     const [state, dispatch] = useReducer(reducer, initialState);
+    const reduxDispatch = useDispatch(); // Hook para enviar acciones a Redux Saga
+
+    // Obtenemos configuración del estado global de Redux
     const { autoStartBreak, autoStartFocus } = useSelector(state => state.settings) || {};
     const { masterVolume, alarmVolume } = useAudio();
 
@@ -86,46 +77,54 @@ export const PomodoroProvider = ({ children }) => {
         alarm.play().catch(err => console.log("Waiting for user interaction to sound...", err));
     };
 
+    // Lógica principal del temporizador y conexión con Redux Saga
     useEffect(() => {
         let interval = null;
         if (state.isActive && state.timeLeft > 0) {
             interval = setInterval(() => dispatch({ type: 'TICK' }), 1000);
         } else if (state.timeLeft === 0 && state.isActive) {
+            // 1. Detener temporizador local
             dispatch({ type: 'TOGGLE_TIMER' });
             playAlarm();
+
+            // 2. DISPARAR ACCIÓN A REDUX SAGA PARA GUARDAR EN DB
+            // Solo guardamos si es modo FOCUS (trabajo)
+            if (state.mode === 'FOCUS') {
+                reduxDispatch(createTimerRequest({
+                    type: 'work',
+                    duration: state.settings.FOCUS,
+                    timestamp: new Date().toISOString()
+                }));
+            }
         }
         return () => clearInterval(interval);
-    }, [state.isActive, state.timeLeft]);
+    }, [state.isActive, state.timeLeft, state.mode, state.settings.FOCUS, reduxDispatch]);
 
+    // Atajos de teclado
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
-
             switch (e.code) {
                 case 'Space':
-                    e.preventDefault(); 
+                    e.preventDefault();
                     dispatch({ type: 'TOGGLE_TIMER' });
                     break;
                 case 'KeyR':
                     dispatch({ type: 'RESET_TIMER' });
                     break;
                 case 'Digit1':
-                case 'Numpad1':
                     handleSwitchMode('FOCUS');
                     break;
                 case 'Digit2':
-                case 'Numpad2':
                     handleSwitchMode('SHORT_BREAK');
                     break;
                 case 'Digit3':
-                case 'Numpad3':
                     handleSwitchMode('LONG_BREAK');
                     break;
                 default:
                     break;
             }
         };
-
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleSwitchMode]);

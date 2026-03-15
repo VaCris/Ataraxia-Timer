@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { AuthUser } from '@/api/auth/dto/auth.dto'
+import { Check } from 'lucide-react'
 
 type AuthState = {
   user: AuthUser | null
@@ -21,16 +22,21 @@ const slice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    checkAuthRequest: (s) => {
+      s.status = 'loading'
+    },
+
     loginRequest: (s, _a: PayloadAction<{ email: string; password: string }>) => {
       s.status = 'loading'
       s.error = null
     },
 
     loginSuccess: (s, a: PayloadAction<{ user: AuthUser; accessToken: string; refreshToken?: string }>) => {
+      s.status = 'authenticated'
       s.user = a.payload.user
       s.accessToken = a.payload.accessToken
       s.refreshToken = a.payload.refreshToken || null
-      s.status = 'authenticated'
+      s.error = null
     },
 
     loginFailure: (s, a: PayloadAction<string>) => {
@@ -60,10 +66,10 @@ const slice = createSlice({
       s.error = null
     },
 
-    guestLoginSuccess: (s, a: PayloadAction<{ user: AuthUser; accessToken: string }>) => {
-      s.user = a.payload.user
-      s.accessToken = a.payload.accessToken
-      s.status = 'authenticated'
+    guestLoginSuccess: (s, a: PayloadAction<{ user: AuthUser; accessToken?: string }>) => {
+      s.status = 'authenticated';
+      s.user = a.payload.user;
+      s.error = null;
     },
 
     guestLoginFailure: (s, a: PayloadAction<string>) => {
@@ -118,6 +124,7 @@ const slice = createSlice({
 })
 
 export const {
+  checkAuthRequest,
   loginRequest,
   loginSuccess,
   loginFailure,

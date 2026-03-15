@@ -23,9 +23,10 @@ export interface ResetPasswordDto {
 
 export interface AuthUser {
     id: string;
-    email: string;
+    email?: string;
     name: string;
     isGuest: boolean;
+    deviceId?: string;
 }
 
 export interface AuthResponse {

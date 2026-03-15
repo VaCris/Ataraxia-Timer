@@ -1,165 +1,175 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useTasks } from '@hooks/useTasks'; // Tu hook con estado local y persistencia
+import { useTags } from '@hooks/useTags';   // Hook para gestionar etiquetas y colores
 import EmptyTasks from './EmptyTasks';
-import { usePomodoro } from '@context/PomodoroContext';
-import { useTasks } from '@hooks/useTasks';
-import { Plus, Trash2, CheckCircle2, Circle, Tag as TagIcon, Hash } from 'lucide-react';
+import {
+  Plus, Trash2, CheckCircle2, Circle,
+  Tag as TagIcon, Hash, Loader2, Settings2
+} from 'lucide-react';
 
 const TaskManager = () => {
-    const { state, dispatch } = usePomodoro();
-    const [name, setName] = useState('');
-    const [est, setEst] = useState(1);
-    const [tagName, setTagName] = useState('General');
-    const [tagColor, setTagColor] = useState('#e11d48');
+  // 1. Usamos tu hook useTasks y useTags
+  const { tasks, loading: tasksLoading, addTask, toggleTask, removeTask } = useTasks();
+  const { tags, addTag } = useTags();
 
-    const { tasks, loading, addTask, toggleTask, removeTask } = useTasks();
+  // 2. Estados locales para el diseño "Mission Log"
+  const [name, setName] = useState('');
+  const [est, setEst] = useState(1);
+  const [tagName, setTagName] = useState('General');
+  const [tagColor, setTagColor] = useState('#e11d48'); // Color predeterminado Ataraxia
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (name.trim().length < 2) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (name.trim().length < 2) return;
 
-        const taskData = {
-            title: name.trim(),
-            tag: tagName.trim() || 'General' 
-        };
+    const cleanTagName = tagName.trim() || 'General';
 
-        try {
-            await addTask(taskData);
-            dispatch({
-                type: 'ADD_TASK',
-                payload: {
-                    id: crypto.randomUUID(),
-                    title: taskData.title,
-                    estPomos: est,
-                    isCompleted: false,
-                    tag: taskData.tag,
-                    createdAt: new Date().toISOString()
-                }
-            });
+    try {
+      // 3. Verificamos si el tag existe para que el servidor guarde su color
+      const existingTag = tags.find(t => t.name.toLowerCase() === cleanTagName.toLowerCase());
 
-            setName('');
-            setEst(1);
-            
-        } catch (err) {
-            console.error(err);
-        }
-    };
+      // 4. Si es un tag nuevo, lo creamos primero (CreateTagDto: {name, color})
+      if (!existingTag) {
+        await addTag({ name: cleanTagName, color: tagColor });
+      }
 
-    if (loading) {
-        return (
-            <div className="flex flex-col justify-center items-center bg-surface/20 backdrop-blur-md p-6 border border-white/5 rounded-[2.5rem] h-full">
-                <p className="text-white/40">Loading Mission Log...</p>
-            </div>
-        );
+      // 5. Creamos la tarea (CreateTaskDto: {title, tag})
+      // Solo enviamos lo que el DTO permite para evitar el error 400
+      await addTask({
+        title: name.trim(),
+        tag: cleanTagName
+      });
+
+      // Reset campos
+      setName('');
+      setEst(1);
+    } catch (err) {
+      console.error("Error en la misión:", err);
     }
+  };
 
+  return (
+    <div className="flex flex-col bg-[#0a0a0a]/80 shadow-2xl backdrop-blur-xl p-6 border border-white/5 rounded-[2.5rem] h-full overflow-hidden">
 
-    return (
-        <div className="flex flex-col bg-surface/20 backdrop-blur-md p-6 border border-white/5 rounded-[2.5rem] h-full">
-            <h2 className="flex items-center gap-3 mb-6 px-2 font-bold text-lg">
-                <span className="bg-accent rounded-full w-2 h-2"></span>
-                Mission Log
-            </h2>
+      {/* HEADER MISSION LOG */}
+      <div className="flex justify-between items-center mb-6 px-2">
+        <h2 className="flex items-center gap-3 font-black text-white text-sm uppercase tracking-[0.2em]">
+          <span className="bg-[#00ffd5] shadow-[0_0_10px_#00ffd5] rounded-full w-2 h-2"></span>
+          Mission Log
+        </h2>
+        <Settings2 size={18} className="text-white/20 hover:text-white transition-colors cursor-pointer" />
+      </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4 mb-8 px-2">
-                <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="What's the next objective?"
-                    className="bg-black/40 px-5 py-4 border border-white/10 focus:border-accent/50 rounded-2xl focus:outline-none w-full placeholder:text-white/20 text-sm transition-all"
-                    maxLength={40}
-                />
+      {/* FORMULARIO DE ENTRADA (DISEÑO EXACTO A LA IMAGEN) */}
+      <form onSubmit={handleSubmit} className="space-y-3 mb-8 px-2">
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="What's the next objective?"
+          className="bg-black/40 shadow-inner px-5 py-4 border border-white/5 focus:border-[#00ffd5]/30 rounded-2xl focus:outline-none w-full text-white placeholder:text-white/10 text-sm transition-all"
+          maxLength={40}
+        />
 
-                <div className="flex gap-3">
-                    <div className="relative flex-1">
-                        <TagIcon className="top-1/2 left-4 absolute text-white/20 -translate-y-1/2" size={14} />
-                        <input
-                            type="text"
-                            value={tagName}
-                            onChange={(e) => setTagName(e.target.value)}
-                            placeholder="Tag"
-                            className="bg-black/20 py-3 pr-4 pl-10 border border-white/5 focus:border-white/20 rounded-2xl outline-none w-full font-bold text-xs uppercase tracking-widest transition-all"
-                        />
-                    </div>
-
-                    <div className="group relative">
-                        <div
-                            className="flex justify-center items-center border-2 border-white/10 rounded-xl w-10 h-10 group-hover:scale-105 transition-transform cursor-pointer"
-                            style={{ backgroundColor: tagColor }}
-                        >
-                            <Hash size={14} className="text-black/40" />
-                            <input
-                                type="color"
-                                value={tagColor}
-                                onChange={(e) => setTagColor(e.target.value)}
-                                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex gap-3">
-                    <div className="flex flex-1 justify-between items-center bg-black/20 px-5 py-2 border border-white/5 rounded-2xl">
-                        <span className="font-bold text-[10px] text-white/30 uppercase tracking-widest">Est. Pomos</span>
-                        <input
-                            type="number" min="1" max="10"
-                            value={est}
-                            onChange={(e) => setEst(parseInt(e.target.value))}
-                            className="bg-transparent focus:outline-none w-12 font-bold text-right"
-                        />
-                    </div>
-                    <button type="submit" className="bg-cream p-4 rounded-2xl text-black hover:scale-105 active:scale-95 transition-transform">
-                        <Plus size={20} strokeWidth={3} />
-                    </button>
-                </div>
-            </form>
-
-            <div className="flex-1 space-y-3 px-2 overflow-y-auto custom-scrollbar">
-                {tasks.length === 0 ? (
-                    <EmptyTasks />
-                ) : (
-                    tasks.map(task => (
-                        <div key={task.id} className={`group flex items-center justify-between p-5 rounded-2xl border transition-all ${task.isCompleted ? 'bg-black/20 border-white/5 opacity-50' : 'bg-surface border-white/10 hover:border-accent/30'
-                            }`}>
-                            <div className="flex items-center gap-4">
-                                <button
-                                    onClick={() => toggleTask(task.id, task.isCompleted)} // Usa la función del hook API
-                                    className="active:scale-90 transition-transform"
-                                >
-                                    {task.isCompleted ? <CheckCircle2 className="text-accent" /> : <Circle className="text-white/20" />}
-                                </button>
-                                <div>
-                                    <p className={`text-sm font-medium ${task.isCompleted ? 'line-through' : ''}`}>{task.title}</p>
-                                    <div className="flex items-center gap-3 mt-1.5">
-                                        <div className="flex gap-1">
-                                            {[...Array(task.estPomos || 1)].map((_, i) => (
-                                                <div key={i} className="bg-white/10 rounded-full w-1.5 h-1.5" />
-                                            ))}
-                                        </div>
-                                        {task.tag && task.tag.name && (
-                                            <span
-                                                className="flex items-center gap-1 font-black text-[9px] uppercase tracking-tighter"
-                                                style={{ color: task.tag.color || '#ccc' }}
-                                            >
-                                                <div className="rounded-full w-1 h-1" style={{ backgroundColor: task.tag.color || '#ccc' }} />
-                                                {task.tag.name}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => removeTask(task.id)} 
-                                className="opacity-0 group-hover:opacity-100 p-2 text-white/20 hover:text-red-500 transition-all"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
-                    ))
-                )}
+        <div className="flex items-center gap-3">
+          <div className="group relative flex flex-1 items-center bg-black/40 px-4 py-3 border border-white/5 focus-within:border-white/10 rounded-2xl">
+            <TagIcon className="mr-3 text-white/20" size={14} />
+            <input
+              type="text"
+              value={tagName}
+              onChange={(e) => setTagName(e.target.value)}
+              placeholder="Tag"
+              className="bg-transparent outline-none w-full font-black text-white text-xs uppercase tracking-widest"
+            />
+          </div>
+          {/* Botón de Color # */}
+          <div className="group relative">
+            <div
+              className="flex justify-center items-center shadow-lg border border-white/10 rounded-xl w-10 h-10 hover:scale-105 transition-transform cursor-pointer"
+              style={{ backgroundColor: tagColor }}
+            >
+              <Hash size={14} className="text-black/40" />
+              <input
+                type="color"
+                value={tagColor}
+                onChange={(e) => setTagColor(e.target.value)}
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+              />
             </div>
+          </div>
         </div>
-    );
+
+        <div className="flex items-center gap-3">
+          <div className="flex flex-1 justify-between items-center bg-black/40 px-5 py-3 border border-white/5 rounded-2xl">
+            <span className="font-black text-[10px] text-white/20 uppercase tracking-widest">Est. Pomos</span>
+            <div className="flex items-center gap-4 font-bold text-white">
+              <button type="button" onClick={() => setEst(Math.max(1, est - 1))} className="opacity-40 hover:opacity-100">-</button>
+              <span className="w-4 text-sm text-center">{est}</span>
+              <button type="button" onClick={() => setEst(Math.min(10, est + 1))} className="opacity-40 hover:opacity-100">+</button>
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={tasksLoading}
+            className="bg-white hover:bg-[#00ffd5] disabled:opacity-20 shadow-xl p-4 rounded-2xl text-black active:scale-95 transition-all"
+          >
+            {tasksLoading ? <Loader2 size={24} className="animate-spin" /> : <Plus size={24} strokeWidth={3} />}
+          </button>
+        </div>
+      </form>
+
+      {/* LISTA DE TAREAS (DISEÑO SOLICITADO) */}
+      <div className="flex-1 space-y-3 px-2 overflow-y-auto custom-scrollbar">
+        {tasks.length === 0 && !tasksLoading ? (
+          <EmptyTasks />
+        ) : (
+          tasks.map((task) => {
+            // VINCULACIÓN DE COLOR: Buscamos el color en el array global de tags por el nombre
+            // Como el servidor guarda el tag, lo mapeamos aquí para recuperar el color al refrescar.
+            const tagData = tags.find(t => t.name.toLowerCase() === (task.tag || '').toLowerCase());
+            const displayColor = tagData?.color || '#5fbfff';
+
+            return (
+              <div key={task.id} className={`group flex items-center justify-between p-5 rounded-3xl border transition-all ${task.completed ? 'bg-black/20 border-white/5 opacity-40' : 'bg-[#121212]/40 border-white/5 hover:border-white/10'
+                }`}>
+                <div className="flex flex-1 items-center gap-4">
+                  <button
+                    onClick={() => toggleTask(task.id, task.completed)}
+                    className="active:scale-90 transition-transform"
+                  >
+                    {task.completed ? <CheckCircle2 className="text-[#00ffd5]" size={22} /> : <Circle className="text-white/20" size={22} />}
+                  </button>
+
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-bold tracking-tight transition-all ${task.completed ? 'line-through text-white/20' : 'text-white/80'}`}>
+                      {task.title}
+                    </p>
+
+                    {/* TAG VISUAL DEBAJO (NOMBRE + COLOR DINÁMICO) */}
+                    {task.tag && (
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <TagIcon size={10} style={{ color: displayColor }} />
+                        <span className="font-black text-[9px] uppercase tracking-widest" style={{ color: displayColor, opacity: 0.5 }}>
+                          {task.tag}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => removeTask(task.id)}
+                  className="opacity-0 group-hover:opacity-100 p-2 text-white/5 hover:text-red-500 transition-all"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default TaskManager;

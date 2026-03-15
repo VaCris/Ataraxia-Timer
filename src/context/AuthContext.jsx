@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { authService } from '@api/auth/auth.service'
+import { useDispatch, useSelector } from 'react-redux'
+import {
+    checkAuthRequest,
+    loginRequest,
+    registerRequest,
+    logoutRequest
+} from '@store/slices/authSlice'
 import LogoSVG from '@assets/pwa-192x192.svg'
 
 const AuthContext = createContext(null)
@@ -17,95 +23,62 @@ const SENECA_QUOTES = [
 ]
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null)
-    const [isAuthenticated, setIsAuthenticated] = useState(false)
-    const [loading, setLoading] = useState(true)
+    const dispatch = useDispatch()
+
+    // Obtenemos el estado real de Redux
+    const { user, status, error: authError } = useSelector(state => state.auth)
+    const isAuthenticated = status === 'authenticated'
+
+    const [loadingUI, setLoadingUI] = useState(true)
     const [currentQuote, setCurrentQuote] = useState(0)
 
+    // 1. Manejo de las frases de Séneca
     useEffect(() => {
         let interval
-        if (loading) {
-            interval = setInterval(() => { setCurrentQuote(p => (p + 1) % SENECA_QUOTES.length) }, 3000)
+        if (loadingUI) {
+            interval = setInterval(() => {
+                setCurrentQuote(p => (p + 1) % SENECA_QUOTES.length)
+            }, 3000)
         }
         return () => clearInterval(interval)
-    }, [loading])
+    }, [loadingUI])
 
+    // 2. INICIALIZACIÓN BLINDADA (Fix doble disparo)
     useEffect(() => {
-        const init = async () => {
-            const minLoading = new Promise(r => setTimeout(r, 2000))
+        const initAtaraxia = async () => {
+            const token = localStorage.getItem('token');
+            const deviceId = localStorage.getItem('deviceId');
 
-            try {
-                const token = localStorage.getItem('token')
+            // UX: Queremos que vean al menos una frase de Séneca (2.5s)
+            const minWait = new Promise(r => setTimeout(r, 2500));
 
-                if (token) {
-                    const res = await authService.getProfile()
-                    setUser(res.user)
-                    setIsAuthenticated(true)
-                } else {
-                    let deviceId = localStorage.getItem('deviceId')
-                    if (!deviceId) {
-                        deviceId = crypto.randomUUID()
-                        localStorage.setItem('deviceId', deviceId)
-                    }
+            // REGLA: Solo disparamos checkAuth si estamos en 'idle' y hay algo que validar
+            // Esto evita que React Strict Mode dispare dos peticiones paralelas
+            if (token && status === 'idle') {
+                dispatch(checkAuthRequest());
+            }
 
-                    const res = await authService.guestLogin({ deviceId })
+            await minWait;
 
-                    localStorage.setItem('token', res.access_token)
-                    if (res.refresh_token) localStorage.setItem('refreshToken', res.refresh_token)
-
-                    setUser(res.user)
-                    setIsAuthenticated(true)
-                }
-
-            } catch {
-                localStorage.removeItem('token')
-                localStorage.removeItem('refreshToken')
-                setUser(null)
-                setIsAuthenticated(false)
-            } finally {
-                await minLoading
-                setLoading(false)
+            // Solo quitamos el splash screen cuando la Saga haya terminado (o no haya nada que cargar)
+            // Si el status sigue en 'loading', esperamos a que cambie.
+            if (status !== 'loading') {
+                setLoadingUI(false);
             }
         }
 
-        init()
-    }, [])
+        initAtaraxia();
+    }, [dispatch, status]); // Escuchamos status para saber cuándo la Saga terminó
 
-    const login = async (email, password) => {
-        try {
-            setLoading(true)
+    const login = (email, password) => dispatch(loginRequest({ email, password }))
+    const register = (userData) => dispatch(registerRequest(userData))
+    const logout = () => dispatch(logoutRequest())
 
-            const res = await authService.login({ email, password })
-
-            localStorage.setItem('token', res.access_token)
-            if (res.refresh_token) localStorage.setItem('refreshToken', res.refresh_token)
-
-            setUser(res.user)
-            setIsAuthenticated(true)
-
-            return { success: true }
-        } catch (e) {
-            return { success: false, error: e.response?.data?.message || 'Invalid credentials' }
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const logout = async () => {
-        try { await authService.logout() } catch { }
-        localStorage.removeItem('token')
-        localStorage.removeItem('refreshToken')
-        setUser(null)
-        setIsAuthenticated(false)
-        window.location.reload()
-    }
-
-    if (loading) {
+    // 3. RENDER DEL LOADING (Se mantiene mientras se inicializa o mientras la Saga trabaja)
+    if (loadingUI || (status === 'loading' && !user)) {
         return (
             <div className="flex flex-col justify-center items-center bg-[#050505] px-6 w-screen h-screen overflow-hidden">
-
                 <div className="relative flex justify-center items-center mb-16 w-48 h-48">
-
                     <motion.div
                         animate={{ scale: [1, 1.4, 1], opacity: [0.1, 0.25, 0.1] }}
                         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -118,7 +91,6 @@ export const AuthProvider = ({ children }) => {
                         transition={{ duration: 1.2, ease: "easeOut" }}
                         className="z-10 relative"
                     >
-
                         <motion.img
                             src={LogoSVG}
                             alt="Ataraxia Logo"
@@ -126,14 +98,11 @@ export const AuthProvider = ({ children }) => {
                             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                             className="drop-shadow-[0_0_25px_rgba(var(--color-accent-rgb),0.4)] brightness-110 w-28 h-28 object-contain"
                         />
-
                     </motion.div>
                 </div>
 
                 <div className="flex flex-col items-center max-w-lg text-center">
-
                     <div className="flex justify-center items-center h-20">
-
                         <AnimatePresence mode="wait">
                             <motion.p
                                 key={currentQuote}
@@ -146,24 +115,19 @@ export const AuthProvider = ({ children }) => {
                                 "{SENECA_QUOTES[currentQuote]}"
                             </motion.p>
                         </AnimatePresence>
-
                     </div>
 
                     <div className="flex flex-col items-center gap-5 mt-12">
-
                         <span className="ml-[1em] font-black text-[10px] text-white/10 uppercase tracking-[1em]">
                             STARTING ATARAXIA...
                         </span>
-
                         <div className="relative bg-white/5 rounded-full w-56 h-[1px] overflow-hidden">
-
                             <motion.div
                                 initial={{ left: "-100%" }}
                                 animate={{ left: "100%" }}
                                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                                 className="absolute inset-0 bg-gradient-to-r from-transparent via-accent to-transparent shadow-[0_0_10px_var(--color-accent)] w-2/3"
                             />
-
                         </div>
                     </div>
                 </div>
@@ -172,7 +136,15 @@ export const AuthProvider = ({ children }) => {
     }
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated, login, logout, loading }}>
+        <AuthContext.Provider value={{
+            user,
+            isAuthenticated,
+            login,
+            register,
+            logout,
+            error: authError,
+            loading: loadingUI || status === 'loading'
+        }}>
             {children}
         </AuthContext.Provider>
     )

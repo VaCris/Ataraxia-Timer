@@ -1,29 +1,58 @@
-import { call, put, takeLatest } from 'redux-saga/effects';
+import { call, put, takeLatest, all } from 'redux-saga/effects';
 import { tasksService } from '@api/tasks/tasks.service';
-import { 
-    fetchTasksRequest, fetchTasksSuccess, createTaskRequest, 
-    taskActionFailure 
+import {
+  fetchTasksRequest, fetchTasksSuccess, fetchTasksFailure,
+  createTaskRequest, createTaskSuccess, createTaskFailure,
+  updateTaskRequest, updateTaskSuccess, updateTaskFailure,
+  deleteTaskRequest, deleteTaskSuccess, deleteTaskFailure
 } from '../slices/tasksSlice';
+import { TaskResponse } from '@api/tasks/dto/task.dto';
 
-function* handleFetchTasks(): Generator {
-    try {
-        const data = yield call(tasksService.getAll);
-        yield put(fetchTasksSuccess(data as any[]));
-    } catch (e: any) {
-        yield put(taskActionFailure(e.message));
-    }
+function* handleFetchTasks() {
+  try {
+    const data: TaskResponse[] = yield call(tasksService.getAll);
+    yield put(fetchTasksSuccess(data));
+  } catch (e: any) {
+    yield put(fetchTasksFailure(e.response?.data?.message || e.message));
+  }
 }
 
-function* handleCreateTask(action: ReturnType<typeof createTaskRequest>): Generator {
-    try {
-        const createdTask = yield call(tasksService.create, action.payload);
-        yield put(fetchTasksRequest()); 
-    } catch (e: any) {
-        yield put(taskActionFailure(e.message));
-    }
+function* handleCreateTask(action: ReturnType<typeof createTaskRequest>) {
+  try {
+    const payload = {
+      ...action.payload,
+      tag: action.payload.tag?.trim() || 'General'
+    };
+    const data: TaskResponse = yield call(tasksService.create, payload);
+    yield put(createTaskSuccess(data));
+  } catch (e: any) {
+    yield put(createTaskFailure(e.response?.data?.message || e.message));
+  }
+}
+
+function* handleUpdateTask(action: ReturnType<typeof updateTaskRequest>) {
+  try {
+    const data: TaskResponse = yield call(tasksService.update, action.payload.id, action.payload.data);
+    yield put(updateTaskSuccess(data));
+  } catch (e: any) {
+    yield put(updateTaskFailure(e.response?.data?.message || e.message));
+  }
+}
+
+function* handleDeleteTask(action: ReturnType<typeof deleteTaskRequest>) {
+  try {
+    yield call(tasksService.delete, action.payload);
+    yield put(deleteTaskSuccess(action.payload));
+  } catch (e: any) {
+    yield put(deleteTaskFailure(e.response?.data?.message || e.message));
+  }
 }
 
 export function* taskSaga() {
-    yield takeLatest(fetchTasksRequest.type, handleFetchTasks);
-    yield takeLatest(createTaskRequest.type, handleCreateTask);
+  yield all([
+    takeLatest(fetchTasksRequest.type, handleFetchTasks),
+    takeLatest(createTaskRequest.type, handleCreateTask),
+    takeLatest(updateTaskRequest.type, handleUpdateTask),
+    takeLatest(deleteTaskRequest.type, handleDeleteTask),
+  ]);
 }
