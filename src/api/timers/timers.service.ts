@@ -33,8 +33,10 @@ export const timersService = {
     },
 
     update: async (id: string, data: UpdateTimerDto): Promise<TimerResponse> => {
-        const { data: res } = await api.patch<TimerResponse>(`/timers/${id}`, data)
-        return res
+        if (!id) return Promise.reject('INVALID_ID');
+    
+        const { data: res } = await api.patch<TimerResponse>(`/timers/${id}`, data);
+        return res;
     },
 
     delete: async (id: string): Promise<void> => {

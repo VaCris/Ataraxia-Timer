@@ -8,6 +8,7 @@
     "allowJs": true,
     "checkJs": false,
     "strict": true,
+    "types": ["vite/client"],
     "skipLibCheck": true,
     "noEmit": true,
     "baseUrl": "./src",
@@ -21,7 +22,10 @@
       "@styles/*": ["styles/*"],
       "@api/*": ["api/*"],
       "@store/*": ["store/*"],
-      "@pages/*": ["pages/*"]
+      "@pages/*": ["pages/*"],
+      "@db/*": ["db/*"],
+      "@core": ["core/*"],
+      "@types/*": ["types/*"]
     }
   },
   "include": ["src"]

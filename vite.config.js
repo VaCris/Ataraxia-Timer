@@ -50,7 +50,6 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,mp3}'],
         cleanupOutdatedCaches: true,
-        // Reglas para cachear fuentes externas en tiempo de ejecución
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -96,6 +95,8 @@ export default defineConfig({
       '@api': path.resolve(__dirname, './src/api'),
       '@store': path.resolve(__dirname, './src/store'),
       '@pages': path.resolve(__dirname, './src/pages'),
+      '@db': path.resolve(__dirname, './src/db'),
+      '@core': path.resolve(__dirname, './src/core'),
     },
   },
   server: {

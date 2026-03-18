@@ -1,12 +1,15 @@
 export interface CreateTimerDto {
     tag?: string
     duration: number
+    startTime?: string
+    endTime?: string
+    status?: 'completed' | 'interrupted'
     taskId?: string
-}
-
-export interface UpdateTimerDto extends Partial<CreateTimerDto> { }
-
-export interface TimerResponse {
+  }
+  
+  export interface UpdateTimerDto extends Partial<CreateTimerDto> {}
+  
+  export interface TimerResponse {
     id: string
     userId: string
     tag?: string
@@ -15,4 +18,4 @@ export interface TimerResponse {
     endTime?: string
     status: 'completed' | 'interrupted'
     taskId?: string
-}
+  }

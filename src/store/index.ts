@@ -4,8 +4,10 @@ import createSagaMiddleware from 'redux-saga'
 import settingsReducer from './slices/settingsSlice'
 import authReducer from './slices/authSlice'
 import tasksReducer from './slices/tasksSlice'
+import timersReducer from './slices/timersSlice'
 import timerReducer from './slices/timerSlice'
 import tagReducer from './slices/tagsSlice'
+import pomodoroReducer from './slices/pomodoroSlice'
 
 import rootSaga from './sagas'
 
@@ -17,7 +19,9 @@ export const store = configureStore({
     auth: authReducer,
     tasks: tasksReducer,
     tags: tagReducer,
-    timer: timerReducer
+    timers: timersReducer,
+    timer: timerReducer,
+    pomodoro: pomodoroReducer
   },
   middleware: gDM => gDM({ thunk: false }).concat(sagaMiddleware)
 })

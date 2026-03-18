@@ -14,6 +14,7 @@ import SupportModal from '@components/layout/SupportModal';
 import MusicWidget from '@components/layout/MusicWidget';
 import Toast from '@components/layout/Toast';
 import PipPortal from '@components/timer/PipPortal';
+import { resetTimer, setMode, toggleTimer } from '@/store/slices/timerSlice';
 
 const hexToRgb = (hex) => {
     let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || '#e11d48');
@@ -58,7 +59,7 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                             </button>
                             <div className="flex gap-2 bg-black/40 mb-12 p-1.5 border border-white/10 rounded-[2rem]">
                                 {['FOCUS', 'SHORT_BREAK', 'LONG_BREAK'].map((m) => (
-                                    <button key={m} onClick={() => dispatch({ type: 'SET_MODE', payload: m })} className={`px-8 py-3.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-[1.4rem] transition-all ${state.mode === m ? 'bg-surface text-accent shadow-glow border border-white/10 scale-105' : 'text-white/20 hover:text-white/40'}`}>
+                                    <button key={m} onClick={() => dispatch(setMode(m))} className={`px-8 py-3.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-[1.4rem] transition-all ${state.mode === m ? 'bg-surface text-accent shadow-glow border border-white/10 scale-105' : 'text-white/20 hover:text-white/40'}`}>
                                         {m.replace('_', ' ')}
                                     </button>
                                 ))}
@@ -67,10 +68,10 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                                 <TimerDial isPipMode={false} />
                             </div>
                             <div className="flex items-center gap-6 mt-12">
-                                <button onClick={() => dispatch({ type: 'TOGGLE_TIMER' })} className={`px-14 py-5 rounded-[2rem] font-black text-sm tracking-[0.3em] transition-all hover:scale-105 active:scale-95 ${state.isActive ? 'bg-transparent border-2 border-accent text-accent' : 'bg-accent text-white shadow-glow'}`}>
+                                <button onClick={() => dispatch(toggleTimer())} className={`px-14 py-5 rounded-[2rem] font-black text-sm tracking-[0.3em] transition-all hover:scale-105 active:scale-95 ${state.isActive ? 'bg-transparent border-2 border-accent text-accent' : 'bg-accent text-white shadow-glow'}`}>
                                     {state.isActive ? 'PAUSE SYSTEM' : 'START SESSION'}
                                 </button>
-                                <button onClick={() => dispatch({ type: 'RESET_TIMER' })} className="bg-white/5 hover:bg-white/10 p-5 border border-white/10 rounded-[1.8rem] text-white/40 hover:text-white transition-colors">
+                                <button onClick={() => dispatch(resetTimer())} className="bg-white/5 hover:bg-white/10 p-5 border border-white/10 rounded-[1.8rem] text-white/40 hover:text-white transition-colors">
                                     <motion.div whileTap={{ rotate: -180 }}><RotateCcw size={24} /></motion.div>
                                 </button>
                             </div>

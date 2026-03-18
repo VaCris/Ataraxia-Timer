@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useAudio } from './AudioContext';
-import { createTimerRequest } from '@store/slices/timerSlice';
+import { createTimerRequest } from '@/store/slices/timersSlice';
 
 const PomodoroContext = createContext();
 
