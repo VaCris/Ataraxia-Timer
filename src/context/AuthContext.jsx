@@ -24,15 +24,12 @@ const SENECA_QUOTES = [
 
 export const AuthProvider = ({ children }) => {
     const dispatch = useDispatch()
-
-    // Obtenemos el estado real de Redux
     const { user, status, error: authError } = useSelector(state => state.auth)
     const isAuthenticated = status === 'authenticated'
 
     const [loadingUI, setLoadingUI] = useState(true)
     const [currentQuote, setCurrentQuote] = useState(0)
 
-    // 1. Manejo de las frases de Séneca
     useEffect(() => {
         let interval
         if (loadingUI) {
@@ -43,38 +40,31 @@ export const AuthProvider = ({ children }) => {
         return () => clearInterval(interval)
     }, [loadingUI])
 
-    // 2. INICIALIZACIÓN BLINDADA (Fix doble disparo)
     useEffect(() => {
         const initAtaraxia = async () => {
             const token = localStorage.getItem('token');
             const deviceId = localStorage.getItem('deviceId');
 
-            // UX: Queremos que vean al menos una frase de Séneca (2.5s)
             const minWait = new Promise(r => setTimeout(r, 2500));
 
-            // REGLA: Solo disparamos checkAuth si estamos en 'idle' y hay algo que validar
-            // Esto evita que React Strict Mode dispare dos peticiones paralelas
             if (token && status === 'idle') {
                 dispatch(checkAuthRequest());
             }
 
             await minWait;
 
-            // Solo quitamos el splash screen cuando la Saga haya terminado (o no haya nada que cargar)
-            // Si el status sigue en 'loading', esperamos a que cambie.
             if (status !== 'loading') {
                 setLoadingUI(false);
             }
         }
 
         initAtaraxia();
-    }, [dispatch, status]); // Escuchamos status para saber cuándo la Saga terminó
+    }, [dispatch, status]);
 
     const login = (email, password) => dispatch(loginRequest({ email, password }))
     const register = (userData) => dispatch(registerRequest(userData))
     const logout = () => dispatch(logoutRequest())
 
-    // 3. RENDER DEL LOADING (Se mantiene mientras se inicializa o mientras la Saga trabaja)
     if (loadingUI || (status === 'loading' && !user)) {
         return (
             <div className="flex flex-col justify-center items-center bg-[#050505] px-6 w-screen h-screen overflow-hidden">

@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
-// Contextos (Usando Alias @context definido en vite.config.js)
 import { AuthProvider } from '@/context/AuthContext';
 import { PomodoroProvider } from '@context/PomodoroContext';
 import { MusicProvider } from '@context/MusicContext';
 import { AudioProvider } from '@context/AudioContext';
 import { processSyncQueue } from '@api/syncManager';
 
-// Componentes y Páginas (Usando Alias @components y @pages)
 import Dashboard from '@components/layout/Dashboard';
 import ResetPassword from '@components/auth/ResetPassword';
 import UpdatePrompt from '@components/layout/UpdatePrompt';

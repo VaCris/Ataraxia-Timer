@@ -1,27 +1,28 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   X, Sun, Monitor, Upload, Volume2, Clock,
-  Trash2, Save, Bell, Keyboard, RotateCcw, Loader2, Hash
+  Trash2, Save, Bell, Keyboard, RotateCcw, Loader2
 } from 'lucide-react'
 import { useAudio } from '@context/AudioContext'
 import { updateDurations, showToast } from '@store/slices/timerSlice'
 import { fetchSettingsSuccess, updateSettingsRequest } from '@store/slices/settingsSlice'
+import { setInitialTime } from '@store/slices/pomodoroSlice'
 
 const SettingsModal = ({ isOpen, onClose }) => {
   const dispatch = useDispatch()
   const settings = useSelector(s => s.settings)
+  const currentMode = useSelector(s => s.timer.mode)
 
   const { masterVolume, setMasterVolume, alarmVolume } = useAudio()
-  const { timerSettings = { FOCUS: 25, SHORT_BREAK: 5, LONG_BREAK: 15 } } = settings.item || {}
-  const [localTimers, setLocalTimers] = useState(timerSettings);
-
-  const isSaving = useSelector(s => s.settings.status === 'loading')
 
   const {
-    autoStartBreak = false,
-    autoStartFocus = false,
+    focusDuration = 25,
+    shortBreakDuration = 5,
+    longBreakDuration = 15,
+    autoStartBreaks = false,
+    autoStartPomodoros = false,
     longBreakInterval = 4,
     accentColor = '#e11d48',
     bgImage = '',
@@ -30,21 +31,38 @@ const SettingsModal = ({ isOpen, onClose }) => {
     customShortcuts = { settings: 's', support: 'h', music: 'm', games: 'g', stats: 't', achievements: 'a' }
   } = settings.item || {}
 
+  const [localTimers, setLocalTimers] = useState({
+    FOCUS: focusDuration,
+    SHORT_BREAK: shortBreakDuration,
+    LONG_BREAK: longBreakDuration
+  })
+
+  const [localInterval, setLocalInterval] = useState(longBreakInterval)
+
+  const isSaving = useSelector(s => s.settings.status === 'loading')
+
   const [activeShortcutKey, setActiveShortcutKey] = useState(null)
+
+  useEffect(() => {
+    if (isOpen) {
+      const newDurationForCurrentMode = localTimers[currentMode]
+      dispatch(updateDurations({ mode: currentMode, duration: newDurationForCurrentMode }))
+      dispatch(setInitialTime(newDurationForCurrentMode * 60))
+    }
+  }, [localTimers, currentMode, isOpen, dispatch])
 
   if (!isOpen) return null
 
-  const handleTimerChange = (v) => {
-    dispatch(fetchSettingsSuccess({
-      ...settings.item,
-      timerSettings: v
-    }))
-  }
-
   const handleSettingChange = (key, value) => {
+    const localKeys = ['accentColor', 'blurIntensity', 'bgImage', 'customShortcuts','is24Hour'];
+    if (localKeys.includes(key)) {
+      const valueToSave = typeof value === 'object' ? JSON.stringify(value) : value;
+      localStorage.setItem(`ataraxia_${key}`, valueToSave);
+    }
+
     dispatch(fetchSettingsSuccess({
       ...settings.item,
-      [key]: value
+      ...{ [key]: value }
     }))
   }
 
@@ -53,23 +71,22 @@ const SettingsModal = ({ isOpen, onClose }) => {
       focusDuration: localTimers.FOCUS,
       shortBreakDuration: localTimers.SHORT_BREAK,
       longBreakDuration: localTimers.LONG_BREAK,
-      autoStartBreaks: autoStartBreak,
-      autoStartPomodoros: autoStartFocus,
-      longBreakInterval,
+      autoStartBreaks,
+      autoStartPomodoros,
+      longBreakInterval: localInterval,
       theme: "dark",
       soundEnabled: true,
       platform: "web"
     }
 
     dispatch(updateSettingsRequest(payload))
-
     dispatch(fetchSettingsSuccess({
       ...settings.item,
-      timerSettings: localTimers
+      ...payload
     }))
 
-    dispatch(updateDurations({ mode: 'FOCUS', duration: localTimers.FOCUS }))
     dispatch(showToast('Settings saved'))
+    onClose()
   }
 
   const handleFileUpload = (e) => {
@@ -106,7 +123,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="z-[100] fixed inset-0 flex justify-center items-center p-4">
-      {/* Overlay con Blur */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -121,8 +137,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
         exit={{ scale: .9, opacity: 0, y: 20 }}
         className="relative flex flex-col shadow-2xl p-6 md:p-8 border border-white/10 rounded-[3rem] w-full max-w-lg max-h-[90vh] overflow-hidden glass"
       >
-
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="flex items-center gap-3 font-black text-2xl tracking-tighter">
             <span className="text-accent" style={{ color: accentColor }}>/</span> CONFIGURATION
@@ -132,10 +146,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Scrollable Content */}
         <div className="flex-1 space-y-10 pr-2 pb-4 overflow-y-auto custom-scrollbar">
-
-          {/* Timer Section */}
           <section>
             <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.3em]">
               <Clock size={14} /> Timer Durations
@@ -147,7 +158,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
             </div>
           </section>
 
-          {/* Shortcuts Section */}
           <section>
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-2 font-bold text-[10px] text-white/30 uppercase tracking-[0.3em]">
@@ -172,19 +182,28 @@ const SettingsModal = ({ isOpen, onClose }) => {
             </div>
           </section>
 
-          {/* Workflow Section */}
           <section>
             <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.3em]">
               <Monitor size={14} /> Workflow & Automation
             </div>
             <div className="space-y-4 bg-white/5 p-6 rounded-[2rem]">
               <div className="flex justify-between items-center">
+                <span className="text-white/60 text-xs">Rounds before Long Break</span>
+                <input
+                  type="number"
+                  min="1" max="10"
+                  value={localInterval}
+                  onChange={(e) => setLocalInterval(Number(e.target.value))}
+                  className="bg-black/40 px-3 py-1.5 border border-white/10 focus:border-white/30 rounded-lg outline-none w-16 text-white text-xs text-center transition-colors"
+                />
+              </div>
+              <div className="flex justify-between items-center">
                 <span className="text-white/60 text-xs">Auto-start Breaks</span>
-                <Switch checked={autoStartBreak} onChange={() => handleSettingChange('autoStartBreak', !autoStartBreak)} accent={accentColor} />
+                <Switch checked={autoStartBreaks} onChange={() => handleSettingChange('autoStartBreaks', !autoStartBreaks)} accent={accentColor} />
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-white/60 text-xs">Auto-start Focus</span>
-                <Switch checked={autoStartFocus} onChange={() => handleSettingChange('autoStartFocus', !autoStartFocus)} accent={accentColor} />
+                <Switch checked={autoStartPomodoros} onChange={() => handleSettingChange('autoStartPomodoros', !autoStartPomodoros)} accent={accentColor} />
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-white/60 text-xs">24-Hour Clock</span>
@@ -193,13 +212,11 @@ const SettingsModal = ({ isOpen, onClose }) => {
             </div>
           </section>
 
-          {/* Appearance Section */}
           <section>
             <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.3em]">
               <Sun size={14} /> Visual Sanctuary
             </div>
             <div className="space-y-6 bg-white/5 p-6 rounded-[2rem]">
-              {/* Color Picker Custom */}
               <div className="flex justify-between items-center bg-black/20 p-4 border border-white/5 rounded-xl">
                 <span className="text-white/60 text-xs">Accent Theme</span>
                 <div className="relative border-2 border-white/20 rounded-full w-8 h-8 overflow-hidden">
@@ -207,7 +224,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
-              {/* Blur Intensity */}
               <div className="space-y-3">
                 <div className="flex justify-between font-bold text-[10px] text-white/30 uppercase">
                   <span>Glass Blur Intensity</span>
@@ -216,7 +232,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
                 <input type="range" min="0" max="40" value={blurIntensity} onChange={(e) => handleSettingChange('blurIntensity', parseInt(e.target.value))} className="w-full accent-accent" style={{ accentColor }} />
               </div>
 
-              {/* Background Management */}
               <div className="space-y-4">
                 <input
                   type="text"
@@ -241,7 +256,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
             </div>
           </section>
 
-          {/* Sound Section */}
           <section>
             <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.3em]">
               <Volume2 size={14} /> Auditory Experience
@@ -266,10 +280,8 @@ const SettingsModal = ({ isOpen, onClose }) => {
               </button>
             </div>
           </section>
-
         </div>
 
-        {/* Action Footer */}
         <div className="mt-4 pt-6 border-white/10 border-t">
           <button
             onClick={handleSave}
@@ -280,7 +292,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
             {isSaving ? <Loader2 className="animate-spin" size={20} /> : <><Save size={18} /> SAVE CONFIGURATION</>}
           </button>
         </div>
-
       </motion.div>
     </div>
   )
