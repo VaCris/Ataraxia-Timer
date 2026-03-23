@@ -184,7 +184,7 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                     <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bottom-6 left-6 z-50 absolute"><MusicWidget /></motion.div>
                 </AnimatePresence>
             </main>
-            {pipWindow && <PipPortal pipWindow={pipWindow} />}
+            {pipWindow && <PipPortal pipWindow={pipWindow} currentRound={currentRound} />}
             {/* <Toast isOpen={state.toast?.isOpen} message={state.toast?.message} onClose={() => timerDispatch({ type: 'HIDE_TOAST' })} /> */}
             <AnimatePresence>
                 {isSettingsOpen && <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />}

@@ -11,7 +11,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       injectRegister: 'inline',
       devOptions: {
         enabled: false,
@@ -48,9 +48,26 @@ export default defineConfig({
         ]
       },
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,png,svg,mp3}'],
         cleanupOutdatedCaches: true,
         runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/ataraxia-api\.studios-tkoh\.online\/api\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'ataraxia-api-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 7,
+              },
+              networkTimeoutSeconds: 5,
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',

@@ -32,12 +32,11 @@ const PipPortal = ({ pipWindow, currentRound }) => {
             boxSizing: 'border-box',
             overflow: 'hidden'
         }}>
-            {/* Título del Modo */}
             <div style={{
                 fontSize: '4.5vw',
                 fontWeight: '900',
                 letterSpacing: '0.5em',
-                color: accentColor, // Usamos la variable directa
+                color: accentColor,
                 marginBottom: '1vh',
                 textTransform: 'uppercase',
                 fontStyle: 'italic',
@@ -46,7 +45,6 @@ const PipPortal = ({ pipWindow, currentRound }) => {
                 {timerState.mode.replace('_', ' ')}
             </div>
 
-            {/* Contador de Rondas */}
             <div style={{
                 fontSize: '3vw',
                 fontWeight: '800',
@@ -62,7 +60,6 @@ const PipPortal = ({ pipWindow, currentRound }) => {
                 Round {currentRound} / {longBreakInterval}
             </div>
 
-            {/* Reloj Digital */}
             <div style={{
                 fontSize: '32vw',
                 fontWeight: '900',
@@ -83,7 +80,6 @@ const PipPortal = ({ pipWindow, currentRound }) => {
                 {String(seconds).padStart(2, '0')}
             </div>
 
-            {/* Barra de Progreso */}
             <div style={{
                 width: '85%',
                 height: '2.5vw',
@@ -114,7 +110,6 @@ const PipPortal = ({ pipWindow, currentRound }) => {
                 ATARAXIA V2
             </div>
 
-            {/* Animación inyectada en el documento del PiP */}
             <style>{`
                 @keyframes pip-pulse {
                     0% { opacity: 1; }
