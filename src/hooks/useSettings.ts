@@ -19,9 +19,7 @@ export const useSettings = () => {
     const next = { ...item, ...partial }
     dispatch(fetchSettingsSuccess(next))
 
-    if (partial.accentColor) {
-      localStorage.setItem('accentColor', partial.accentColor)
-    }
+    localStorage.setItem('ataraxia_settings', JSON.stringify(next))
   }
 
   return {

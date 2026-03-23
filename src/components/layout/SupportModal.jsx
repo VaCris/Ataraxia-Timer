@@ -41,7 +41,7 @@ const SupportModal = ({ isOpen, onClose }) => {
 
                 <div className="space-y-3">
                     <a
-                        href="#"
+                        href="https://buymeacoffee.com/avid0"
                         target="_blank"
                         className="group flex justify-between items-center bg-white/5 hover:bg-white/10 p-5 border border-white/5 hover:border-accent/30 rounded-2xl transition-all"
                     >

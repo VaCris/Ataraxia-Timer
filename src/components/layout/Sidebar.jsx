@@ -1,11 +1,18 @@
 import React, { useEffect } from 'react';
 import { Layout, Settings, Coffee, Heart, Music, Keyboard, Gamepad2, BarChart2, Trophy } from 'lucide-react';
 import Tooltip from './Tooltip';
-import { useMusic } from '@context/MusicContext';
 import LogoSVG from '@assets/pwa-192x192.svg';
 
-const Sidebar = ({ onOpenSettings, onOpenSupport, onOpenGames, onOpenStats, onOpenAchievements, customShortcuts = {} }) => {
-    const { openModal, isModalOpen, closeModal } = useMusic();
+const Sidebar = ({
+    onOpenSettings,
+    onOpenSupport,
+    onOpenGames,
+    onOpenStats,
+    onOpenAchievements,
+    onOpenMusic,
+    isMusicOpen,
+    customShortcuts = {}
+}) => {
 
     const shortcuts = {
         settings: 's',
@@ -35,8 +42,7 @@ const Sidebar = ({ onOpenSettings, onOpenSupport, onOpenGames, onOpenStats, onOp
                     break;
                 case shortcuts.music:
                     e.preventDefault();
-                    if (isModalOpen) closeModal();
-                    else openModal();
+                    onOpenMusic();
                     break;
                 case shortcuts.games:
                     e.preventDefault();
@@ -57,7 +63,7 @@ const Sidebar = ({ onOpenSettings, onOpenSupport, onOpenGames, onOpenStats, onOp
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onOpenSettings, onOpenSupport, onOpenGames, onOpenStats, onOpenAchievements, isModalOpen, shortcuts]);
+    }, [onOpenSettings, onOpenSupport, onOpenGames, onOpenStats, onOpenAchievements, onOpenMusic, shortcuts]);
 
     const helpText = `
         ${shortcuts.music.toUpperCase()}: Music | 
@@ -69,19 +75,23 @@ const Sidebar = ({ onOpenSettings, onOpenSupport, onOpenGames, onOpenStats, onOp
 
     return (
         <aside className="hidden z-50 relative md:flex flex-col items-center bg-black/20 backdrop-blur-xl py-8 border-white/5 border-r w-24 h-full shrink-0">
-            <div className="flex justify-center items-center bg-accent shadow-glow mb-12 p-2 rounded-2xl w-12 h-12 overflow-hidden">
+            <div className="flex justify-center items-center bg-accent shadow-glow mb-12 p-2 rounded-2xl w-12 h-12 overflow-hidden" style={{ backgroundColor: 'var(--color-accent)' }}>
                 <img src={LogoSVG} alt="Ataraxia Logo" className="w-full h-full object-contain" />
             </div>
 
             <nav className="flex flex-col flex-1 gap-8">
                 <Tooltip text="Dashboard">
-                    <button className="bg-accent/10 shadow-glow p-3 rounded-xl text-accent">
+                    <button className="bg-accent/10 shadow-glow p-3 rounded-xl text-accent" style={{ color: 'var(--color-accent)' }}>
                         <Layout size={24} />
                     </button>
                 </Tooltip>
 
                 <Tooltip text={`Player (${shortcuts.music.toUpperCase()})`}>
-                    <button onClick={openModal} className={`p-3 transition-all rounded-xl ${isModalOpen ? 'text-accent bg-accent/10 shadow-glow' : 'text-white/30 hover:text-white'}`}>
+                    <button
+                        onClick={onOpenMusic}
+                        className={`p-3 transition-all rounded-xl ${isMusicOpen ? 'text-accent bg-accent/10 shadow-glow' : 'text-white/30 hover:text-white'}`}
+                        style={isMusicOpen ? { color: 'var(--color-accent)', backgroundColor: 'rgba(var(--color-accent-rgb), 0.1)' } : {}}
+                    >
                         <Music size={24} />
                     </button>
                 </Tooltip>
@@ -107,7 +117,7 @@ const Sidebar = ({ onOpenSettings, onOpenSupport, onOpenGames, onOpenStats, onOp
 
             <div className="flex flex-col gap-4">
                 <Tooltip text={helpText}>
-                    <div className="p-3 text-accent/40 hover:text-accent transition-colors cursor-help">
+                    <div className="p-3 text-accent/40 hover:text-accent transition-colors cursor-help" style={{ color: 'rgba(var(--color-accent-rgb), 0.4)' }}>
                         <Keyboard size={24} />
                     </div>
                 </Tooltip>

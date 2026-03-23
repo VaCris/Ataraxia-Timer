@@ -6,6 +6,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { PomodoroProvider } from '@context/PomodoroContext';
 import { MusicProvider } from '@context/MusicContext';
 import { AudioProvider } from '@context/AudioContext';
+import ThemeProvider from '@context/ThemeContext';
 import { processSyncQueue } from '@api/syncManager';
 
 import Dashboard from '@components/layout/Dashboard';
@@ -39,21 +40,21 @@ function App() {
 
   const renderHomeContent = () => {
     if (isComingSoon) return <ComingSoon />;
-    
+
     if (['games', 'stats', 'achievements'].includes(activeView)) {
       return (
-        <ComingSoon 
-          type={activeView} 
-          onBack={() => setActiveView('main')} 
+        <ComingSoon
+          type={activeView}
+          onBack={() => setActiveView('main')}
         />
       );
     }
 
     return (
-      <Dashboard 
-        onOpenGames={() => setActiveView('games')} 
-        onOpenStats={() => setActiveView('stats')} 
-        onOpenAchievements={() => setActiveView('achievements')} 
+      <Dashboard
+        onOpenGames={() => setActiveView('games')}
+        onOpenStats={() => setActiveView('stats')}
+        onOpenAchievements={() => setActiveView('achievements')}
       />
     );
   };
@@ -68,11 +69,13 @@ function App() {
       <AudioProvider>
         <PomodoroProvider>
           <MusicProvider>
-            <Routes>
-              <Route path="/" element={renderHomeContent()} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
+            <ThemeProvider>
+              <Routes>
+                <Route path="/" element={renderHomeContent()} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </ThemeProvider>
           </MusicProvider>
         </PomodoroProvider>
       </AudioProvider>

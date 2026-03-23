@@ -5,7 +5,13 @@ export const applyAccentColor = (color: string) => {
 }
 
 export const applyBgImage = (url: string) => {
-    document.body.style.backgroundImage = url ? `url(${url})` : 'none'
-    document.body.style.backgroundSize = 'cover'
-    document.body.style.backgroundPosition = 'center'
+    if (url) {
+        document.documentElement.style.setProperty('--bg-image', `url("${url}")`)
+    } else {
+        document.documentElement.style.removeProperty('--bg-image')
+    }
+}
+
+export const applyBlur = (intensity: number) => {
+    document.documentElement.style.setProperty('--bg-blur', `${intensity}px`)
 }

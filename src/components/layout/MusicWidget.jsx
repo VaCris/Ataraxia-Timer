@@ -10,11 +10,10 @@ const MusicWidget = () => {
         <motion.div
             initial={false}
             animate={{
-                opacity: isOpen ? 1 : 0,
-                scale: isOpen ? 1 : 0.95,
-                y: isOpen ? 0 : 40,
-                pointerEvents: isOpen ? 'auto' : 'none',
-                visibility: isOpen ? 'visible' : 'hidden'
+                opacity: isOpen ? 1 : 0.01,   // nunca 0 real
+                scale: isOpen ? 1 : 0.98,
+                x: isOpen ? 0 : -600,        // lo sacas de pantalla
+                pointerEvents: isOpen ? 'auto' : 'none'
             }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="bottom-24 left-28 z-50 fixed"
@@ -24,9 +23,9 @@ const MusicWidget = () => {
                 <div className="flex justify-between items-center p-6 border-white/5 border-b shrink-0">
                     <span className="font-black text-[9px] text-white/20 uppercase tracking-[0.3em]">Lofi.cafe Player</span>
                     <div className="flex items-center gap-4">
-                         <a href="https://www.lofi.cafe/" target="_blank" rel="noreferrer" className="text-white/20 hover:text-white transition-colors" title="Abrir Lofi.cafe en nueva pestaña">
+                        {/* <a href="https://www.lofi.cafe/" target="_blank" rel="noreferrer" className="text-white/20 hover:text-white transition-colors" title="Abrir Lofi.cafe en nueva pestaña">
                             <Maximize2 size={16} />
-                        </a>
+                        </a> */}
                         <button onClick={onClose} className="text-white/20 hover:text-white transition-colors">
                             <X size={18} />
                         </button>
@@ -39,6 +38,7 @@ const MusicWidget = () => {
                         className="border-none w-full h-full"
                         title="Lofi Cafe"
                         allow="autoplay; encrypted-media"
+                        loading="eager"
                     />
                     <div className="right-4 bottom-4 left-4 absolute pointer-events-none">
                         <div className="bg-black/60 shadow-lg backdrop-blur-md p-2 border border-white/5 rounded-xl font-bold text-[8px] text-white/40 text-center uppercase tracking-tighter">

@@ -8,8 +8,17 @@ type SettingsState = {
   error: string | null
 }
 
+const loadLocalSettings = (): SettingResponse | null => {
+  try {
+    const data = localStorage.getItem('ataraxia_settings')
+    return data ? JSON.parse(data) : null
+  } catch {
+    return null
+  }
+}
+
 const initialState: SettingsState = {
-  item: null,
+  item: loadLocalSettings(),
   items: [],
   status: 'idle',
   error: null
