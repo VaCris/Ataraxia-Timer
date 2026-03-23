@@ -53,7 +53,7 @@ const SupportModal = ({ isOpen, onClose }) => {
                     </a>
 
                     <a
-                        href="#"
+                        href="https://github.com/VaCris"
                         target="_blank"
                         className="group flex justify-between items-center bg-black/40 hover:bg-white/5 p-5 border border-white/5 rounded-2xl transition-all"
                     >

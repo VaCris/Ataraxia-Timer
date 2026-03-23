@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { Layout, Settings, Coffee, Heart, Music, Keyboard, Gamepad2, BarChart2, Trophy } from 'lucide-react';
+import { Layout, Settings, Coffee, Heart, Music, Keyboard, Gamepad2, BarChart2, Trophy,Blocks } from 'lucide-react';
 import Tooltip from './Tooltip';
 import LogoSVG from '@assets/pwa-192x192.svg';
+import toast from 'react-hot-toast';
 
 const Sidebar = ({
     onOpenSettings,
@@ -22,6 +23,18 @@ const Sidebar = ({
         stats: 't',
         achievements: 'a',
         ...customShortcuts
+    };
+
+    const handleUnderConstruction = (feature) => {
+        toast(`The ${feature} module is coming soon!`, {
+            icon: <Blocks size={15} style={{ color: 'var(--color-accent)' }} />,
+            style: {
+                borderRadius: '15px',
+                background: '#1a1a1a',
+                color: '#fff',
+                border: '1px solid rgba(255,255,255,0.1)'
+            },
+        });
     };
 
     useEffect(() => {
@@ -45,17 +58,11 @@ const Sidebar = ({
                     onOpenMusic();
                     break;
                 case shortcuts.games:
-                    e.preventDefault();
-                    onOpenGames();
-                    break;
+                    e.preventDefault(); handleUnderConstruction('Games'); break;
                 case shortcuts.stats:
-                    e.preventDefault();
-                    onOpenStats();
-                    break;
+                    e.preventDefault(); handleUnderConstruction('Insights'); break;
                 case shortcuts.achievements:
-                    e.preventDefault();
-                    onOpenAchievements();
-                    break;
+                    e.preventDefault(); handleUnderConstruction('Achievements'); break;
                 default:
                     break;
             }
@@ -65,11 +72,10 @@ const Sidebar = ({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [onOpenSettings, onOpenSupport, onOpenGames, onOpenStats, onOpenAchievements, onOpenMusic, shortcuts]);
 
+    const disabledButtonStyle = "p-3 rounded-xl text-white/5 cursor-not-allowed grayscale transition-all";
+
     const helpText = `
         ${shortcuts.music.toUpperCase()}: Music | 
-        ${shortcuts.games.toUpperCase()}: Games | 
-        ${shortcuts.stats.toUpperCase()}: Stats | 
-        ${shortcuts.achievements.toUpperCase()}: Achievements | 
         ${shortcuts.settings.toUpperCase()}: Settings
     `.trim();
 
@@ -96,20 +102,29 @@ const Sidebar = ({
                     </button>
                 </Tooltip>
 
-                <Tooltip text={`Games (${shortcuts.games.toUpperCase()})`}>
-                    <button onClick={onOpenGames} className="p-3 border border-transparent hover:border-white/5 rounded-xl text-white/10 hover:text-accent/50 transition-all">
+                <Tooltip text="Coming Soon (Games)">
+                    <button 
+                        onClick={() => handleUnderConstruction('Games')} 
+                        className={disabledButtonStyle}
+                    >
                         <Gamepad2 size={24} />
                     </button>
                 </Tooltip>
 
-                <Tooltip text={`Insights (${shortcuts.stats.toUpperCase()})`}>
-                    <button onClick={onOpenStats} className="p-3 border border-transparent hover:border-white/5 rounded-xl text-white/10 hover:text-accent/50 transition-all">
+                <Tooltip text="Coming Soon (Insights)">
+                    <button 
+                        onClick={() => handleUnderConstruction('Insights')} 
+                        className={disabledButtonStyle}
+                    >
                         <BarChart2 size={24} />
                     </button>
                 </Tooltip>
 
-                <Tooltip text={`Achievements (${shortcuts.achievements.toUpperCase()})`}>
-                    <button onClick={onOpenAchievements} className="p-3 border border-transparent hover:border-white/5 rounded-xl text-white/10 hover:text-accent/50 transition-all">
+                <Tooltip text="Coming Soon (Achievements)">
+                    <button 
+                        onClick={() => handleUnderConstruction('Achievements')} 
+                        className={disabledButtonStyle}
+                    >
                         <Trophy size={24} />
                     </button>
                 </Tooltip>
