@@ -109,7 +109,7 @@ export default defineConfig({
       '@utils': path.resolve(__dirname, './src/utils'),
       '@assets': path.resolve(__dirname, './src/assets'),
       '@styles': path.resolve(__dirname, './src/styles'),
-      '@api': path.resolve(__dirname, './src/api'),
+      '@api': path.resolve(__dirname, './src/infrastructure/api'),
       '@store': path.resolve(__dirname, './src/store'),
       '@pages': path.resolve(__dirname, './src/pages'),
       '@db': path.resolve(__dirname, './src/db'),

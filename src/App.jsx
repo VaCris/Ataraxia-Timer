@@ -9,8 +9,8 @@ import { AudioProvider } from '@context/AudioContext';
 import ThemeProvider from '@context/ThemeContext';
 import { processSyncQueue } from '@api/syncManager';
 
-import Dashboard from '@components/layout/Dashboard';
-import ResetPassword from '@components/auth/ResetPassword';
+import Dashboard from '@/app/layout/Dashboard';
+import ResetPassword from '@/features/auth/components/ResetPassword';
 import UpdatePrompt from '@components/layout/UpdatePrompt';
 import InstallPrompt from '@components/layout/InstallPrompt';
 import CookieConsent from '@components/layout/CookieConsent';

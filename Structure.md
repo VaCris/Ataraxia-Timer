@@ -41,9 +41,8 @@
                     ├── timer.dto.ts
                 ├── timers.service.ts
             ├── client.js
-            ├── syncManager.js
+            ├── syncManager.ts
         └── 📁assets
-            └── 📁logos
             ├── pwa-192x192.svg
             ├── pwa-512x512.svg
             ├── react.svg
@@ -83,19 +82,18 @@
             ├── AuthContext.jsx
             ├── MusicContext.jsx
             ├── PomodoroContext.jsx
-        └── 📁db
-            ├── LocalDB.ts
+            ├── ThemeContext.jsx
         └── 📁hooks
             ├── useInstallPrompt.js
             ├── useLocalStorage.js
             ├── useNotifications.js
             ├── usePip.js
-            ├── usePomodoro.js
-            ├── useSettings.js
+            ├── usePomodoro.ts
+            ├── useSettings.ts
             ├── useStats.js
             ├── useTags.ts
             ├── useTasks.ts
-            ├── useTimer.js
+            ├── useTimer.ts
         └── 📁pages
             ├── ComingSoon.jsx
             ├── Maintenance.jsx
@@ -110,11 +108,15 @@
                 ├── timerSaga.ts
             └── 📁slices
                 ├── authSlice.ts
+                ├── pomodoroSlice.ts
                 ├── settingsSlice.ts
                 ├── tagsSlice.ts
                 ├── tasksSlice.ts
                 ├── timerSlice.ts
+                ├── timersSlice.ts
             ├── index.ts
+        └── 📁utils
+            ├── theme.ts
         ├── App.css
         ├── App.jsx
         ├── index.css
@@ -128,6 +130,7 @@
     ├── package.json
     ├── postcss.config.js
     ├── README.md
+    ├── Structure.md
     ├── tailwind.config.js
     ├── tsconfig.json
     └── vite.config.js

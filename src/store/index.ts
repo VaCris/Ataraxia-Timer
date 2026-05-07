@@ -1,13 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit'
 import createSagaMiddleware from 'redux-saga'
 
-import settingsReducer from './slices/settingsSlice'
-import authReducer from './slices/authSlice'
-import tasksReducer from './slices/tasksSlice'
-import timersReducer from './slices/timersSlice'
-import timerReducer from './slices/timerSlice'
-import tagReducer from './slices/tagsSlice'
-import pomodoroReducer from './slices/pomodoroSlice'
+import settingsReducer from '../features/settings/store/settingsSlice'
+import authReducer from '../features/auth/store/authSlice'
+import tasksReducer from '../features/tasks/store/tasksSlice'
+import timersReducer from '@/features/pomodoro/store/timersSlice'
+import timerReducer from '@/features/pomodoro/store/timerSlice'
+import tagReducer from '../features/tags/store/tagsSlice'
+import pomodoroReducer from '@/features/pomodoro/store/pomodoroSlice'
 
 import rootSaga from './sagas'
 
