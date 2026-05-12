@@ -5,6 +5,10 @@ import { RootState } from '@/store';
 import { TimerMode } from '../models/PomodoroSettings';
 
 interface PomodoroController {
+    mode: TimerMode;
+    isActive: boolean;
+    timeLeft: number;
+    initialTime: number;
     currentRound: number;
     handleTimerComplete: () => void;
     handleModeChange: (mode: TimerMode) => void;

@@ -1,31 +1,33 @@
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { RootState } from '@store/index'
-import { tick, toggleTimer } from '@/features/pomodoro/store/timerSlice'
+import type { RootState } from '@/store'
+import { tick, stopTimer } from '@/features/pomodoro/store/timerSlice'
 
 export const useTimer = (onComplete?: () => void) => {
-  const state = useSelector((s: RootState) => s.timer)
+  const timer = useSelector((state: RootState) => state.timer)
   const dispatch = useDispatch()
 
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | null = null
+    if (!timer.isActive) return
 
-    if (state.isActive && state.timeLeft > 0) {
-      interval = setInterval(() => {
-        dispatch(tick())
-      }, 1000)
-    } else if (state.timeLeft === 0 && state.isActive) {
-      dispatch(toggleTimer())
+    if (timer.timeLeft <= 0) {
+      dispatch(stopTimer())
 
       if (onComplete) {
         onComplete()
       }
+
+      return
     }
+
+    const interval = window.setInterval(() => {
+      dispatch(tick())
+    }, 1000)
 
     return () => {
-      if (interval !== null) clearInterval(interval)
+      window.clearInterval(interval)
     }
-  }, [state.isActive, state.timeLeft, dispatch, onComplete])
+  }, [timer.isActive, timer.timeLeft, dispatch, onComplete])
 
-  return { state, dispatch }
+  return timer
 }
