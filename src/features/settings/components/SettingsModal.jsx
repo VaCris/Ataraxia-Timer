@@ -229,7 +229,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
     dispatch(updateUISettings(uiPayload));
     dispatch(showToast('Settings saved'));
 
-    toast.success('Configuración guardada correctamente', {
+    toast.success('Properly saved configuration', {
       id: 'settings-saved',
     });
 
