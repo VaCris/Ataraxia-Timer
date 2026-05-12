@@ -31,6 +31,17 @@ const defaultShortcuts = {
   achievements: 'a',
 };
 
+const normalizeShortcuts = (shortcuts) => {
+  if (!shortcuts || Object.keys(shortcuts).length === 0) {
+    return defaultShortcuts;
+  }
+
+  return {
+    ...defaultShortcuts,
+    ...shortcuts,
+  };
+};
+
 const persistUISetting = (key, value) => {
   localStorage.setItem(
     `ataraxia_${key}`,
@@ -94,13 +105,14 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
     blurIntensity,
     volume,
     is24Hour,
-    customShortcuts,
+    customShortcuts: normalizeShortcuts(customShortcuts),
   });
 
   const [activeShortcutKey, setActiveShortcutKey] = useState(null);
 
   const isSaving = settings.status === 'loading';
   const localAccentColor = localUISettings.accentColor;
+  const visibleShortcuts = normalizeShortcuts(localUISettings.customShortcuts);
 
   const handleUISettingChange = useCallback((key, value) => {
     setLocalUISettings((prev) => ({
@@ -123,6 +135,10 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
     }));
   }, []);
 
+  const handleResetShortcuts = useCallback(() => {
+    handleUISettingChange('customShortcuts', defaultShortcuts);
+  }, [handleUISettingChange]);
+
   const handleSave = useCallback(() => {
     const payload = {
       focusDuration: localTimers.FOCUS,
@@ -142,14 +158,19 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
       LONG_BREAK: localTimers.LONG_BREAK,
     };
 
+    const uiPayload = {
+      ...localUISettings,
+      customShortcuts: normalizeShortcuts(localUISettings.customShortcuts),
+    };
+
     dispatch(updateSettingsRequest(payload));
     dispatch(updateDurations({ mode: currentMode, duration: durationByMode[currentMode] }));
 
-    Object.entries(localUISettings).forEach(([key, value]) => {
+    Object.entries(uiPayload).forEach(([key, value]) => {
       persistUISetting(key, value);
     });
 
-    dispatch(updateUISettings(localUISettings));
+    dispatch(updateUISettings(uiPayload));
     dispatch(showToast('Settings saved'));
 
     if (onClose) onClose();
@@ -171,7 +192,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
 
       if (key !== 'escape' && key.length === 1) {
         handleUISettingChange('customShortcuts', {
-          ...(localUISettings.customShortcuts || defaultShortcuts),
+          ...normalizeShortcuts(localUISettings.customShortcuts),
           [action]: key,
         });
       }
@@ -254,7 +275,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
 
               <button
                 type="button"
-                onClick={() => handleUISettingChange('customShortcuts', defaultShortcuts)}
+                onClick={handleResetShortcuts}
                 className="flex items-center gap-1 text-[10px] text-white/30 hover:text-white uppercase tracking-widest"
               >
                 <RotateCcw size={12} />
@@ -263,30 +284,28 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
             </div>
 
             <div className="gap-3 grid grid-cols-2 bg-white/5 p-6 rounded-[2rem]">
-              {Object.entries(localUISettings.customShortcuts || defaultShortcuts).map(
-                ([action, key]) => (
-                  <div
-                    key={action}
-                    className="flex justify-between items-center bg-black/20 p-3 border border-white/5 rounded-xl"
-                  >
-                    <span className="font-bold text-[10px] text-white/40 uppercase tracking-tighter">
-                      {action}
-                    </span>
+              {Object.entries(visibleShortcuts).map(([action, key]) => (
+                <div
+                  key={action}
+                  className="flex justify-between items-center bg-black/20 p-3 border border-white/5 rounded-xl"
+                >
+                  <span className="font-bold text-[10px] text-white/40 uppercase tracking-tighter">
+                    {action}
+                  </span>
 
-                    <button
-                      type="button"
-                      onClick={() => recordShortcut(action)}
-                      className={`px-3 py-1 rounded text-xs font-mono transition-colors ${activeShortcutKey === action
-                        ? 'bg-accent text-white'
-                        : 'bg-white/10 text-white/80'
-                      }`}
-                      style={activeShortcutKey === action ? { backgroundColor: localAccentColor } : {}}
-                    >
-                      {activeShortcutKey === action ? '...' : key}
-                    </button>
-                  </div>
-                )
-              )}
+                  <button
+                    type="button"
+                    onClick={() => recordShortcut(action)}
+                    className={`px-3 py-1 rounded text-xs font-mono transition-colors ${activeShortcutKey === action
+                      ? 'bg-accent text-white'
+                      : 'bg-white/10 text-white/80'
+                    }`}
+                    style={activeShortcutKey === action ? { backgroundColor: localAccentColor } : {}}
+                  >
+                    {activeShortcutKey === action ? '...' : key}
+                  </button>
+                </div>
+              ))}
             </div>
           </section>
 
