@@ -41,7 +41,7 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
 
     return (
         <motion.div
-            className="relative flex bg-[#030303] w-screen h-screen overflow-hidden text-white"
+            className="relative flex bg-[#030303] w-screen min-h-screen lg:h-screen overflow-y-auto lg:overflow-hidden text-white"
             style={{
                 '--color-accent': uiSettings.accentColor,
             }}
@@ -69,24 +69,15 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                 customShortcuts={uiSettings.customShortcuts}
             />
 
-            <main className="z-10 relative flex flex-col flex-1 min-w-0 h-screen">
+            <main className="z-10 relative flex flex-col flex-1 min-w-0 min-h-screen lg:h-screen">
                 <Header is24Hour={uiSettings.is24Hour} />
 
-<<<<<<< HEAD
-                <section className="flex-1 gap-6 lg:gap-8 2xl:gap-12 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(400px,480px)] px-4 sm:px-8 2xl:px-20 xl:px-12 pb-6 sm:pb-8 min-h-0 xl:overflow-hidden overflow-y-auto">
-                    <div className="flex flex-col justify-center items-center py-4 xl:py-0 min-w-0 min-h-0">
-                        <div className="flex flex-col items-center gap-6 sm:gap-7 xl:gap-8 w-full max-w-[58rem]">
+                <section className="flex-1 gap-7 lg:gap-8 2xl:gap-12 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] 2xl:grid-cols-[minmax(0,1fr)_minmax(420px,480px)] px-5 sm:px-8 lg:px-10 xl:px-14 2xl:px-20 pb-24 lg:pb-8 min-h-0">
+                    <div className="flex flex-col justify-center items-center py-6 lg:py-0 min-w-0 min-h-0">
+                        <div className="flex flex-col items-center gap-6 lg:gap-7 xl:gap-8 w-full max-w-[52rem]">
                             <TimerDial controller={pomodoro} />
 
-                            <div className="flex items-center gap-2.5 bg-white/5 backdrop-blur-xl p-2.5 border border-white/10 rounded-full">
-=======
-                <section className="flex-1 gap-5 sm:gap-6 xl:gap-8 2xl:gap-10 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(340px,400px)] px-4 sm:px-8 xl:px-10 2xl:px-14 pb-5 sm:pb-8 min-h-0">
-                    <div className="flex flex-col justify-center items-center min-w-0 min-h-0">
-                        <div className="flex flex-col items-center gap-5 sm:gap-6 xl:gap-7 w-full max-w-[44rem]">
-                            <TimerDial controller={pomodoro} />
-
-                            <div className="flex items-center gap-1.5 bg-white/5 backdrop-blur-xl p-1.5 border border-white/10 rounded-full">
->>>>>>> a6fe17b66fca010cff6e54cfa69c0328cbc5bef5
+                            <div className="flex items-center gap-1.5 sm:gap-2 bg-white/5 backdrop-blur-xl p-1.5 sm:p-2 border border-white/10 rounded-full">
                                 {[
                                     { label: 'Focus', value: 'FOCUS' },
                                     { label: 'Short', value: 'SHORT_BREAK' },
@@ -99,15 +90,9 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                                             key={item.value}
                                             type="button"
                                             onClick={() => pomodoro.handleModeChange(item.value)}
-<<<<<<< HEAD
                                             className={`px-4 sm:px-5 xl:px-6 py-2 xl:py-2.5 rounded-full font-black text-[9px] sm:text-[10px] xl:text-[11px] uppercase tracking-[0.18em] xl:tracking-[0.2em] transition-all ${isActive
                                                 ? 'bg-accent text-white shadow-[0_0_18px_rgba(var(--color-accent-rgb),0.45)]'
                                                 : 'text-white/30 hover:text-white hover:bg-white/10'
-=======
-                                            className={`px-4 sm:px-5 py-2 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-[0.18em] transition-all ${isActive
-                                                    ? 'bg-accent text-white shadow-[0_0_18px_rgba(var(--color-accent-rgb),0.45)]'
-                                                    : 'text-white/30 hover:text-white hover:bg-white/10'
->>>>>>> a6fe17b66fca010cff6e54cfa69c0328cbc5bef5
                                                 }`}
                                         >
                                             {item.label}
@@ -116,20 +101,12 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                                 })}
                             </div>
 
-<<<<<<< HEAD
                             <div className="flex justify-center items-center gap-3 sm:gap-4 bg-white/5 shadow-2xl backdrop-blur-xl p-2.5 sm:p-3 border border-white/10 rounded-full">
-=======
-                            <div className="flex justify-center items-center gap-3 bg-white/5 shadow-2xl backdrop-blur-xl p-2.5 border border-white/10 rounded-full">
->>>>>>> a6fe17b66fca010cff6e54cfa69c0328cbc5bef5
                                 <button
                                     type="button"
                                     onClick={pip.togglePip}
                                     disabled={!pip.isPipSupported}
-<<<<<<< HEAD
                                     className="flex justify-center items-center hover:bg-white/10 disabled:hover:bg-transparent disabled:opacity-30 rounded-full w-11 sm:w-12 xl:w-[3.25rem] h-11 sm:h-12 xl:h-[3.25rem] text-white/50 hover:text-white transition-all"
-=======
-                                    className="flex justify-center items-center hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent rounded-full w-11 h-11 text-white/50 hover:text-white transition-all"
->>>>>>> a6fe17b66fca010cff6e54cfa69c0328cbc5bef5
                                     aria-label="Picture in Picture"
                                     title={
                                         pip.isPipSupported
@@ -137,21 +114,13 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                                             : 'Picture in Picture is not supported in this browser'
                                     }
                                 >
-<<<<<<< HEAD
-                                    <ExternalLink size={22} />
-=======
-                                    <ExternalLink size={19} />
->>>>>>> a6fe17b66fca010cff6e54cfa69c0328cbc5bef5
+                                    <ExternalLink size={20} />
                                 </button>
 
                                 <button
                                     type="button"
                                     onClick={pomodoro.toggleSession}
-<<<<<<< HEAD
                                     className="flex justify-center items-center gap-3 bg-accent px-8 sm:px-10 xl:px-12 rounded-full min-w-36 sm:min-w-40 xl:min-w-48 h-12 sm:h-14 xl:h-16 font-black text-[11px] text-white sm:text-xs xl:text-sm uppercase tracking-[0.2em] xl:tracking-[0.22em] active:scale-95 transition-all"
-=======
-                                    className="flex justify-center items-center gap-3 bg-accent px-8 sm:px-10 rounded-full min-w-36 sm:min-w-40 h-13 sm:h-14 font-black text-white text-[11px] sm:text-xs uppercase tracking-[0.2em] active:scale-95 transition-all"
->>>>>>> a6fe17b66fca010cff6e54cfa69c0328cbc5bef5
                                 >
                                     {pomodoro.isActive ? (
                                         <>
@@ -169,17 +138,10 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                                 <button
                                     type="button"
                                     onClick={pomodoro.resetSession}
-<<<<<<< HEAD
-                                    className="flex justify-center items-center hover:bg-white/10 rounded-full w-14 h-14 text-white/50 hover:text-white transition-all"
+                                    className="flex justify-center items-center hover:bg-white/10 rounded-full w-11 sm:w-12 xl:w-[3.25rem] h-11 sm:h-12 xl:h-[3.25rem] text-white/50 hover:text-white transition-all"
                                     aria-label="Reset Timer"
                                 >
-                                    <RotateCcw size={22} />
-=======
-                                    className="flex justify-center items-center hover:bg-white/10 rounded-full w-11 h-11 text-white/50 hover:text-white transition-all"
-                                    aria-label="Reset Timer"
-                                >
-                                    <RotateCcw size={19} />
->>>>>>> a6fe17b66fca010cff6e54cfa69c0328cbc5bef5
+                                    <RotateCcw size={20} />
                                 </button>
                             </div>
 
@@ -191,12 +153,8 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                         </div>
                     </div>
 
-                    <aside className="flex justify-center xl:justify-end items-center min-w-0 min-h-0">
-<<<<<<< HEAD
-                        <div className="w-full max-w-[420px] xl:max-w-[480px] h-[min(620px,calc(100vh-170px))] xl:h-[min(680px,calc(100vh-150px))]">
-=======
-                        <div className="w-full max-w-[400px] h-[min(600px,calc(100vh-170px))]">
->>>>>>> a6fe17b66fca010cff6e54cfa69c0328cbc5bef5
+                    <aside className="flex justify-center lg:justify-end items-center min-w-0 min-h-0">
+                        <div className="w-full max-w-[420px] 2xl:max-w-[480px] h-[620px] max-h-[calc(100vh-150px)]">
                             <TaskManager />
                         </div>
                     </aside>
