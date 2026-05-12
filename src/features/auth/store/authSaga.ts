@@ -13,6 +13,12 @@ import {
   guestLoginRequest,
   guestLoginSuccess,
   guestLoginFailure,
+  forgotPasswordRequest,
+  forgotPasswordSuccess,
+  forgotPasswordFailure,
+  resetPasswordRequest,
+  resetPasswordSuccess,
+  resetPasswordFailure,
   logoutRequest,
   logoutSuccess,
   logoutFailure,
@@ -140,15 +146,18 @@ function* handleCheckAuth(): Generator<any, void, any> {
     const token = localStorage.getItem('token');
 
     if (!token) {
+      yield put(logoutSuccess());
       return;
     }
 
     const res: any = yield call(authService.getProfile);
 
-    const user = res.user || res;
+    const user = res.user || res.data?.user || res;
     const accessToken = res.access_token || res.accessToken || token;
     const refreshToken =
-      res.refresh_token || res.refreshToken || localStorage.getItem('refreshToken');
+      res.refresh_token ||
+      res.refreshToken ||
+      localStorage.getItem('refreshToken');
 
     if (!user || (!user.id && !user._id)) {
       throw new Error('Formato de usuario no reconocido');
@@ -166,6 +175,50 @@ function* handleCheckAuth(): Generator<any, void, any> {
     localStorage.removeItem('refreshToken');
 
     yield put(loginFailure(error.message || 'Session expired'));
+  }
+}
+
+function* handleForgotPassword(
+  action: ReturnType<typeof forgotPasswordRequest>
+): Generator<any, void, any> {
+  try {
+    yield call(authService.forgotPassword, {
+      email: action.payload.email.trim().toLowerCase(),
+    });
+
+    yield put(forgotPasswordSuccess());
+
+    toast.success('Password reset link sent to your email', { id: TOAST_ID });
+  } catch (error: any) {
+    const backendMessage = error.response?.data?.message;
+
+    const message =
+      backendMessage === 'Error técnico enviando el correo.'
+        ? 'No se pudo enviar el correo de recuperación. Inténtalo más tarde.'
+        : backendMessage || error.message || 'Could not send password reset email';
+
+    yield put(forgotPasswordFailure(message));
+    toast.error(message, { id: TOAST_ID });
+  }
+}
+
+function* handleResetPassword(
+  action: ReturnType<typeof resetPasswordRequest>
+): Generator<any, void, any> {
+  try {
+    yield call(authService.resetPassword, action.payload);
+
+    yield put(resetPasswordSuccess());
+
+    toast.success('Password updated successfully', { id: TOAST_ID });
+  } catch (error: any) {
+    const message =
+      error.response?.data?.message ||
+      error.message ||
+      'Could not reset password';
+
+    yield put(resetPasswordFailure(message));
+    toast.error(message, { id: TOAST_ID });
   }
 }
 
@@ -195,6 +248,8 @@ export default function* authSaga(): Generator {
     takeLatest(loginRequest.type, handleLogin),
     takeLatest(registerRequest.type, handleRegister),
     takeLatest(guestLoginRequest.type, handleGuestLogin),
+    takeLatest(forgotPasswordRequest.type, handleForgotPassword),
+    takeLatest(resetPasswordRequest.type, handleResetPassword),
     takeLatest(logoutRequest.type, handleLogout),
   ]);
 }

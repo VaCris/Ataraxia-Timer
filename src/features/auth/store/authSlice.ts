@@ -1,126 +1,180 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { AuthUser } from '@/api/auth/dto/auth.dto'
-import { Check } from 'lucide-react'
+import type { AuthUser } from '@/features/auth/types/auth.dto'
+
+type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'error'
 
 type AuthState = {
   user: AuthUser | null
   accessToken: string | null
   refreshToken: string | null
-  status: 'idle' | 'loading' | 'authenticated' | 'error'
+  status: AuthStatus
   error: string | null
 }
 
 const initialState: AuthState = {
   user: null,
-  accessToken: null,
-  refreshToken: null,
-  status: 'idle',
-  error: null
+  accessToken: localStorage.getItem('token'),
+  refreshToken: localStorage.getItem('refreshToken'),
+  status: localStorage.getItem('token') ? 'loading' : 'idle',
+  error: null,
 }
 
 const slice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    checkAuthRequest: (s) => {
-      s.status = 'loading'
+    checkAuthRequest: (state) => {
+      state.status = 'loading'
+      state.error = null
     },
 
-    loginRequest: (s, _a: PayloadAction<{ email: string; password: string }>) => {
-      s.status = 'loading'
-      s.error = null
+    loginRequest: (
+      state,
+      _action: PayloadAction<{ email: string; password: string }>
+    ) => {
+      state.status = 'loading'
+      state.error = null
     },
 
-    loginSuccess: (s, a: PayloadAction<{ user: AuthUser; accessToken: string; refreshToken?: string }>) => {
-      s.status = 'authenticated'
-      s.user = a.payload.user
-      s.accessToken = a.payload.accessToken
-      s.refreshToken = a.payload.refreshToken || null
-      s.error = null
+    loginSuccess: (
+      state,
+      action: PayloadAction<{
+        user: AuthUser
+        accessToken: string
+        refreshToken?: string | null
+      }>
+    ) => {
+      state.status = 'authenticated'
+      state.user = action.payload.user
+      state.accessToken = action.payload.accessToken
+      state.refreshToken = action.payload.refreshToken || null
+      state.error = null
     },
 
-    loginFailure: (s, a: PayloadAction<string>) => {
-      s.status = 'error'
-      s.error = a.payload
+    loginFailure: (state, action: PayloadAction<string>) => {
+      state.status = 'error'
+      state.user = null
+      state.accessToken = null
+      state.refreshToken = null
+      state.error = action.payload
     },
 
-    registerRequest: (s, _a: PayloadAction<{ username: string; email: string; password: string; deviceId?: string }>) => {
-      s.status = 'loading'
-      s.error = null
+    registerRequest: (
+      state,
+      _action: PayloadAction<{
+        username: string
+        email: string
+        password: string
+        deviceId?: string
+      }>
+    ) => {
+      state.status = 'loading'
+      state.error = null
     },
 
-    registerSuccess: (s, a: PayloadAction<{ user: AuthUser; accessToken: string; refreshToken?: string }>) => {
-      s.user = a.payload.user
-      s.accessToken = a.payload.accessToken
-      s.refreshToken = a.payload.refreshToken || null
-      s.status = 'authenticated'
+    registerSuccess: (
+      state,
+      action: PayloadAction<{
+        user: AuthUser
+        accessToken: string
+        refreshToken?: string | null
+      }>
+    ) => {
+      state.user = action.payload.user
+      state.accessToken = action.payload.accessToken
+      state.refreshToken = action.payload.refreshToken || null
+      state.status = 'authenticated'
+      state.error = null
     },
 
-    registerFailure: (s, a: PayloadAction<string>) => {
-      s.status = 'error'
-      s.error = a.payload
+    registerFailure: (state, action: PayloadAction<string>) => {
+      state.status = 'error'
+      state.error = action.payload
     },
 
-    guestLoginRequest: (s, _a: PayloadAction<{ deviceId: string }>) => {
-      s.status = 'loading'
-      s.error = null
+    guestLoginRequest: (
+      state,
+      _action: PayloadAction<{ deviceId: string }>
+    ) => {
+      state.status = 'loading'
+      state.error = null
     },
 
-    guestLoginSuccess: (s, a: PayloadAction<{ user: AuthUser; accessToken?: string }>) => {
-      s.status = 'authenticated';
-      s.user = a.payload.user;
-      s.error = null;
+    guestLoginSuccess: (
+      state,
+      action: PayloadAction<{
+        user: AuthUser
+        accessToken?: string | null
+      }>
+    ) => {
+      state.status = 'authenticated'
+      state.user = action.payload.user
+      state.accessToken = action.payload.accessToken || null
+      state.refreshToken = null
+      state.error = null
     },
 
-    guestLoginFailure: (s, a: PayloadAction<string>) => {
-      s.status = 'error'
-      s.error = a.payload
+    guestLoginFailure: (state, action: PayloadAction<string>) => {
+      state.status = 'error'
+      state.error = action.payload
     },
 
-    forgotPasswordRequest: (s, _a: PayloadAction<{ email: string }>) => {
-      s.status = 'loading'
-      s.error = null
+    forgotPasswordRequest: (
+      state,
+      _action: PayloadAction<{ email: string }>
+    ) => {
+      state.status = 'loading'
+      state.error = null
     },
 
-    forgotPasswordSuccess: (s) => {
-      s.status = 'idle'
+    forgotPasswordSuccess: (state) => {
+      state.status = 'idle'
+      state.error = null
     },
 
-    forgotPasswordFailure: (s, a: PayloadAction<string>) => {
-      s.status = 'error'
-      s.error = a.payload
+    forgotPasswordFailure: (state, action: PayloadAction<string>) => {
+      state.status = 'error'
+      state.error = action.payload
     },
 
-    resetPasswordRequest: (s, _a: PayloadAction<{ token: string; newPassword: string }>) => {
-      s.status = 'loading'
-      s.error = null
+    resetPasswordRequest: (
+      state,
+      _action: PayloadAction<{ token: string; newPassword: string }>
+    ) => {
+      state.status = 'loading'
+      state.error = null
     },
 
-    resetPasswordSuccess: (s) => {
-      s.status = 'idle'
+    resetPasswordSuccess: (state) => {
+      state.status = 'idle'
+      state.error = null
     },
 
-    resetPasswordFailure: (s, a: PayloadAction<string>) => {
-      s.status = 'error'
-      s.error = a.payload
+    resetPasswordFailure: (state, action: PayloadAction<string>) => {
+      state.status = 'error'
+      state.error = action.payload
     },
 
-    logoutRequest: (s) => {
-      s.status = 'loading'
+    logoutRequest: (state) => {
+      state.status = 'loading'
     },
 
-    logoutSuccess: (s) => {
-      s.user = null
-      s.accessToken = null
-      s.refreshToken = null
-      s.status = 'idle'
+    logoutSuccess: (state) => {
+      state.user = null
+      state.accessToken = null
+      state.refreshToken = null
+      state.status = 'idle'
+      state.error = null
     },
 
-    logoutFailure: (s, a: PayloadAction<string>) => {
-      s.status = 'error'
-      s.error = a.payload
-    }
-  }
+    logoutFailure: (state, action: PayloadAction<string>) => {
+      state.user = null
+      state.accessToken = null
+      state.refreshToken = null
+      state.status = 'idle'
+      state.error = action.payload
+    },
+  },
 })
 
 export const {
@@ -142,7 +196,7 @@ export const {
   resetPasswordFailure,
   logoutRequest,
   logoutSuccess,
-  logoutFailure
+  logoutFailure,
 } = slice.actions
 
 export default slice.reducer

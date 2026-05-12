@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User as UserIcon, ArrowRight, Loader2, KeyRound } from 'lucide-react';
-import { loginRequest, registerRequest } from '@/features/auth/store/authSlice';
+import {
+  loginRequest,
+  registerRequest,
+  forgotPasswordRequest,
+} from '@/features/auth/store/authSlice';
+import toast from 'react-hot-toast';
 
 const AuthForm = ({ isLogin, toggleMode }) => {
   const dispatch = useDispatch();
@@ -23,8 +28,24 @@ const AuthForm = ({ isLogin, toggleMode }) => {
     }
   };
 
+  const handleForgotPassword = () => {
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail) {
+      toast.error('Enter your email first');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      toast.error('Enter a valid email');
+      return;
+    }
+
+    dispatch(forgotPasswordRequest({ email: cleanEmail }));
+  };
+
   return (
-    <div className="mx-auto w-full max-w-lg"> {/* Aumentamos el ancho máximo */}
+    <div className="mx-auto w-full max-w-lg">
       <div className="mb-10 text-center">
         <h2 className="font-black text-white text-3xl italic tracking-tighter">
           {isLogin ? 'WELCOME BACK' : 'CREATE ESSENCE'}
@@ -84,7 +105,12 @@ const AuthForm = ({ isLogin, toggleMode }) => {
 
           {isLogin && (
             <div className="flex justify-end">
-              <button type="button" className="flex items-center gap-1.5 font-bold text-[10px] text-white/30 hover:text-white/60 uppercase tracking-widest transition-colors">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={isLoading}
+                className="flex items-center gap-1.5 disabled:opacity-40 font-bold text-[10px] text-white/30 hover:text-white/60 uppercase tracking-widest transition-colors"
+              >
                 <KeyRound size={12} /> Forgot Password?
               </button>
             </div>
@@ -110,7 +136,6 @@ const AuthForm = ({ isLogin, toggleMode }) => {
         </motion.button>
       </form>
 
-      {/* Footer del Formulario */}
       <div className="mt-10 pt-8 border-white/5 border-t text-center">
         <p className="text-white/30 text-xs">
           {isLogin ? "Don't have an account yet?" : "Already part of the sanctuary?"}

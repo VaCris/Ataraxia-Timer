@@ -2,11 +2,11 @@
   "version": "2.0.0",
   "date": "2026-05-12",
   "changelog": [
+    "connect pomodoro timer",
     "standardize api services",
     "normalize settings contracts",
     "remove sagas entry",
-    "organize redux store",
-    "clean lint errors"
+    "organize redux store"
   ],
   "targetUrl": "/"
 }

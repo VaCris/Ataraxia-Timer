@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { useDispatch } from 'react-redux';
 
 import { processSyncQueue } from '@/infrastructure/sync/syncManager';
+import { checkAuthRequest } from '@/features/auth/store/authSlice';
 
 import Dashboard from '@/app/layout/Dashboard';
 import ResetPassword from '@/features/auth/components/ResetPassword';
@@ -14,11 +16,21 @@ import ComingSoon from '@/app/pages/ComingSoon';
 import Restricted from '@/app/pages/Restricted';
 
 function App() {
+  const dispatch = useDispatch();
+
   const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
   const isComingSoon = import.meta.env.VITE_COMING_SOON_MODE === 'true';
   const isRestricted = import.meta.env.VITE_RESTRICT_ACCESS === 'true';
 
   const [activeView, setActiveView] = useState('main');
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+
+    if (token) {
+      dispatch(checkAuthRequest());
+    }
+  }, [dispatch]);
 
   useEffect(() => {
     if (!isMaintenance && !isComingSoon && !isRestricted) {

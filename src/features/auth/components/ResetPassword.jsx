@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { resetPasswordRequest } from '@/features/auth/store/authSlice';
@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 const ResetPassword = () => {
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
+
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
@@ -17,15 +18,31 @@ const ResetPassword = () => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+
+    const hasRedirected = useRef(false);
 
     const isLoading = authStatus === 'loading';
+    const passwordsMatch = password.length > 0 && password === confirmPassword;
+
+    useEffect(() => {
+        if (!token) {
+            navigate('/');
+        }
+    }, [token, navigate]);
+
+    useEffect(() => {
+        if (!submitted || hasRedirected.current) return;
+
+        if (authStatus === 'idle' && !authError) {
+            hasRedirected.current = true;
+            navigate('/');
+        }
+    }, [submitted, authStatus, authError, navigate]);
 
     if (!token) {
-        navigate('/');
         return null;
     }
-
-    const passwordsMatch = password.length > 0 && password === confirmPassword;
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -40,20 +57,14 @@ const ResetPassword = () => {
             return;
         }
 
+        setSubmitted(true);
+
         dispatch(
             resetPasswordRequest({
                 token,
                 newPassword: password,
             })
         );
-
-        if (authError) {
-            toast.error(authError);
-            return;
-        }
-
-        toast.success('Password update request sent');
-        navigate('/');
     };
 
     return (
@@ -110,6 +121,12 @@ const ResetPassword = () => {
                             </div>
                         )}
                     </div>
+
+                    {authError && submitted && (
+                        <p className="text-red-400 text-xs text-center">
+                            {authError}
+                        </p>
+                    )}
 
                     <button
                         type="submit"
