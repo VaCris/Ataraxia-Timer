@@ -2,6 +2,37 @@ import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/store'
 
+const readStoredValue = <T,>(key: string, fallback: T): T => {
+  const value = localStorage.getItem(`ataraxia_${key}`)
+
+  if (value === null || value === undefined) {
+    return fallback
+  }
+
+  return value as T
+}
+
+const readStoredNumber = (key: string, fallback: number): number => {
+  const value = localStorage.getItem(`ataraxia_${key}`)
+
+  if (value === null || value === undefined) {
+    return fallback
+  }
+
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+const readStoredBoolean = (key: string, fallback: boolean): boolean => {
+  const value = localStorage.getItem(`ataraxia_${key}`)
+
+  if (value === null || value === undefined) {
+    return fallback
+  }
+
+  return value === 'true'
+}
+
 const safeParseShortcuts = (): Record<string, string> => {
   try {
     return JSON.parse(localStorage.getItem('ataraxia_customShortcuts') || '{}')
@@ -15,37 +46,74 @@ export const useUISettings = () => {
   const uiSettingsState = useSelector((state: RootState) => state.settings.ui)
 
   const uiSettings = useMemo(() => {
+    const focusDuration = readStoredNumber(
+      'focusDuration',
+      apiSettings?.focusDuration ?? 25
+    )
+
+    const shortBreakDuration = readStoredNumber(
+      'shortBreakDuration',
+      apiSettings?.shortBreakDuration ?? 5
+    )
+
+    const longBreakDuration = readStoredNumber(
+      'longBreakDuration',
+      apiSettings?.longBreakDuration ?? 15
+    )
+
+    const longBreakInterval = readStoredNumber(
+      'longBreakInterval',
+      apiSettings?.longBreakInterval ?? 4
+    )
+
     return {
       ...uiSettingsState,
 
-      accentColor:
-        localStorage.getItem('ataraxia_accentColor') ||
-        uiSettingsState.accentColor ||
-        '#e11d48',
+      accentColor: readStoredValue(
+        'accentColor',
+        uiSettingsState.accentColor || '#e11d48'
+      ),
 
-      bgImage:
-        localStorage.getItem('ataraxia_bgImage') ||
-        uiSettingsState.bgImage ||
-        null,
+      bgImage: readStoredValue(
+        'bgImage',
+        uiSettingsState.bgImage || null
+      ),
 
-      blurIntensity:
-        Number(localStorage.getItem('ataraxia_blurIntensity')) ||
-        uiSettingsState.blurIntensity ||
-        0,
+      blurIntensity: readStoredNumber(
+        'blurIntensity',
+        uiSettingsState.blurIntensity || 0
+      ),
 
-      is24Hour:
-        localStorage.getItem('ataraxia_is24Hour') === 'true' ||
-        uiSettingsState.is24Hour ||
-        false,
+      volume: readStoredNumber(
+        'volume',
+        uiSettingsState.volume || 50
+      ),
+
+      is24Hour: readStoredBoolean(
+        'is24Hour',
+        uiSettingsState.is24Hour || false
+      ),
 
       customShortcuts: safeParseShortcuts(),
 
-      focusDuration: apiSettings?.focusDuration ?? 25,
-      shortBreakDuration: apiSettings?.shortBreakDuration ?? 5,
-      longBreakDuration: apiSettings?.longBreakDuration ?? 15,
-      autoStartBreaks: apiSettings?.autoStartBreaks ?? false,
-      autoStartPomodoros: apiSettings?.autoStartPomodoros ?? false,
-      longBreakInterval: apiSettings?.longBreakInterval ?? 4,
+      focusDuration,
+      shortBreakDuration,
+      longBreakDuration,
+      autoStartBreaks: readStoredBoolean(
+        'autoStartBreaks',
+        apiSettings?.autoStartBreaks ?? false
+      ),
+      autoStartPomodoros: readStoredBoolean(
+        'autoStartPomodoros',
+        apiSettings?.autoStartPomodoros ?? false
+      ),
+      longBreakInterval,
+      theme: readStoredValue('theme', apiSettings?.theme ?? 'dark'),
+      soundEnabled: readStoredBoolean(
+        'soundEnabled',
+        apiSettings?.soundEnabled ?? true
+      ),
+      platform: readStoredValue('platform', apiSettings?.platform ?? 'web'),
     }
   }, [apiSettings, uiSettingsState])
 
