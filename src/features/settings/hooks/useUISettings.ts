@@ -1,25 +1,53 @@
 import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
+import type { RootState } from '@/store'
+
+const safeParseShortcuts = (): Record<string, string> => {
+  try {
+    return JSON.parse(localStorage.getItem('ataraxia_customShortcuts') || '{}')
+  } catch {
+    return {}
+  }
+}
 
 export const useUISettings = () => {
-    const settingsItem = useSelector((state: any) => state.settings.item) || {}
+  const apiSettings = useSelector((state: RootState) => state.settings.api)
+  const uiSettingsState = useSelector((state: RootState) => state.settings.ui)
 
-    const uiSettings = useMemo(() => {
-        return {
-            accentColor: localStorage.getItem('ataraxia_accentColor') || '#e11d48',
-            bgImage: localStorage.getItem('ataraxia_bgImage') || '',
-            blurIntensity: Number(localStorage.getItem('ataraxia_blurIntensity')) || 0,
-            is24Hour: localStorage.getItem('ataraxia_is24Hour') === 'true',
-            customShortcuts: JSON.parse(localStorage.getItem('ataraxia_customShortcuts') || '[]'),
+  const uiSettings = useMemo(() => {
+    return {
+      ...uiSettingsState,
 
-            focusDuration: settingsItem.focusDuration ?? 25,
-            shortBreakDuration: settingsItem.shortBreakDuration ?? 5,
-            longBreakDuration: settingsItem.longBreakDuration ?? 15,
-            autoStartBreaks: settingsItem.autoStartBreaks ?? false,
-            autoStartPomodoros: settingsItem.autoStartPomodoros ?? false,
-            longBreakInterval: settingsItem.longBreakInterval ?? 4
-        }
-    }, [settingsItem])
+      accentColor:
+        localStorage.getItem('ataraxia_accentColor') ||
+        uiSettingsState.accentColor ||
+        '#e11d48',
 
-    return uiSettings
+      bgImage:
+        localStorage.getItem('ataraxia_bgImage') ||
+        uiSettingsState.bgImage ||
+        null,
+
+      blurIntensity:
+        Number(localStorage.getItem('ataraxia_blurIntensity')) ||
+        uiSettingsState.blurIntensity ||
+        0,
+
+      is24Hour:
+        localStorage.getItem('ataraxia_is24Hour') === 'true' ||
+        uiSettingsState.is24Hour ||
+        false,
+
+      customShortcuts: safeParseShortcuts(),
+
+      focusDuration: apiSettings?.focusDuration ?? 25,
+      shortBreakDuration: apiSettings?.shortBreakDuration ?? 5,
+      longBreakDuration: apiSettings?.longBreakDuration ?? 15,
+      autoStartBreaks: apiSettings?.autoStartBreaks ?? false,
+      autoStartPomodoros: apiSettings?.autoStartPomodoros ?? false,
+      longBreakInterval: apiSettings?.longBreakInterval ?? 4,
+    }
+  }, [apiSettings, uiSettingsState])
+
+  return uiSettings
 }

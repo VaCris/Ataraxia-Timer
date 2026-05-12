@@ -18,6 +18,8 @@ const initialUISettings: UISettings = {
     volume: 50,
     isMuted: false,
     pipEnabled: true,
+    is24Hour: false,
+    customShortcuts: {},
 };
 
 const initialState: SettingsState = {
@@ -39,82 +41,82 @@ const settingsSlice = createSlice({
             state.ui = action.payload;
         },
 
-        fetchSettingsRequest: (state) => { 
-            state.status = 'loading'; 
-            state.error = null; 
+        fetchSettingsRequest: (state) => {
+            state.status = 'loading';
+            state.error = null;
         },
-        fetchSettingsSuccess: (state, action: PayloadAction<SettingResponse>) => { 
-            state.status = 'idle'; 
-            state.api = action.payload; 
+        fetchSettingsSuccess: (state, action: PayloadAction<SettingResponse>) => {
+            state.status = 'idle';
+            state.api = action.payload;
         },
-        fetchSettingsFailure: (state, action: PayloadAction<string>) => { 
-            state.status = 'error'; 
-            state.error = action.payload; 
-        },
-
-        fetchAllSettingsRequest: (state) => { 
-            state.status = 'loading'; 
-            state.error = null; 
-        },
-        fetchAllSettingsSuccess: (state, action: PayloadAction<SettingResponse[]>) => { 
-            state.status = 'idle'; 
-            state.items = action.payload; 
-        },
-        fetchAllSettingsFailure: (state, action: PayloadAction<string>) => { 
-            state.status = 'error'; 
-            state.error = action.payload; 
+        fetchSettingsFailure: (state, action: PayloadAction<string>) => {
+            state.status = 'error';
+            state.error = action.payload;
         },
 
-        createSettingsRequest: (state, _action: PayloadAction<CreateSettingDto>) => { 
-            state.status = 'loading'; 
-            state.error = null; 
+        fetchAllSettingsRequest: (state) => {
+            state.status = 'loading';
+            state.error = null;
         },
-        createSettingsSuccess: (state, action: PayloadAction<SettingResponse>) => { 
-            state.status = 'idle'; 
-            state.api = action.payload; 
+        fetchAllSettingsSuccess: (state, action: PayloadAction<SettingResponse[]>) => {
+            state.status = 'idle';
+            state.items = action.payload;
         },
-        createSettingsFailure: (state, action: PayloadAction<string>) => { 
-            state.status = 'error'; 
-            state.error = action.payload; 
-        },
-
-        updateSettingsRequest: (state, _action: PayloadAction<UpdateSettingDto>) => { 
-            state.status = 'loading'; 
-            state.error = null; 
-        },
-        updateSettingsSuccess: (state, action: PayloadAction<SettingResponse>) => { 
-            state.status = 'idle'; 
-            state.api = action.payload; 
-        },
-        updateSettingsFailure: (state, action: PayloadAction<string>) => { 
-            state.status = 'error'; 
-            state.error = action.payload; 
+        fetchAllSettingsFailure: (state, action: PayloadAction<string>) => {
+            state.status = 'error';
+            state.error = action.payload;
         },
 
-        deleteSettingsRequest: (state, _action: PayloadAction<string>) => { 
-            state.status = 'loading'; 
-            state.error = null; 
+        createSettingsRequest: (state, _action: PayloadAction<CreateSettingDto>) => {
+            state.status = 'loading';
+            state.error = null;
         },
-        deleteSettingsSuccess: (state) => { 
-            state.status = 'idle'; 
-            state.api = null; 
+        createSettingsSuccess: (state, action: PayloadAction<SettingResponse>) => {
+            state.status = 'idle';
+            state.api = action.payload;
         },
-        deleteSettingsFailure: (state, action: PayloadAction<string>) => { 
-            state.status = 'error'; 
-            state.error = action.payload; 
+        createSettingsFailure: (state, action: PayloadAction<string>) => {
+            state.status = 'error';
+            state.error = action.payload;
         },
 
-        adminUpdateSettingsRequest: (state, _action: PayloadAction<{ id: string; data: UpdateSettingDto }>) => { 
-            state.status = 'loading'; 
-            state.error = null; 
+        updateSettingsRequest: (state, _action: PayloadAction<UpdateSettingDto>) => {
+            state.status = 'loading';
+            state.error = null;
         },
-        adminUpdateSettingsSuccess: (state, action: PayloadAction<SettingResponse>) => { 
-            state.status = 'idle'; 
-            state.api = action.payload; 
+        updateSettingsSuccess: (state, action: PayloadAction<SettingResponse>) => {
+            state.status = 'idle';
+            state.api = action.payload;
         },
-        adminUpdateSettingsFailure: (state, action: PayloadAction<string>) => { 
-            state.status = 'error'; 
-            state.error = action.payload; 
+        updateSettingsFailure: (state, action: PayloadAction<string>) => {
+            state.status = 'error';
+            state.error = action.payload;
+        },
+
+        deleteSettingsRequest: (state, _action: PayloadAction<string>) => {
+            state.status = 'loading';
+            state.error = null;
+        },
+        deleteSettingsSuccess: (state) => {
+            state.status = 'idle';
+            state.api = null;
+        },
+        deleteSettingsFailure: (state, action: PayloadAction<string>) => {
+            state.status = 'error';
+            state.error = action.payload;
+        },
+
+        adminUpdateSettingsRequest: (state, _action: PayloadAction<{ id: string; data: UpdateSettingDto }>) => {
+            state.status = 'loading';
+            state.error = null;
+        },
+        adminUpdateSettingsSuccess: (state, action: PayloadAction<SettingResponse>) => {
+            state.status = 'idle';
+            state.api = action.payload;
+        },
+        adminUpdateSettingsFailure: (state, action: PayloadAction<string>) => {
+            state.status = 'error';
+            state.error = action.payload;
         }
     }
 });
