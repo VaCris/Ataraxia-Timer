@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
 import {
   X,
   Sun,
@@ -129,20 +130,20 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
     customShortcuts = defaultShortcuts,
   } = uiSettings;
 
-  const [localTimers, setLocalTimers] = useState({
-    FOCUS: focusDuration,
-    SHORT_BREAK: shortBreakDuration,
-    LONG_BREAK: longBreakDuration,
-  });
+  const [localTimers, setLocalTimers] = useState(() => ({
+    FOCUS: readStoredNumber('focusDuration', focusDuration),
+    SHORT_BREAK: readStoredNumber('shortBreakDuration', shortBreakDuration),
+    LONG_BREAK: readStoredNumber('longBreakDuration', longBreakDuration),
+  }));
 
-  const [localApiSettings, setLocalApiSettings] = useState({
-    autoStartBreaks,
-    autoStartPomodoros,
-    longBreakInterval,
-    theme,
-    soundEnabled,
-    platform,
-  });
+  const [localApiSettings, setLocalApiSettings] = useState(() => ({
+    autoStartBreaks: readStoredBoolean('autoStartBreaks', autoStartBreaks),
+    autoStartPomodoros: readStoredBoolean('autoStartPomodoros', autoStartPomodoros),
+    longBreakInterval: readStoredNumber('longBreakInterval', longBreakInterval),
+    theme: readStoredValue('theme', theme),
+    soundEnabled: readStoredBoolean('soundEnabled', soundEnabled),
+    platform: readStoredValue('platform', platform),
+  }));
 
   const [localUISettings, setLocalUISettings] = useState(() => ({
     accentColor: readStoredValue('accentColor', accentColor),
@@ -208,23 +209,44 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
       customShortcuts: normalizeShortcuts(localUISettings.customShortcuts),
     };
 
-    dispatch(updateSettingsRequest(payload));
-    dispatch(updateDurations({ mode: currentMode, duration: durationByMode[currentMode] }));
+    Object.entries(payload).forEach(([key, value]) => {
+      persistUISetting(key, value);
+    });
 
     Object.entries(uiPayload).forEach(([key, value]) => {
       persistUISetting(key, value);
     });
 
+    dispatch(updateSettingsRequest(payload));
+
+    dispatch(
+      updateDurations({
+        mode: currentMode,
+        duration: durationByMode[currentMode],
+      })
+    );
+
     dispatch(updateUISettings(uiPayload));
     dispatch(showToast('Settings saved'));
 
+    toast.success('Configuración guardada correctamente', {
+      id: 'settings-saved',
+    });
+
     if (onClose) onClose();
-  }, [currentMode, dispatch, localApiSettings, localTimers, localUISettings, onClose]);
+  }, [
+    currentMode,
+    dispatch,
+    localApiSettings,
+    localTimers,
+    localUISettings,
+    onClose,
+  ]);
 
   const playTestAlarm = useCallback(() => {
     const audio = new Audio('/sounds/alarm.mp3');
     audio.volume = Math.max(0, Math.min(1, Number(localUISettings.volume || 50) / 100));
-    audio.play().catch(() => {});
+    audio.play().catch(() => { });
   }, [localUISettings.volume]);
 
   const recordShortcut = useCallback((action) => {
@@ -344,7 +366,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                     className={`px-3 py-1 rounded text-xs font-mono transition-colors ${activeShortcutKey === action
                       ? 'bg-accent text-white'
                       : 'bg-white/10 text-white/80'
-                    }`}
+                      }`}
                     style={activeShortcutKey === action ? { backgroundColor: localAccentColor } : {}}
                   >
                     {activeShortcutKey === action ? '...' : key}

@@ -2,11 +2,11 @@
   "version": "2.0.0",
   "date": "2026-05-12",
   "changelog": [
-    "connect pomodoro timer",
-    "standardize api services",
-    "normalize settings contracts",
-    "remove sagas entry",
-    "organize redux store"
+    "fix: use persisted timer settings when api state is empty",
+    "fix: persist ui and api settings across refresh",
+    "fix: resolve timer dial conflict and keep responsive sizing",
+    "fix: resolve dashboard layout conflict and restore responsive view",
+    "feat: add clearTags and clearTasks actions to reset state"
   ],
   "targetUrl": "/"
 }
