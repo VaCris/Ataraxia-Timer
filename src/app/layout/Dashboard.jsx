@@ -72,12 +72,12 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
             <main className="z-10 relative flex flex-col flex-1 min-w-0 h-screen">
                 <Header is24Hour={uiSettings.is24Hour} />
 
-                <section className="flex-1 gap-8 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_420px] px-6 sm:px-10 xl:px-14 pb-8 min-h-0">
-                    <div className="flex flex-col justify-center items-center min-w-0">
-                        <div className="flex flex-col items-center gap-8 w-full max-w-3xl">
+                <section className="flex-1 gap-5 sm:gap-6 xl:gap-8 2xl:gap-10 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(340px,400px)] px-4 sm:px-8 xl:px-10 2xl:px-14 pb-5 sm:pb-8 min-h-0">
+                    <div className="flex flex-col justify-center items-center min-w-0 min-h-0">
+                        <div className="flex flex-col items-center gap-5 sm:gap-6 xl:gap-7 w-full max-w-[44rem]">
                             <TimerDial controller={pomodoro} />
 
-                            <div className="flex items-center gap-2 bg-white/5 backdrop-blur-xl p-2 border border-white/10 rounded-full">
+                            <div className="flex items-center gap-1.5 bg-white/5 backdrop-blur-xl p-1.5 border border-white/10 rounded-full">
                                 {[
                                     { label: 'Focus', value: 'FOCUS' },
                                     { label: 'Short', value: 'SHORT_BREAK' },
@@ -90,7 +90,7 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                                             key={item.value}
                                             type="button"
                                             onClick={() => pomodoro.handleModeChange(item.value)}
-                                            className={`px-5 py-2 rounded-full font-black text-[10px] uppercase tracking-[0.2em] transition-all ${isActive
+                                            className={`px-4 sm:px-5 py-2 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-[0.18em] transition-all ${isActive
                                                     ? 'bg-accent text-white shadow-[0_0_18px_rgba(var(--color-accent-rgb),0.45)]'
                                                     : 'text-white/30 hover:text-white hover:bg-white/10'
                                                 }`}
@@ -101,22 +101,22 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                                 })}
                             </div>
 
-                            <div className="flex justify-center items-center gap-4 bg-white/5 shadow-2xl backdrop-blur-xl p-3 border border-white/10 rounded-full">
+                            <div className="flex justify-center items-center gap-3 bg-white/5 shadow-2xl backdrop-blur-xl p-2.5 border border-white/10 rounded-full">
                                 <button
                                     type="button"
                                     onClick={pip.togglePip}
                                     disabled={!pip.isPipSupported}
-                                    className="flex justify-center items-center hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent rounded-full w-12 h-12 text-white/50 hover:text-white transition-all"
+                                    className="flex justify-center items-center hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent rounded-full w-11 h-11 text-white/50 hover:text-white transition-all"
                                     aria-label="Picture in Picture"
                                     title={pip.isPipSupported ? 'Picture in Picture' : 'Picture in Picture is not supported in this browser'}
                                 >
-                                    <ExternalLink size={20} />
+                                    <ExternalLink size={19} />
                                 </button>
 
                                 <button
                                     type="button"
                                     onClick={pomodoro.toggleSession}
-                                    className="flex justify-center items-center gap-3 bg-accent px-10 rounded-full min-w-40 h-14 font-black text-white text-xs uppercase tracking-[0.2em] active:scale-95 transition-all"
+                                    className="flex justify-center items-center gap-3 bg-accent px-8 sm:px-10 rounded-full min-w-36 sm:min-w-40 h-13 sm:h-14 font-black text-white text-[11px] sm:text-xs uppercase tracking-[0.2em] active:scale-95 transition-all"
                                 >
                                     {pomodoro.isActive ? (
                                         <>
@@ -134,10 +134,10 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                                 <button
                                     type="button"
                                     onClick={pomodoro.resetSession}
-                                    className="flex justify-center items-center hover:bg-white/10 rounded-full w-12 h-12 text-white/50 hover:text-white transition-all"
+                                    className="flex justify-center items-center hover:bg-white/10 rounded-full w-11 h-11 text-white/50 hover:text-white transition-all"
                                     aria-label="Reset Timer"
                                 >
-                                    <RotateCcw size={20} />
+                                    <RotateCcw size={19} />
                                 </button>
                             </div>
 
@@ -150,7 +150,7 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                     </div>
 
                     <aside className="flex justify-center xl:justify-end items-center min-w-0 min-h-0">
-                        <div className="w-full max-w-[420px] h-[min(620px,calc(100vh-180px))]">
+                        <div className="w-full max-w-[400px] h-[min(600px,calc(100vh-170px))]">
                             <TaskManager />
                         </div>
                     </aside>
