@@ -18,11 +18,16 @@ export const usePip = () => {
 
             [...document.styleSheets].forEach((styleSheet) => {
                 try {
-                    const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
+                    const cssRules = [...styleSheet.cssRules]
+                        .map((rule) => rule.cssText)
+                        .join('');
+
                     const style = pip.document.createElement('style');
                     style.textContent = cssRules;
                     pip.document.head.appendChild(style);
-                } catch (e) {
+                } catch {
+                    if (!styleSheet.href) return;
+
                     const link = pip.document.createElement('link');
                     link.rel = 'stylesheet';
                     link.href = styleSheet.href;
@@ -30,7 +35,7 @@ export const usePip = () => {
                 }
             });
 
-            pip.addEventListener("pagehide", () => {
+            pip.addEventListener('pagehide', () => {
                 pipWindowRef.current = null;
                 setPipContainer(null);
             });
@@ -38,7 +43,7 @@ export const usePip = () => {
             pipWindowRef.current = pip;
             setPipContainer(pip.document.body);
         } catch (error) {
-            console.error("PiP failed:", error);
+            console.error('PiP failed:', error);
         }
     }, [pipContainer]);
 

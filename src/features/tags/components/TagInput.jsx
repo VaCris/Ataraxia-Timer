@@ -1,10 +1,7 @@
 import React from 'react'
 import { Tag as TagIcon, Hash } from 'lucide-react'
-import { useTags } from '@/features/tags/hooks/useTags'
 
 const TagInput = ({ tagName, setTagName, tagColor, setTagColor }) => {
-    const { tags } = useTags()
-
     return (
         <div className="flex gap-3">
             <div className="group relative flex flex-1 items-center bg-black/40 px-4 py-3 border border-white/5 focus-within:border-white/10 rounded-2xl transition-all">

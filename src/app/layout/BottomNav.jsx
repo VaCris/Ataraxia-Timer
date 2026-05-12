@@ -2,14 +2,17 @@ import React from 'react'
 import { Layout, Music, Gamepad2, BarChart2, Trophy, Settings } from 'lucide-react'
 import { useMusic } from '@context/MusicContext'
 
-const NavButton = ({ icon: Icon, onClick, active = false }) => (
+const NavButton = ({ icon, onClick, active = false }) => (
     <button
         type="button"
         onClick={onClick}
         className={`flex flex-col items-center justify-center flex-1 py-3 transition-all ${active ? 'text-accent' : 'text-white/30 hover:text-white/60'
             }`}
     >
-        <Icon size={24} className={active ? 'shadow-glow' : ''} />
+        {React.createElement(icon, {
+            size: 24,
+            className: active ? 'shadow-glow' : '',
+        })}
     </button>
 )
 
@@ -26,7 +29,7 @@ const BottomNav = ({ onOpenSettings, onOpenGames, onOpenStats, onOpenAchievement
         { id: 'games', icon: Gamepad2, onClick: onOpenGames },
         { id: 'stats', icon: BarChart2, onClick: onOpenStats },
         { id: 'achievements', icon: Trophy, onClick: onOpenAchievements },
-        { id: 'settings', icon: Settings, onClick: onOpenSettings }
+        { id: 'settings', icon: Settings, onClick: onOpenSettings },
     ]
 
     return (

@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export const useNotifications = () => {
     const [permission, setPermission] = useState(Notification.permission);
-    const navigate = useNavigate();
 
     const requestPermission = async () => {
         if (!('Notification' in window)) return;
