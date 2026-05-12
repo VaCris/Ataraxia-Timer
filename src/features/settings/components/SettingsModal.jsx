@@ -49,6 +49,51 @@ const persistUISetting = (key, value) => {
   );
 };
 
+const readStoredValue = (key, fallback) => {
+  const value = localStorage.getItem(`ataraxia_${key}`);
+
+  if (value === null || value === undefined) {
+    return fallback;
+  }
+
+  return value;
+};
+
+const readStoredBoolean = (key, fallback) => {
+  const value = localStorage.getItem(`ataraxia_${key}`);
+
+  if (value === null || value === undefined) {
+    return fallback;
+  }
+
+  return value === 'true';
+};
+
+const readStoredNumber = (key, fallback) => {
+  const value = localStorage.getItem(`ataraxia_${key}`);
+
+  if (value === null || value === undefined) {
+    return fallback;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const readStoredShortcuts = (fallback) => {
+  try {
+    const value = localStorage.getItem('ataraxia_customShortcuts');
+
+    if (!value) {
+      return normalizeShortcuts(fallback);
+    }
+
+    return normalizeShortcuts(JSON.parse(value));
+  } catch {
+    return normalizeShortcuts(fallback);
+  }
+};
+
 const clampNumber = (value, fallback = 0) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -99,14 +144,14 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
     platform,
   });
 
-  const [localUISettings, setLocalUISettings] = useState({
-    accentColor,
-    bgImage,
-    blurIntensity,
-    volume,
-    is24Hour,
-    customShortcuts: normalizeShortcuts(customShortcuts),
-  });
+  const [localUISettings, setLocalUISettings] = useState(() => ({
+    accentColor: readStoredValue('accentColor', accentColor),
+    bgImage: readStoredValue('bgImage', bgImage || ''),
+    blurIntensity: readStoredNumber('blurIntensity', blurIntensity),
+    volume: readStoredNumber('volume', volume),
+    is24Hour: readStoredBoolean('is24Hour', is24Hour),
+    customShortcuts: readStoredShortcuts(customShortcuts),
+  }));
 
   const [activeShortcutKey, setActiveShortcutKey] = useState(null);
 
