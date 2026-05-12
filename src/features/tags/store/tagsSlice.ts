@@ -55,7 +55,12 @@ const tagsSlice = createSlice({
     tagsOperationFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
       state.error = action.payload;
-    }
+    },
+    clearTags: (state) => {
+      state.items = [];
+      state.loading = false;
+      state.error = null;
+    },
   }
 });
 
@@ -64,7 +69,7 @@ export const {
   addTagRequest, addTagSuccess,
   updateTagRequest, updateTagSuccess,
   deleteTagRequest, deleteTagSuccess,
-  tagsOperationFailure
+  tagsOperationFailure,clearTags
 } = tagsSlice.actions;
 
 export default tagsSlice.reducer;

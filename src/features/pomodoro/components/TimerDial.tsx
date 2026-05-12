@@ -38,8 +38,8 @@ export const TimerDial: React.FC<TimerDialProps> = memo(({ controller }) => {
     }, [timerState.timeLeft, timerState.initialTime]);
 
     return (
-        <div className="relative flex justify-center items-center w-72 md:w-[26rem] h-72 md:h-[26rem]">
-            <svg className="drop-shadow-[0_0_25px_rgba(0,0,0,0.5)] w-full h-full -rotate-90 transform">
+        <div className="relative flex justify-center items-center w-[22rem] sm:w-[25rem] md:w-[29rem] 2xl:w-[34rem] xl:w-[32rem] h-[22rem] sm:h-[25rem] md:h-[29rem] 2xl:h-[34rem] xl:h-[32rem]">
+            <svg className="drop-shadow-[0_0_22px_rgba(0,0,0,0.45)] w-full h-full -rotate-90 transform">
                 <circle
                     cx="50%"
                     cy="50%"
@@ -48,52 +48,63 @@ export const TimerDial: React.FC<TimerDialProps> = memo(({ controller }) => {
                     style={{ stroke: 'var(--color-accent)' }}
                     strokeWidth="1.5"
                 />
+
                 <motion.circle
                     cx="50%"
                     cy="50%"
                     r="45%"
                     className="fill-none"
-                    style={{ stroke: 'var(--color-accent)', filter: 'drop-shadow(0 0 12px var(--color-accent))' }}
+                    style={{
+                        stroke: 'var(--color-accent)',
+                        filter: 'drop-shadow(0 0 10px var(--color-accent))',
+                    }}
                     strokeWidth="4"
                     strokeLinecap="round"
                     initial={{ pathLength: 1 }}
                     animate={{ pathLength: progress }}
-                    transition={{ duration: 0.5, ease: "linear" }}
+                    transition={{ duration: 0.5, ease: 'linear' }}
                 />
             </svg>
-            <div className="absolute flex flex-col items-center">
-                <div className="flex items-center font-black text-white md:text-[7rem] text-8xl italic leading-none tracking-tighter">
+
+            <div className="absolute flex flex-col items-center px-4">
+                <div className="flex items-center font-black text-[4.8rem] text-white sm:text-[5.9rem] md:text-[6.8rem] 2xl:text-[8.8rem] xl:text-[8rem] italic leading-none tracking-tighter">
                     {minutes}
                     <span
                         style={{ color: 'var(--color-accent)' }}
-                        className={`mx-1 ${timerState.isActive ? 'animate-pulse' : ''}`}
+                        className={`mx-0.5 sm:mx-1 ${timerState.isActive ? 'animate-pulse' : ''}`}
                     >
                         :
                     </span>
                     {seconds}
                 </div>
-                <div className="flex flex-col items-center gap-2 mt-4">
-                    <span className="font-black text-[12px] text-white/20 md:text-sm italic uppercase tracking-[0.6em]">
+
+                <div className="flex flex-col items-center gap-2 mt-3 sm:mt-4">
+                    <span className="font-black text-[10px] text-white/20 sm:text-[11px] md:text-xs xl:text-sm italic uppercase tracking-[0.45em] sm:tracking-[0.55em]">
                         {timerState.mode.replace('_', ' ')}
                     </span>
+
                     <div
-                        className="px-5 py-1.5 border rounded-full"
+                        className="px-4 sm:px-5 py-1.5 border rounded-full"
                         style={{
                             backgroundColor: 'rgba(var(--color-accent-rgb), 0.15)',
-                            borderColor: 'rgba(var(--color-accent-rgb), 0.3)'
+                            borderColor: 'rgba(var(--color-accent-rgb), 0.3)',
                         }}
                     >
                         <span
-                            className="font-black text-[11px] md:text-xs uppercase tracking-[0.3em]"
+                            className="font-black text-[10px] sm:text-[11px] md:text-xs uppercase tracking-[0.24em] sm:tracking-[0.3em]"
                             style={{ color: 'var(--color-accent)' }}
                         >
-                            ROUND {controller.currentRound} <span className="opacity-30 mx-1">/</span> {longBreakInterval}
+                            ROUND {controller.currentRound}
+                            <span className="opacity-30 mx-1">/</span>
+                            {longBreakInterval}
                         </span>
                     </div>
                 </div>
             </div>
+
             <div
-                className={`absolute inset-0 rounded-full blur-[100px] transition-opacity duration-1000 -z-10 ${timerState.isActive ? 'opacity-20' : 'opacity-0'}`}
+                className={`absolute inset-2 sm:inset-3 rounded-full blur-[70px] sm:blur-[85px] xl:blur-[100px] transition-opacity duration-1000 -z-10 ${timerState.isActive ? 'opacity-[0.18]' : 'opacity-0'
+                    }`}
                 style={{ backgroundColor: 'var(--color-accent)' }}
             />
         </div>

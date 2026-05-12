@@ -24,6 +24,10 @@ import {
   logoutFailure,
 } from './authSlice';
 import { fetchTagsRequest } from '@/features/tags/store/tagsSlice';
+import { fetchTasksRequest } from '@/features/tasks/store/tasksSlice';
+import { fetchSettingsRequest } from '@/features/settings/store/settingsSlice';
+import { clearTasks } from '@/features/tasks/store/tasksSlice';
+import { clearTags } from '@/features/tags/store/tagsSlice';
 import {
   LoginDto,
   RegisterDto,
@@ -39,11 +43,11 @@ function* handleLogin(
   try {
     const res: any = yield call(authService.login, action.payload as LoginDto);
 
-    const user = res.user || res.data?.user;
+    const fallbackUser = res.user || res.data?.user;
     const token = res.access_token || res.accessToken || res.token;
     const refresh = res.refresh_token || res.refreshToken;
 
-    if (!user || !token) {
+    if (!fallbackUser || !token) {
       throw new Error('The server response does not have the expected format.');
     }
 
@@ -53,15 +57,26 @@ function* handleLogin(
       localStorage.setItem('refreshToken', refresh);
     }
 
+    const profileRes: any = yield call(authService.getProfile);
+
+    const profileUser =
+      profileRes.user ||
+      profileRes.data?.user ||
+      profileRes ||
+      fallbackUser;
+
     yield put(
       loginSuccess({
-        user,
+        user: profileUser,
         accessToken: token,
         refreshToken: refresh,
       })
     );
 
     yield put(fetchTagsRequest());
+    yield put(fetchTagsRequest());
+    yield put(fetchTasksRequest());
+    yield put(fetchSettingsRequest());
 
     toast.success('Welcome back to Ataraxia', { id: TOAST_ID });
   } catch (error: any) {
@@ -226,19 +241,17 @@ function* handleLogout(): Generator<any, void, any> {
   try {
     yield call(authService.logout);
 
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('deviceId');
-
-    yield put(logoutSuccess());
-
-    toast.success('Sanctuary closed', { id: TOAST_ID });
+    toast.success('Session closed', { id: TOAST_ID });
   } catch (error: any) {
+    console.error('Logout failed:', error);
+  } finally {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('deviceId');
 
-    yield put(logoutFailure(error.message || 'Logout failed'));
+    yield put(clearTasks());
+    yield put(clearTags());
+    yield put(logoutSuccess());
   }
 }
 
