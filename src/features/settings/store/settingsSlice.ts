@@ -22,6 +22,20 @@ const initialUISettings: UISettings = {
     customShortcuts: {},
 };
 
+const getFallbackApiSettings = (current: SettingResponse | null): SettingResponse => ({
+    id: current?.id || '',
+    userId: current?.userId || '',
+    focusDuration: current?.focusDuration ?? 25,
+    shortBreakDuration: current?.shortBreakDuration ?? 5,
+    longBreakDuration: current?.longBreakDuration ?? 15,
+    longBreakInterval: current?.longBreakInterval ?? 4,
+    autoStartBreaks: current?.autoStartBreaks ?? false,
+    autoStartPomodoros: current?.autoStartPomodoros ?? false,
+    theme: current?.theme ?? 'dark',
+    soundEnabled: current?.soundEnabled ?? true,
+    platform: current?.platform ?? 'web',
+});
+
 const initialState: SettingsState = {
     api: null,
     items: [],
@@ -37,8 +51,8 @@ const settingsSlice = createSlice({
         updateUISettings: (state, action: PayloadAction<Partial<UISettings>>) => {
             state.ui = { ...state.ui, ...action.payload };
         },
-        hydrateUISettings: (state, action: PayloadAction<UISettings>) => {
-            state.ui = action.payload;
+        hydrateUISettings: (state, action: PayloadAction<Partial<UISettings>>) => {
+            state.ui = { ...state.ui, ...action.payload };
         },
 
         fetchSettingsRequest: (state) => {
@@ -80,9 +94,13 @@ const settingsSlice = createSlice({
             state.error = action.payload;
         },
 
-        updateSettingsRequest: (state, _action: PayloadAction<UpdateSettingDto>) => {
+        updateSettingsRequest: (state, action: PayloadAction<UpdateSettingDto>) => {
             state.status = 'loading';
             state.error = null;
+            state.api = {
+                ...getFallbackApiSettings(state.api),
+                ...action.payload,
+            };
         },
         updateSettingsSuccess: (state, action: PayloadAction<SettingResponse>) => {
             state.status = 'idle';
@@ -106,9 +124,13 @@ const settingsSlice = createSlice({
             state.error = action.payload;
         },
 
-        adminUpdateSettingsRequest: (state, _action: PayloadAction<{ id: string; data: UpdateSettingDto }>) => {
+        adminUpdateSettingsRequest: (state, action: PayloadAction<{ id: string; data: UpdateSettingDto }>) => {
             state.status = 'loading';
             state.error = null;
+            state.api = {
+                ...getFallbackApiSettings(state.api),
+                ...action.payload.data,
+            };
         },
         adminUpdateSettingsSuccess: (state, action: PayloadAction<SettingResponse>) => {
             state.status = 'idle';
