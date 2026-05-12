@@ -105,8 +105,10 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                                 <button
                                     type="button"
                                     onClick={pip.togglePip}
-                                    className="flex justify-center items-center hover:bg-white/10 rounded-full w-12 h-12 text-white/50 hover:text-white transition-all"
+                                    disabled={!pip.isPipSupported}
+                                    className="flex justify-center items-center hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent rounded-full w-12 h-12 text-white/50 hover:text-white transition-all"
                                     aria-label="Picture in Picture"
+                                    title={pip.isPipSupported ? 'Picture in Picture' : 'Picture in Picture is not supported in this browser'}
                                 >
                                     <ExternalLink size={20} />
                                 </button>
@@ -138,6 +140,12 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                                     <RotateCcw size={20} />
                                 </button>
                             </div>
+
+                            {pip.pipError && (
+                                <p className="max-w-md text-[10px] text-red-400/80 text-center uppercase tracking-widest">
+                                    {pip.pipError}
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -153,6 +161,12 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                 <PipPortal
                     pipWindow={pip.pipWindow}
                     currentRound={pomodoro.currentRound}
+                    longBreakInterval={uiSettings.longBreakInterval}
+                    mode={pomodoro.mode}
+                    timeLeft={pomodoro.timeLeft}
+                    initialTime={pomodoro.initialTime}
+                    isActive={pomodoro.isActive}
+                    accentColor={uiSettings.accentColor}
                 />
             )}
 
