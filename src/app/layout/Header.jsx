@@ -16,7 +16,7 @@ import { useInstallPrompt } from '@/shared/hooks/useInstallPrompt';
 
 const AuthModal = React.lazy(() => import('@/features/auth/components/AuthModal'));
 
-const Header = () => {
+const Header = ({ is24Hour = false, accentColor = '#e11d48' }) => {
   const dispatch = useDispatch();
 
   const { permission, requestPermission } = useNotifications();
@@ -27,8 +27,6 @@ const Header = () => {
 
   const authStatus = useSelector((state) => state.auth.status);
   const authUser = useSelector((state) => state.auth.user);
-  const accentColor = useSelector((state) => state.settings.accentColor);
-  const is24Hour = useSelector((state) => state.settings.is24Hour);
 
   const logout = () => {
     dispatch(logoutRequest());
@@ -39,7 +37,7 @@ const Header = () => {
   const profile = useMemo(() => {
     if (!authUser || authUser.isGuest) return null;
 
-    const isEmail = (val) => typeof val === 'string' && val.includes('@');
+    const isEmail = (value) => typeof value === 'string' && value.includes('@');
 
     if (authUser.username && !isEmail(authUser.username)) {
       return { text: authUser.username, showIcon: false };
@@ -53,7 +51,9 @@ const Header = () => {
   }, [authUser]);
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
 
     return () => clearInterval(timer);
   }, []);
@@ -96,6 +96,7 @@ const Header = () => {
             className="animate-pulse"
             strokeWidth={3}
           />
+
           <span className="font-black tabular-nums text-white/60 text-sm 2xl:text-2xl tracking-widest">
             {formatTime(currentTime)}
           </span>
@@ -105,11 +106,16 @@ const Header = () => {
       <div className="flex items-center gap-3 sm:gap-6">
         {isInstallable && (
           <button
+            type="button"
             onClick={handleInstallClick}
             className="flex justify-center items-center bg-accent/10 hover:bg-accent/20 shadow-glow px-0 sm:px-6 border border-accent/30 rounded-xl sm:rounded-2xl w-11 sm:w-auto h-11 sm:h-14 text-accent active:scale-95 transition-all"
-            style={{ color: accentColor, borderColor: `${accentColor}4d` }}
+            style={{
+              color: accentColor,
+              borderColor: `${accentColor}4d`,
+            }}
           >
             <Download size={20} className="animate-bounce" />
+
             <span className="hidden sm:block ml-3 font-black text-xs 2xl:text-xl uppercase">
               Install
             </span>
@@ -117,19 +123,19 @@ const Header = () => {
         )}
 
         <button
+          type="button"
           onClick={requestPermission}
-          className={`flex justify-center items-center border rounded-xl sm:rounded-2xl w-11 sm:w-14 h-11 sm:h-14 transition-all active:scale-95 ${
-            isGranted
+          className={`flex justify-center items-center border rounded-xl sm:rounded-2xl w-11 sm:w-14 h-11 sm:h-14 transition-all active:scale-95 ${isGranted
               ? 'bg-accent/10 border-accent/30 text-accent shadow-glow'
               : 'bg-white/5 border-white/10 text-white/20'
-          }`}
+            }`}
           style={
             isGranted
               ? {
-                  color: accentColor,
-                  borderColor: `${accentColor}4d`,
-                  backgroundColor: `${accentColor}1a`,
-                }
+                color: accentColor,
+                borderColor: `${accentColor}4d`,
+                backgroundColor: `${accentColor}1a`,
+              }
               : {}
           }
         >
@@ -171,6 +177,7 @@ const Header = () => {
             </div>
 
             <button
+              type="button"
               onClick={logout}
               className="flex justify-center items-center bg-black/40 hover:bg-red-500/10 border border-white/5 rounded-lg sm:rounded-xl w-8 sm:w-11 h-8 sm:h-11 text-white/20 hover:text-red-500 transition-all"
             >
@@ -179,6 +186,7 @@ const Header = () => {
           </div>
         ) : (
           <button
+            type="button"
             onClick={() => setIsAuthOpen(true)}
             className="flex justify-center items-center bg-white/5 hover:bg-accent/10 shadow-xl border border-white/10 rounded-xl sm:rounded-2xl w-11 sm:w-14 h-11 sm:h-14 text-white/20 hover:text-accent transition-all"
             style={{ '--hover-color': accentColor }}

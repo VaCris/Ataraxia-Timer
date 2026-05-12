@@ -41,7 +41,7 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
 
     return (
         <motion.div
-            className="relative flex bg-[#030303] w-screen min-h-screen lg:h-screen overflow-y-auto lg:overflow-hidden text-white"
+            className="relative flex bg-[#030303] w-screen lg:h-screen min-h-screen lg:overflow-hidden overflow-y-auto text-white"
             style={{
                 '--color-accent': uiSettings.accentColor,
             }}
@@ -69,10 +69,13 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                 customShortcuts={uiSettings.customShortcuts}
             />
 
-            <main className="z-10 relative flex flex-col flex-1 min-w-0 min-h-screen lg:h-screen">
-                <Header is24Hour={uiSettings.is24Hour} />
+            <main className="z-10 relative flex flex-col flex-1 min-w-0 lg:h-screen min-h-screen">
+                <Header
+                    is24Hour={uiSettings.is24Hour}
+                    accentColor={uiSettings.accentColor}
+                />
 
-                <section className="flex-1 gap-7 lg:gap-8 2xl:gap-12 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] 2xl:grid-cols-[minmax(0,1fr)_minmax(420px,480px)] px-5 sm:px-8 lg:px-10 xl:px-14 2xl:px-20 pb-24 lg:pb-8 min-h-0">
+                <section className="flex-1 gap-7 lg:gap-8 2xl:gap-12 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] 2xl:grid-cols-[minmax(0,1fr)_minmax(420px,480px)] px-5 sm:px-8 lg:px-10 2xl:px-20 xl:px-14 pb-24 lg:pb-8 min-h-0">
                     <div className="flex flex-col justify-center items-center py-6 lg:py-0 min-w-0 min-h-0">
                         <div className="flex flex-col items-center gap-6 lg:gap-7 xl:gap-8 w-full max-w-[52rem]">
                             <TimerDial controller={pomodoro} />
