@@ -1,101 +1,183 @@
-import { call, put, takeLatest } from 'redux-saga/effects'
-import { settingsService } from '@api/settings/settings.service'
-import { addToSyncQueue } from '@api/syncManager'
-import {
-  fetchSettingsRequest, fetchSettingsSuccess, fetchSettingsFailure,
-  fetchAllSettingsRequest, fetchAllSettingsSuccess, fetchAllSettingsFailure,
-  createSettingsRequest, createSettingsSuccess, createSettingsFailure,
-  updateSettingsRequest, updateSettingsSuccess, updateSettingsFailure,
-  deleteSettingsRequest, deleteSettingsSuccess, deleteSettingsFailure,
-  adminUpdateSettingsRequest, adminUpdateSettingsSuccess, adminUpdateSettingsFailure
-} from '../../features/settings/store/settingsSlice'
+import { call, put, takeLatest, all } from 'redux-saga/effects';
 
-const sanitizeSettings = (p: any) => ({
-  focusDuration: p.focusDuration,
-  shortBreakDuration: p.shortBreakDuration,
-  longBreakDuration: p.longBreakDuration,
-  autoStartBreaks: p.autoStartBreaks,
-  autoStartPomodoros: p.autoStartPomodoros,
-  longBreakInterval: p.longBreakInterval,
-  theme: ['light', 'dark', 'system'].includes(p.theme) ? p.theme : 'dark',
-  soundEnabled: p.soundEnabled,
-  platform: p.platform || 'web'
-})
+import { settingsService } from '@/features/settings/api/settings.api';
+import { addToSyncQueue } from '@/infrastructure/sync/syncManager';
+import {
+  fetchSettingsRequest,
+  fetchSettingsSuccess,
+  fetchSettingsFailure,
+  fetchAllSettingsRequest,
+  fetchAllSettingsSuccess,
+  fetchAllSettingsFailure,
+  createSettingsRequest,
+  createSettingsSuccess,
+  createSettingsFailure,
+  updateSettingsRequest,
+  updateSettingsSuccess,
+  updateSettingsFailure,
+  deleteSettingsRequest,
+  deleteSettingsSuccess,
+  deleteSettingsFailure,
+  adminUpdateSettingsRequest,
+  adminUpdateSettingsSuccess,
+  adminUpdateSettingsFailure,
+} from './settingsSlice';
+
+const sanitizeSettings = (payload: any) => ({
+  focusDuration: payload.focusDuration,
+  shortBreakDuration: payload.shortBreakDuration,
+  longBreakDuration: payload.longBreakDuration,
+  autoStartBreaks: payload.autoStartBreaks,
+  autoStartPomodoros: payload.autoStartPomodoros,
+  longBreakInterval: payload.longBreakInterval,
+  theme: ['light', 'dark', 'system'].includes(payload.theme)
+    ? payload.theme
+    : 'dark',
+  soundEnabled: payload.soundEnabled ?? true,
+  platform: payload.platform || 'web',
+});
 
 function* fetchSettingsSaga(): Generator<any, void, any> {
   try {
-    const r = yield call(settingsService.get)
-    yield put(fetchSettingsSuccess(r))
-  } catch (e: any) {
-    yield put(fetchSettingsFailure(e.response?.data?.message || 'Error fetching settings'))
+    const response = yield call(settingsService.get);
+    yield put(fetchSettingsSuccess(response));
+  } catch (error: any) {
+    yield put(
+      fetchSettingsFailure(
+        error.response?.data?.message || error.message || 'Error fetching settings'
+      )
+    );
   }
 }
 
 function* fetchAllSettingsSaga(): Generator<any, void, any> {
   try {
-    const r = yield call(settingsService.getAll)
-    yield put(fetchAllSettingsSuccess(r))
-  } catch (e: any) {
-    yield put(fetchAllSettingsFailure(e.response?.data?.message || 'Error fetching all settings'))
+    const response = yield call(settingsService.getAll);
+    yield put(fetchAllSettingsSuccess(response));
+  } catch (error: any) {
+    yield put(
+      fetchAllSettingsFailure(
+        error.response?.data?.message ||
+          error.message ||
+          'Error fetching all settings'
+      )
+    );
   }
 }
 
-function* createSettingsSaga(a: ReturnType<typeof createSettingsRequest>): Generator<any, void, any> {
+function* createSettingsSaga(
+  action: ReturnType<typeof createSettingsRequest>
+): Generator<any, void, any> {
   try {
-    const clean = sanitizeSettings(a.payload)
-    const r = yield call(settingsService.create, clean)
-    yield put(createSettingsSuccess(r))
-  } catch (e: any) {
-    const isNetworkError = e.message === 'Network Error' || e.code === 'ERR_NETWORK'
+    const payload = sanitizeSettings(action.payload);
+    const response = yield call(settingsService.create, payload);
+
+    yield put(createSettingsSuccess(response));
+  } catch (error: any) {
+    const isNetworkError =
+      error.message === 'Network Error' || error.code === 'ERR_NETWORK';
+
     if (isNetworkError) {
-      addToSyncQueue({ method: 'POST', url: '/settings', data: a.payload })
-      yield put(createSettingsFailure('Offline Mode'))
-    } else {
-      yield put(createSettingsFailure(e.response?.data?.message || 'Error creating settings'))
+      addToSyncQueue({
+        method: 'POST',
+        url: '/settings',
+        data: action.payload,
+      });
+
+      yield put(createSettingsFailure('Offline Mode'));
+      return;
     }
+
+    yield put(
+      createSettingsFailure(
+        error.response?.data?.message ||
+          error.message ||
+          'Error creating settings'
+      )
+    );
   }
 }
 
-function* updateSettingsSaga(a: ReturnType<typeof updateSettingsRequest>): Generator<any, void, any> {
+function* updateSettingsSaga(
+  action: ReturnType<typeof updateSettingsRequest>
+): Generator<any, void, any> {
   try {
-    const clean = sanitizeSettings(a.payload)
-    const r = yield call(settingsService.update, clean)
-    yield put(updateSettingsSuccess(r))
-  } catch (e: any) {
-    const isNetworkError = e.message === 'Network Error' || e.code === 'ERR_NETWORK'
+    const payload = sanitizeSettings(action.payload);
+    const response = yield call(settingsService.update, payload);
+
+    yield put(updateSettingsSuccess(response));
+  } catch (error: any) {
+    const isNetworkError =
+      error.message === 'Network Error' || error.code === 'ERR_NETWORK';
+
     if (isNetworkError) {
-      addToSyncQueue({ method: 'PATCH', url: '/settings', data: a.payload })
-      yield put(updateSettingsFailure('Offline Mode'))
-    } else {
-      yield put(updateSettingsFailure(e.response?.data?.message || 'Error updating settings'))
+      addToSyncQueue({
+        method: 'PATCH',
+        url: '/settings',
+        data: action.payload,
+      });
+
+      yield put(updateSettingsFailure('Offline Mode'));
+      return;
     }
+
+    yield put(
+      updateSettingsFailure(
+        error.response?.data?.message ||
+          error.message ||
+          'Error updating settings'
+      )
+    );
   }
 }
 
-function* deleteSettingsSaga(a: ReturnType<typeof deleteSettingsRequest>): Generator<any, void, any> {
+function* deleteSettingsSaga(
+  action: ReturnType<typeof deleteSettingsRequest>
+): Generator<any, void, any> {
   try {
-    yield call(settingsService.delete, a.payload)
-    yield put(deleteSettingsSuccess())
-  } catch (e: any) {
-    yield put(deleteSettingsFailure(e.response?.data?.message || 'Error deleting settings'))
+    yield call(settingsService.delete, action.payload);
+    yield put(deleteSettingsSuccess());
+  } catch (error: any) {
+    yield put(
+      deleteSettingsFailure(
+        error.response?.data?.message ||
+          error.message ||
+          'Error deleting settings'
+      )
+    );
   }
 }
 
-function* adminUpdateSettingsSaga(a: ReturnType<typeof adminUpdateSettingsRequest>): Generator<any, void, any> {
+function* adminUpdateSettingsSaga(
+  action: ReturnType<typeof adminUpdateSettingsRequest>
+): Generator<any, void, any> {
   try {
-    const clean = sanitizeSettings(a.payload.data)
-    const r = yield call(settingsService.adminUpdate, a.payload.id, clean)
-    yield put(adminUpdateSettingsSuccess(r))
-  } catch (e: any) {
-    yield put(adminUpdateSettingsFailure(e.response?.data?.message || 'Error updating settings (admin)'))
+    const payload = sanitizeSettings(action.payload.data);
+    const response = yield call(
+      settingsService.adminUpdate,
+      action.payload.id,
+      payload
+    );
+
+    yield put(adminUpdateSettingsSuccess(response));
+  } catch (error: any) {
+    yield put(
+      adminUpdateSettingsFailure(
+        error.response?.data?.message ||
+          error.message ||
+          'Error updating settings'
+      )
+    );
   }
 }
 
 export default function* settingsSaga(): Generator {
-  yield takeLatest(fetchSettingsRequest.type, fetchSettingsSaga)
-  yield takeLatest(fetchAllSettingsRequest.type, fetchAllSettingsSaga)
-  yield takeLatest(createSettingsRequest.type, createSettingsSaga)
-  yield takeLatest(updateSettingsRequest.type, updateSettingsSaga)
-  yield takeLatest(deleteSettingsRequest.type, deleteSettingsSaga)
-  yield takeLatest(adminUpdateSettingsRequest.type, adminUpdateSettingsSaga)
+  yield all([
+    takeLatest(fetchSettingsRequest.type, fetchSettingsSaga),
+    takeLatest(fetchAllSettingsRequest.type, fetchAllSettingsSaga),
+    takeLatest(createSettingsRequest.type, createSettingsSaga),
+    takeLatest(updateSettingsRequest.type, updateSettingsSaga),
+    takeLatest(deleteSettingsRequest.type, deleteSettingsSaga),
+    takeLatest(adminUpdateSettingsRequest.type, adminUpdateSettingsSaga),
+  ]);
 }

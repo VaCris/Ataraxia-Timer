@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { resetPasswordRequest } from '@/features/auth/store/authSlice';
 import { Lock, Eye, EyeOff, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -8,12 +9,16 @@ const ResetPassword = () => {
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
     const navigate = useNavigate();
-    const { resetPassword } = useAuth();
+    const dispatch = useDispatch();
+
+    const authStatus = useSelector((state) => state.auth.status);
+    const authError = useSelector((state) => state.auth.error);
 
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+
+    const isLoading = authStatus === 'loading';
 
     if (!token) {
         navigate('/');
@@ -22,22 +27,33 @@ const ResetPassword = () => {
 
     const passwordsMatch = password.length > 0 && password === confirmPassword;
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (password.length < 6) return toast.error('Password must be at least 6 characters');
-        if (!passwordsMatch) return toast.error('Passwords do not match');
-
-        setIsLoading(true);
-        const result = await resetPassword(token, password);
-        setIsLoading(false);
-
-        if (result.success) {
-            toast.success('Password updated successfully! You can now log in.');
-            navigate('/');
-        } else {
-            toast.error(result.error);
+        if (password.length < 6) {
+            toast.error('Password must be at least 6 characters');
+            return;
         }
+
+        if (!passwordsMatch) {
+            toast.error('Passwords do not match');
+            return;
+        }
+
+        dispatch(
+            resetPasswordRequest({
+                token,
+                newPassword: password,
+            })
+        );
+
+        if (authError) {
+            toast.error(authError);
+            return;
+        }
+
+        toast.success('Password update request sent');
+        navigate('/');
     };
 
     return (
@@ -63,7 +79,11 @@ const ResetPassword = () => {
                             className="bg-white/5 pr-11 pl-11 border border-white/5 focus:border-accent/50 rounded-xl outline-none w-full h-12 text-white text-sm transition-colors"
                             required
                         />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="top-1/2 right-4 absolute text-white/20 hover:text-white -translate-y-1/2">
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="top-1/2 right-4 absolute text-white/20 hover:text-white -translate-y-1/2"
+                        >
                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                     </div>
@@ -80,6 +100,7 @@ const ResetPassword = () => {
                                 required
                             />
                         </div>
+
                         {confirmPassword.length > 0 && (
                             <div className={`flex items-center gap-2 ml-2 transition-all ${passwordsMatch ? 'text-green-400' : 'text-red-400/50'}`}>
                                 {passwordsMatch ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}

@@ -1,6 +1,6 @@
 import api from '@api/client';
-import { CreateTimerDto, TimerResponse, UpdateTimerDto } from '@/api/timers/dto/timer.dto';
-import { addToSyncQueue } from '@/api/syncManager';
+import { CreateTimerDto, TimerResponse, UpdateTimerDto } from '@/features/pomodoro/types/timer.dto';
+import { addToSyncQueue } from '@/infrastructure/sync/syncManager';
 
 export const timersService = {
     create: async (data: CreateTimerDto): Promise<TimerResponse> => {

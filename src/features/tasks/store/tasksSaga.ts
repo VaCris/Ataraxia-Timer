@@ -1,5 +1,5 @@
 import { call, put, takeLatest, all } from 'redux-saga/effects';
-import { tasksService } from '@api/tasks/tasks.service';
+import { tasksService } from '@/features/tasks/api/tasks.api';
 import {
   fetchTasksRequest, fetchTasksSuccess, fetchTasksFailure,
   createTaskRequest, createTaskSuccess, createTaskFailure,

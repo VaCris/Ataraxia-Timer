@@ -4,8 +4,8 @@ import path from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 export default defineConfig({
   plugins: [
@@ -18,7 +18,13 @@ export default defineConfig({
         type: 'module',
         navigateFallback: 'index.html'
       },
-      includeAssets: ['vite.svg', 'pwa-192x192.png', 'pwa-512x512.png', 'screenshot-desktop.png', 'screenshot-mobile.png'],
+      includeAssets: [
+        'vite.svg',
+        'pwa-192x192.png',
+        'pwa-512x512.png',
+        'screenshot-desktop.png',
+        'screenshot-mobile.png'
+      ],
       manifest: {
         id: '/',
         name: 'Ataraxia Timer',
@@ -28,8 +34,18 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         icons: [
-          { "src": "pwa-192x192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
-          { "src": "pwa-512x512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+          {
+            src: 'pwa-192x192.png',
+            type: 'image/png',
+            sizes: '192x192',
+            purpose: 'any'
+          },
+          {
+            src: 'pwa-512x512.png',
+            type: 'image/png',
+            sizes: '512x512',
+            purpose: 'maskable'
+          }
         ],
         screenshots: [
           {
@@ -60,7 +76,7 @@ export default defineConfig({
               cacheName: 'ataraxia-api-cache',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 7,
+                maxAgeSeconds: 60 * 60 * 24 * 7
               },
               networkTimeoutSeconds: 5,
               cacheableResponse: {
@@ -73,8 +89,13 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: 'google-fonts-cache',
-              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] }
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
             }
           },
           {
@@ -82,40 +103,52 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: 'gstatic-fonts-cache',
-              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] }
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
             }
           }
         ]
       }
     })
   ],
+
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'framer-motion'],
-          redux: ['@reduxjs/toolkit', 'react-redux'],
+          redux: ['@reduxjs/toolkit', 'react-redux']
         }
       }
     }
   },
+
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@components': path.resolve(__dirname, './src/components'),
-      '@context': path.resolve(__dirname, './src/context'),
-      '@hooks': path.resolve(__dirname, './src/hooks'),
-      '@utils': path.resolve(__dirname, './src/utils'),
-      '@assets': path.resolve(__dirname, './src/assets'),
-      '@styles': path.resolve(__dirname, './src/styles'),
+
+      '@app': path.resolve(__dirname, './src/app'),
+      '@components': path.resolve(__dirname, './src/app/components'),
+      '@pages': path.resolve(__dirname, './src/app/pages'),
+
+      '@features': path.resolve(__dirname, './src/features'),
+      '@shared': path.resolve(__dirname, './src/shared'),
+      '@infrastructure': path.resolve(__dirname, './src/infrastructure'),
+
       '@api': path.resolve(__dirname, './src/infrastructure/api'),
+      '@sync': path.resolve(__dirname, './src/infrastructure/sync'),
       '@store': path.resolve(__dirname, './src/store'),
-      '@pages': path.resolve(__dirname, './src/pages'),
-      '@db': path.resolve(__dirname, './src/db'),
-      '@core': path.resolve(__dirname, './src/core'),
-    },
+
+      '@assets': path.resolve(__dirname, './src/assets'),
+      '@utils': path.resolve(__dirname, './src/shared/utils')
+    }
   },
+
   server: {
     host: '127.0.0.1',
     port: 5173,

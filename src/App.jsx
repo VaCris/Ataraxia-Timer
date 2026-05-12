@@ -2,21 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
-import { AuthProvider } from '@/context/AuthContext';
-import { PomodoroProvider } from '@context/PomodoroContext';
-import { MusicProvider } from '@context/MusicContext';
-import { AudioProvider } from '@context/AudioContext';
-import ThemeProvider from '@context/ThemeContext';
-import { processSyncQueue } from '@api/syncManager';
+import { processSyncQueue } from '@/infrastructure/sync/syncManager';
 
 import Dashboard from '@/app/layout/Dashboard';
 import ResetPassword from '@/features/auth/components/ResetPassword';
-import UpdatePrompt from '@components/layout/UpdatePrompt';
-import InstallPrompt from '@components/layout/InstallPrompt';
-import CookieConsent from '@components/layout/CookieConsent';
-import Maintenance from '@pages/Maintenance';
-import ComingSoon from '@pages/ComingSoon';
-import Restricted from '@pages/Restricted';
+import UpdatePrompt from '@/app/components/UpdatePrompt';
+import InstallPrompt from '@/app/components/InstallPrompt';
+import CookieConsent from '@/app/components/CookieConsent';
+import Maintenance from '@/app/pages/Maintenance';
+import ComingSoon from '@/app/pages/ComingSoon';
+import Restricted from '@/app/pages/Restricted';
 
 function App() {
   const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
@@ -28,8 +23,11 @@ function App() {
   useEffect(() => {
     if (!isMaintenance && !isComingSoon && !isRestricted) {
       if (navigator.onLine) processSyncQueue();
+
       const handleOnline = () => processSyncQueue();
+
       window.addEventListener('online', handleOnline);
+
       return () => window.removeEventListener('online', handleOnline);
     }
   }, [isMaintenance, isComingSoon, isRestricted]);
@@ -39,8 +37,6 @@ function App() {
   if (isComingSoon) return <ComingSoon />;
 
   const renderHomeContent = () => {
-    if (isComingSoon) return <ComingSoon />;
-
     if (['games', 'stats', 'achievements'].includes(activeView)) {
       return (
         <ComingSoon
@@ -60,26 +56,18 @@ function App() {
   };
 
   return (
-    <AuthProvider>
+    <>
       <Toaster position="top-right" />
       <UpdatePrompt />
       <InstallPrompt />
       <CookieConsent />
 
-      <AudioProvider>
-        <PomodoroProvider>
-          <MusicProvider>
-            <ThemeProvider>
-              <Routes>
-                <Route path="/" element={renderHomeContent()} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="*" element={<Navigate to="/" />} />
-              </Routes>
-            </ThemeProvider>
-          </MusicProvider>
-        </PomodoroProvider>
-      </AudioProvider>
-    </AuthProvider>
+      <Routes>
+        <Route path="/" element={renderHomeContent()} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </>
   );
 }
 
