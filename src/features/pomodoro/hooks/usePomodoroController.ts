@@ -42,6 +42,24 @@ export const usePomodoroController = () => {
         [settings]
     )
 
+    useEffect(() => {
+        if (timerState.isActive) return
+
+        const duration = getDurationForMode(timerState.mode)
+        const seconds = duration * 60
+
+        if (timerState.initialTime !== seconds || timerState.timeLeft !== seconds) {
+            dispatch(updateDurations({ mode: timerState.mode, duration }))
+        }
+    }, [
+        dispatch,
+        getDurationForMode,
+        timerState.initialTime,
+        timerState.isActive,
+        timerState.mode,
+        timerState.timeLeft,
+    ])
+
     const handleTimerComplete = useCallback(() => {
         let nextMode: Mode = 'FOCUS'
         let nextDuration = settings.focusDuration
