@@ -2,11 +2,11 @@
   "version": "2.0.0",
   "date": "2026-05-12",
   "changelog": [
+    "organize redux store",
     "clean lint errors",
     "Refactor API imports and enhance task management: update paths for tasks and timers services, implement root saga for Redux, and improve MusicWidget component structure",
     "Add new features and refactor existing code: implement Redux store structure, update API paths, and enhance type definitions",
-    "Enhance Sidebar and SupportModal components: add toast notifications for under construction features and update GitHub link",
-    "Enhance PipPortal component: pass currentRound prop and remove commented code; update Vite configuration for auto-update and improve caching strategy"
+    "Enhance Sidebar and SupportModal components: add toast notifications for under construction features and update GitHub link"
   ],
   "targetUrl": "/"
 }
