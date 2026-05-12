@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -21,12 +21,6 @@ import {
   updateUISettings,
   updateSettingsRequest,
 } from '@/features/settings/store/settingsSlice';
-import { setInitialTime } from '@/features/pomodoro/store/pomodoroSlice';
-import {
-  applyAccentColor,
-  applyBgImage,
-  applyBlur,
-} from '@/shared/utils/theme';
 
 const defaultShortcuts = {
   settings: 's',
@@ -37,13 +31,26 @@ const defaultShortcuts = {
   achievements: 'a',
 };
 
+const persistUISetting = (key, value) => {
+  localStorage.setItem(
+    `ataraxia_${key}`,
+    typeof value === 'object' ? JSON.stringify(value) : String(value)
+  );
+};
+
+const clampNumber = (value, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
 const SettingsModal = ({ isOpen = true, onClose }) => {
   const dispatch = useDispatch();
 
   const settings = useSelector((state) => state.settings);
+  const currentMode = useSelector((state) => state.timer.mode);
+
   const uiSettings = settings.ui || {};
   const apiSettings = settings.api || {};
-  const currentMode = useSelector((state) => state.timer.mode);
 
   const {
     focusDuration = 25,
@@ -52,7 +59,6 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
     autoStartBreaks = false,
     autoStartPomodoros = false,
     longBreakInterval = 4,
-    is24Hour = true,
     theme = 'dark',
     soundEnabled = true,
     platform = 'web',
@@ -63,6 +69,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
     bgImage = '',
     blurIntensity = 0,
     volume = 50,
+    is24Hour = false,
     customShortcuts = defaultShortcuts,
   } = uiSettings;
 
@@ -72,80 +79,89 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
     LONG_BREAK: longBreakDuration,
   });
 
-  const [localInterval, setLocalInterval] = useState(longBreakInterval);
-  const [localVolume, setLocalVolume] = useState(volume);
+  const [localApiSettings, setLocalApiSettings] = useState({
+    autoStartBreaks,
+    autoStartPomodoros,
+    longBreakInterval,
+    theme,
+    soundEnabled,
+    platform,
+  });
+
+  const [localUISettings, setLocalUISettings] = useState({
+    accentColor,
+    bgImage,
+    blurIntensity,
+    volume,
+    is24Hour,
+    customShortcuts,
+  });
+
   const [activeShortcutKey, setActiveShortcutKey] = useState(null);
 
   const isSaving = settings.status === 'loading';
+  const localAccentColor = localUISettings.accentColor;
 
-  const handleUISettingChange = (key, value) => {
-    const nextUISettings = {
-      ...uiSettings,
+  const handleUISettingChange = useCallback((key, value) => {
+    setLocalUISettings((prev) => ({
+      ...prev,
       [key]: value,
-    };
+    }));
+  }, []);
 
-    localStorage.setItem(
-      `ataraxia_${key}`,
-      typeof value === 'object' ? JSON.stringify(value) : String(value)
-    );
+  const handleTimerChange = useCallback((mode, value) => {
+    setLocalTimers((prev) => ({
+      ...prev,
+      [mode]: clampNumber(value, prev[mode]),
+    }));
+  }, []);
 
-    if (key === 'accentColor') applyAccentColor(value);
-    if (key === 'bgImage') applyBgImage(value);
-    if (key === 'blurIntensity') applyBlur(value);
+  const handleApiSettingChange = useCallback((key, value) => {
+    setLocalApiSettings((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  }, []);
 
-    dispatch(updateUISettings(nextUISettings));
-  };
-
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     const payload = {
       focusDuration: localTimers.FOCUS,
       shortBreakDuration: localTimers.SHORT_BREAK,
       longBreakDuration: localTimers.LONG_BREAK,
-      autoStartBreaks,
-      autoStartPomodoros,
-      longBreakInterval: localInterval,
-      is24Hour,
-      theme,
-      soundEnabled,
-      platform,
+      autoStartBreaks: localApiSettings.autoStartBreaks,
+      autoStartPomodoros: localApiSettings.autoStartPomodoros,
+      longBreakInterval: localApiSettings.longBreakInterval,
+      theme: localApiSettings.theme,
+      soundEnabled: localApiSettings.soundEnabled,
+      platform: localApiSettings.platform,
+    };
+
+    const durationByMode = {
+      FOCUS: localTimers.FOCUS,
+      SHORT_BREAK: localTimers.SHORT_BREAK,
+      LONG_BREAK: localTimers.LONG_BREAK,
     };
 
     dispatch(updateSettingsRequest(payload));
+    dispatch(updateDurations({ mode: currentMode, duration: durationByMode[currentMode] }));
 
-    if (currentMode === 'FOCUS') {
-      dispatch(updateDurations({ mode: 'FOCUS', duration: localTimers.FOCUS }));
-      dispatch(setInitialTime(localTimers.FOCUS * 60));
-    }
+    Object.entries(localUISettings).forEach(([key, value]) => {
+      persistUISetting(key, value);
+    });
 
-    if (currentMode === 'SHORT_BREAK') {
-      dispatch(updateDurations({ mode: 'SHORT_BREAK', duration: localTimers.SHORT_BREAK }));
-      dispatch(setInitialTime(localTimers.SHORT_BREAK * 60));
-    }
-
-    if (currentMode === 'LONG_BREAK') {
-      dispatch(updateDurations({ mode: 'LONG_BREAK', duration: localTimers.LONG_BREAK }));
-      dispatch(setInitialTime(localTimers.LONG_BREAK * 60));
-    }
-
-    dispatch(
-      updateUISettings({
-        ...uiSettings,
-        volume: localVolume,
-      })
-    );
-
+    dispatch(updateUISettings(localUISettings));
     dispatch(showToast('Settings saved'));
 
     if (onClose) onClose();
-  };
+  }, [currentMode, dispatch, localApiSettings, localTimers, localUISettings, onClose]);
 
-  const playTestAlarm = () => {
+  const playTestAlarm = useCallback(() => {
     const audio = new Audio('/sounds/alarm.mp3');
-    audio.volume = Math.max(0, Math.min(1, Number(localVolume || 50) / 100));
-    audio.play().catch(() => { });
-  };
+    audio.volume = Math.max(0, Math.min(1, Number(localUISettings.volume || 50) / 100));
+    audio.play().catch(() => {});
+  }, [localUISettings.volume]);
 
-  const recordShortcut = (action) => {
+  const recordShortcut = useCallback((action) => {
     setActiveShortcutKey(action);
 
     const listener = (event) => {
@@ -155,7 +171,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
 
       if (key !== 'escape' && key.length === 1) {
         handleUISettingChange('customShortcuts', {
-          ...customShortcuts,
+          ...(localUISettings.customShortcuts || defaultShortcuts),
           [action]: key,
         });
       }
@@ -165,7 +181,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
     };
 
     window.addEventListener('keydown', listener);
-  };
+  }, [handleUISettingChange, localUISettings.customShortcuts]);
 
   if (!isOpen) return null;
 
@@ -176,18 +192,19 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+        className="absolute inset-0 bg-black/80 backdrop-blur-md"
       />
 
       <motion.div
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        initial={{ scale: 0.96, opacity: 0, y: 12 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        exit={{ scale: 0.96, opacity: 0, y: 12 }}
+        transition={{ duration: 0.18 }}
         className="relative flex flex-col shadow-2xl p-6 md:p-8 border border-white/10 rounded-[3rem] w-full max-w-lg max-h-[90vh] overflow-hidden glass"
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="flex items-center gap-3 font-black text-2xl tracking-tighter">
-            <span style={{ color: accentColor }}>/</span>
+            <span style={{ color: localAccentColor }}>/</span>
             CONFIGURATION
           </h2>
 
@@ -211,25 +228,19 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
               <TimeInput
                 label="Focus"
                 value={localTimers.FOCUS}
-                onChange={(value) =>
-                  setLocalTimers({ ...localTimers, FOCUS: value })
-                }
+                onChange={(value) => handleTimerChange('FOCUS', value)}
               />
 
               <TimeInput
                 label="Short"
                 value={localTimers.SHORT_BREAK}
-                onChange={(value) =>
-                  setLocalTimers({ ...localTimers, SHORT_BREAK: value })
-                }
+                onChange={(value) => handleTimerChange('SHORT_BREAK', value)}
               />
 
               <TimeInput
                 label="Long"
                 value={localTimers.LONG_BREAK}
-                onChange={(value) =>
-                  setLocalTimers({ ...localTimers, LONG_BREAK: value })
-                }
+                onChange={(value) => handleTimerChange('LONG_BREAK', value)}
               />
             </div>
           </section>
@@ -243,9 +254,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
 
               <button
                 type="button"
-                onClick={() =>
-                  handleUISettingChange('customShortcuts', defaultShortcuts)
-                }
+                onClick={() => handleUISettingChange('customShortcuts', defaultShortcuts)}
                 className="flex items-center gap-1 text-[10px] text-white/30 hover:text-white uppercase tracking-widest"
               >
                 <RotateCcw size={12} />
@@ -254,7 +263,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
             </div>
 
             <div className="gap-3 grid grid-cols-2 bg-white/5 p-6 rounded-[2rem]">
-              {Object.entries(customShortcuts || defaultShortcuts).map(
+              {Object.entries(localUISettings.customShortcuts || defaultShortcuts).map(
                 ([action, key]) => (
                   <div
                     key={action}
@@ -268,14 +277,10 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                       type="button"
                       onClick={() => recordShortcut(action)}
                       className={`px-3 py-1 rounded text-xs font-mono transition-colors ${activeShortcutKey === action
-                          ? 'bg-accent text-white'
-                          : 'bg-white/10 text-white/80'
-                        }`}
-                      style={
-                        activeShortcutKey === action
-                          ? { backgroundColor: accentColor }
-                          : {}
-                      }
+                        ? 'bg-accent text-white'
+                        : 'bg-white/10 text-white/80'
+                      }`}
+                      style={activeShortcutKey === action ? { backgroundColor: localAccentColor } : {}}
                     >
                       {activeShortcutKey === action ? '...' : key}
                     </button>
@@ -301,9 +306,9 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                   type="number"
                   min="1"
                   max="10"
-                  value={localInterval}
+                  value={localApiSettings.longBreakInterval}
                   onChange={(event) =>
-                    setLocalInterval(Number(event.target.value))
+                    handleApiSettingChange('longBreakInterval', clampNumber(event.target.value, 4))
                   }
                   className="bg-black/40 px-3 py-1.5 border border-white/10 focus:border-white/30 rounded-lg outline-none w-16 text-white text-xs text-center"
                 />
@@ -315,16 +320,11 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                 </span>
 
                 <Switch
-                  checked={autoStartBreaks}
+                  checked={localApiSettings.autoStartBreaks}
                   onChange={() =>
-                    dispatch(
-                      updateSettingsRequest({
-                        ...apiSettings,
-                        autoStartBreaks: !autoStartBreaks,
-                      })
-                    )
+                    handleApiSettingChange('autoStartBreaks', !localApiSettings.autoStartBreaks)
                   }
-                  accent={accentColor}
+                  accent={localAccentColor}
                 />
               </div>
 
@@ -334,16 +334,11 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                 </span>
 
                 <Switch
-                  checked={autoStartPomodoros}
+                  checked={localApiSettings.autoStartPomodoros}
                   onChange={() =>
-                    dispatch(
-                      updateSettingsRequest({
-                        ...apiSettings,
-                        autoStartPomodoros: !autoStartPomodoros,
-                      })
-                    )
+                    handleApiSettingChange('autoStartPomodoros', !localApiSettings.autoStartPomodoros)
                   }
-                  accent={accentColor}
+                  accent={localAccentColor}
                 />
               </div>
 
@@ -353,16 +348,11 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                 </span>
 
                 <Switch
-                  checked={is24Hour}
+                  checked={localUISettings.is24Hour}
                   onChange={() =>
-                    dispatch(
-                      updateSettingsRequest({
-                        ...apiSettings,
-                        is24Hour: !is24Hour,
-                      })
-                    )
+                    handleUISettingChange('is24Hour', !localUISettings.is24Hour)
                   }
-                  accent={accentColor}
+                  accent={localAccentColor}
                 />
               </div>
             </div>
@@ -378,7 +368,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
               <div className="space-y-3">
                 <div className="flex justify-between font-bold text-[10px] text-white/30 uppercase">
                   <span>Master Volume</span>
-                  <span>{Math.round(localVolume)}%</span>
+                  <span>{Math.round(localUISettings.volume)}%</span>
                 </div>
 
                 <input
@@ -386,12 +376,12 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                   min="0"
                   max="100"
                   step="1"
-                  value={localVolume}
+                  value={localUISettings.volume}
                   onChange={(event) =>
-                    setLocalVolume(Number(event.target.value))
+                    handleUISettingChange('volume', clampNumber(event.target.value, 50))
                   }
                   className="w-full accent-accent"
-                  style={{ accentColor }}
+                  style={{ accentColor: localAccentColor }}
                 />
               </div>
 
@@ -421,7 +411,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                 <div className="relative border-2 border-white/20 rounded-full w-8 h-8 overflow-hidden">
                   <input
                     type="color"
-                    value={accentColor}
+                    value={localAccentColor}
                     onChange={(event) =>
                       handleUISettingChange('accentColor', event.target.value)
                     }
@@ -433,29 +423,26 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
               <div className="space-y-3">
                 <div className="flex justify-between font-bold text-[10px] text-white/30 uppercase">
                   <span>Glass Blur Intensity</span>
-                  <span>{blurIntensity}px</span>
+                  <span>{localUISettings.blurIntensity}px</span>
                 </div>
 
                 <input
                   type="range"
                   min="0"
                   max="40"
-                  value={blurIntensity}
+                  value={localUISettings.blurIntensity}
                   onChange={(event) =>
-                    handleUISettingChange(
-                      'blurIntensity',
-                      Number(event.target.value)
-                    )
+                    handleUISettingChange('blurIntensity', clampNumber(event.target.value, 0))
                   }
                   className="w-full"
-                  style={{ accentColor }}
+                  style={{ accentColor: localAccentColor }}
                 />
               </div>
 
               <div className="space-y-4">
                 <input
                   type="text"
-                  value={bgImage || ''}
+                  value={localUISettings.bgImage || ''}
                   onChange={(event) =>
                     handleUISettingChange('bgImage', event.target.value)
                   }
@@ -487,7 +474,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                     />
                   </label>
 
-                  {bgImage && (
+                  {localUISettings.bgImage && (
                     <button
                       type="button"
                       onClick={() => handleUISettingChange('bgImage', '')}
@@ -507,7 +494,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            style={{ backgroundColor: accentColor }}
+            style={{ backgroundColor: localAccentColor }}
             className="flex justify-center items-center gap-2 disabled:opacity-50 shadow-lg py-5 rounded-3xl w-full font-black text-white text-xs uppercase tracking-[0.2em] transition-all"
           >
             {isSaving ? (
@@ -525,7 +512,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
   );
 };
 
-const TimeInput = ({ label, value, onChange }) => (
+const TimeInput = memo(({ label, value, onChange }) => (
   <div className="flex flex-col gap-2">
     <input
       type="number"
@@ -539,9 +526,11 @@ const TimeInput = ({ label, value, onChange }) => (
       {label}
     </label>
   </div>
-);
+));
 
-const Switch = ({ checked, onChange, accent }) => (
+TimeInput.displayName = 'TimeInput';
+
+const Switch = memo(({ checked, onChange, accent }) => (
   <button
     type="button"
     onClick={onChange}
@@ -552,9 +541,12 @@ const Switch = ({ checked, onChange, accent }) => (
   >
     <motion.div
       animate={{ x: checked ? 20 : 4 }}
+      transition={{ duration: 0.15 }}
       className="top-1 absolute bg-white shadow-sm rounded-full w-4 h-4"
     />
   </button>
-);
+));
+
+Switch.displayName = 'Switch';
 
 export default SettingsModal;
