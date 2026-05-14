@@ -8,7 +8,6 @@ import { checkAuthRequest } from '@/features/auth/store/authSlice';
 
 import Dashboard from '@/app/layout/Dashboard';
 import ResetPassword from '@/features/auth/components/ResetPassword';
-import UpdatePrompt from '@/app/components/UpdatePrompt';
 import InstallPrompt from '@/app/components/InstallPrompt';
 import CookieConsent from '@/app/components/CookieConsent';
 import Maintenance from '@/app/pages/Maintenance';
@@ -70,7 +69,6 @@ function App() {
   return (
     <>
       <Toaster position="top-right" />
-      <UpdatePrompt />
       <InstallPrompt />
       <CookieConsent />
 
