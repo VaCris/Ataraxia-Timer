@@ -8,6 +8,7 @@ import {
   User,
   ShieldCheck,
   Loader2,
+  Menu,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutRequest } from '@/features/auth/store/authSlice';
@@ -16,7 +17,7 @@ import { useInstallPrompt } from '@/shared/hooks/useInstallPrompt';
 
 const AuthModal = React.lazy(() => import('@/features/auth/components/AuthModal'));
 
-const Header = ({ is24Hour = false, accentColor = '#e11d48' }) => {
+const Header = ({ is24Hour = false, accentColor = '#e11d48', onOpenSidebar }) => {
   const dispatch = useDispatch();
 
   const { permission, requestPermission } = useNotifications();
@@ -67,16 +68,25 @@ const Header = ({ is24Hour = false, accentColor = '#e11d48' }) => {
   };
 
   return (
-    <header className="z-50 flex justify-between items-center px-6 sm:px-12 2xl:px-20 py-6 sm:py-10 w-full">
-      <div className="flex items-center gap-6 sm:gap-12">
-        <div className="flex flex-col">
-          <div className="flex items-baseline gap-2 sm:gap-4">
-            <h1 className="font-black text-white text-xl sm:text-3xl 2xl:text-5xl italic uppercase leading-none tracking-tighter">
+    <header className="z-50 flex justify-between items-center gap-3 px-4 xs:px-5 sm:px-8 lg:px-12 2xl:px-20 py-4 sm:py-6 lg:py-10 w-full min-w-0">
+      <div className="flex items-center gap-3 sm:gap-5 lg:gap-12 min-w-0">
+        <button
+          type="button"
+          onClick={onOpenSidebar}
+          className="md:hidden flex justify-center items-center bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl w-11 h-11 text-white shadow-xl active:scale-95 transition-all shrink-0"
+          aria-label="Open sidebar"
+        >
+          <Menu size={21} />
+        </button>
+
+        <div className="flex flex-col min-w-0">
+          <div className="flex items-baseline gap-2 sm:gap-4 min-w-0">
+            <h1 className="font-black text-white text-xl xs:text-2xl sm:text-3xl 2xl:text-5xl italic uppercase leading-none tracking-tighter truncate">
               ATARAXIA
             </h1>
 
             <div
-              className="hidden xs:block bg-accent/10 px-2 py-1 border border-accent/20 rounded-lg"
+              className="hidden xs:block bg-accent/10 px-2 py-1 border border-accent/20 rounded-lg shrink-0"
               style={{ borderColor: `${accentColor}33` }}
             >
               <span
@@ -103,18 +113,18 @@ const Header = ({ is24Hour = false, accentColor = '#e11d48' }) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 sm:gap-6">
+      <div className="flex items-center justify-end gap-2 xs:gap-3 sm:gap-6 min-w-0 shrink-0">
         {isInstallable && (
           <button
             type="button"
             onClick={handleInstallClick}
-            className="flex justify-center items-center bg-accent/10 hover:bg-accent/20 shadow-glow px-0 sm:px-6 border border-accent/30 rounded-xl sm:rounded-2xl w-11 sm:w-auto h-11 sm:h-14 text-accent active:scale-95 transition-all"
+            className="flex justify-center items-center bg-accent/10 hover:bg-accent/20 shadow-glow px-0 sm:px-6 border border-accent/30 rounded-xl sm:rounded-2xl w-10 xs:w-11 sm:w-auto h-10 xs:h-11 sm:h-14 text-accent active:scale-95 transition-all"
             style={{
               color: accentColor,
               borderColor: `${accentColor}4d`,
             }}
           >
-            <Download size={20} className="animate-bounce" />
+            <Download size={19} className="animate-bounce" />
 
             <span className="hidden sm:block ml-3 font-black text-xs 2xl:text-xl uppercase">
               Install
@@ -125,7 +135,7 @@ const Header = ({ is24Hour = false, accentColor = '#e11d48' }) => {
         <button
           type="button"
           onClick={requestPermission}
-          className={`flex justify-center items-center border rounded-xl sm:rounded-2xl w-11 sm:w-14 h-11 sm:h-14 transition-all active:scale-95 ${isGranted
+          className={`flex justify-center items-center border rounded-xl sm:rounded-2xl w-10 xs:w-11 sm:w-14 h-10 xs:h-11 sm:h-14 transition-all active:scale-95 ${isGranted
               ? 'bg-accent/10 border-accent/30 text-accent shadow-glow'
               : 'bg-white/5 border-white/10 text-white/20'
             }`}
@@ -139,11 +149,11 @@ const Header = ({ is24Hour = false, accentColor = '#e11d48' }) => {
               : {}
           }
         >
-          {isGranted ? <Bell size={22} /> : <BellOff size={22} />}
+          {isGranted ? <Bell size={21} /> : <BellOff size={21} />}
         </button>
 
         {authStatus === 'loading' ? (
-          <div className="flex justify-center items-center bg-white/5 border border-white/10 rounded-2xl w-11 sm:w-14 h-11 sm:h-14">
+          <div className="flex justify-center items-center bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl w-10 xs:w-11 sm:w-14 h-10 xs:h-11 sm:h-14">
             <Loader2
               className="animate-spin"
               size={20}
@@ -151,7 +161,7 @@ const Header = ({ is24Hour = false, accentColor = '#e11d48' }) => {
             />
           </div>
         ) : profile ? (
-          <div className="flex items-center gap-3 bg-white/5 shadow-lg py-2 pr-2 pl-4 sm:pl-8 border border-white/10 rounded-xl sm:rounded-2xl">
+          <div className="flex items-center gap-2 sm:gap-3 bg-white/5 shadow-lg p-1.5 sm:py-2 sm:pr-2 sm:pl-8 border border-white/10 rounded-xl sm:rounded-2xl">
             <div className="hidden md:flex flex-col items-end">
               <div className="flex items-center gap-2">
                 {profile.showIcon && (
@@ -188,10 +198,10 @@ const Header = ({ is24Hour = false, accentColor = '#e11d48' }) => {
           <button
             type="button"
             onClick={() => setIsAuthOpen(true)}
-            className="flex justify-center items-center bg-white/5 hover:bg-accent/10 shadow-xl border border-white/10 rounded-xl sm:rounded-2xl w-11 sm:w-14 h-11 sm:h-14 text-white/20 hover:text-accent transition-all"
+            className="flex justify-center items-center bg-white/5 hover:bg-accent/10 shadow-xl border border-white/10 rounded-xl sm:rounded-2xl w-10 xs:w-11 sm:w-14 h-10 xs:h-11 sm:h-14 text-white/20 hover:text-accent transition-all"
             style={{ '--hover-color': accentColor }}
           >
-            <User size={22} className="hover:text-[var(--hover-color)]" />
+            <User size={21} className="hover:text-[var(--hover-color)]" />
           </button>
         )}
       </div>
