@@ -68,20 +68,20 @@ const TaskManager = () => {
   };
 
   return (
-    <div className="flex flex-col bg-[#0a0a0a]/80 shadow-2xl backdrop-blur-xl p-4 sm:p-5 border border-white/5 rounded-[2rem] sm:rounded-[2.25rem] h-full overflow-hidden">
-      <div className="flex justify-between items-center mb-4 px-1">
-        <h2 className="flex items-center gap-3 font-black text-white text-xs sm:text-sm uppercase tracking-[0.2em]">
-          <span className="bg-[#00ffd5] shadow-[0_0_10px_#00ffd5] rounded-full w-2 h-2" />
-          Mission Log
+    <div className="flex flex-col bg-[#0a0a0a]/80 shadow-2xl backdrop-blur-xl p-3 xs:p-4 sm:p-5 border border-white/5 rounded-[1.75rem] sm:rounded-[2.25rem] h-full min-h-0 overflow-hidden">
+      <div className="flex justify-between items-center mb-4 px-1 shrink-0">
+        <h2 className="flex items-center gap-3 font-black text-white text-[11px] sm:text-sm uppercase tracking-[0.18em] sm:tracking-[0.2em] min-w-0">
+          <span className="bg-[#00ffd5] shadow-[0_0_10px_#00ffd5] rounded-full w-2 h-2 shrink-0" />
+          <span className="truncate">Mission Log</span>
         </h2>
 
         <Settings2
           size={17}
-          className="text-white/20 hover:text-white transition-colors cursor-pointer"
+          className="text-white/20 hover:text-white transition-colors cursor-pointer shrink-0"
         />
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-2.5 mb-5 px-1">
+      <form onSubmit={handleSubmit} className="space-y-2.5 mb-4 sm:mb-5 px-1 shrink-0">
         <input
           type="text"
           value={name}
@@ -99,12 +99,12 @@ const TaskManager = () => {
         />
 
         <div className="flex items-center gap-2.5">
-          <div className="flex flex-1 justify-between items-center bg-black/40 px-4 py-2.5 border border-white/5 rounded-2xl">
-            <span className="font-black text-[9px] text-white/20 uppercase tracking-widest">
+          <div className="flex flex-1 justify-between items-center bg-black/40 px-3 xs:px-4 py-2.5 border border-white/5 rounded-2xl min-w-0">
+            <span className="font-black text-[8px] xs:text-[9px] text-white/20 uppercase tracking-widest truncate">
               Est. Pomos
             </span>
 
-            <div className="flex items-center gap-3 font-bold text-white">
+            <div className="flex items-center gap-2 xs:gap-3 font-bold text-white shrink-0">
               <button
                 type="button"
                 onClick={() => setEst(Math.max(1, est - 1))}
@@ -128,7 +128,7 @@ const TaskManager = () => {
           <button
             type="submit"
             disabled={loading}
-            className="bg-white hover:bg-[#00ffd5] disabled:opacity-60 p-3.5 rounded-2xl text-black active:scale-95 transition-all"
+            className="bg-white hover:bg-[#00ffd5] disabled:opacity-60 p-3.5 rounded-2xl text-black active:scale-95 transition-all shrink-0"
           >
             {loading ? (
               <Loader2 className="animate-spin" size={22} />
@@ -139,7 +139,7 @@ const TaskManager = () => {
         </div>
       </form>
 
-      <div className="flex-1 space-y-2.5 px-1 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 space-y-2.5 px-1 overflow-y-auto custom-scrollbar min-h-0">
         {tasks.length === 0 && !loading ? (
           <EmptyTasks />
         ) : (
@@ -154,7 +154,7 @@ const TaskManager = () => {
             return (
               <div
                 key={task.id}
-                className={`group flex items-center justify-between px-4 py-3.5 border rounded-2xl transition-all ${
+                className={`group flex items-center justify-between gap-2 px-3 xs:px-4 py-3.5 border rounded-2xl transition-all ${
                   task.completed
                     ? 'bg-black/20 border-white/5 opacity-40'
                     : 'bg-surface/40 border-white/5 hover:border-white/10'
@@ -175,7 +175,7 @@ const TaskManager = () => {
 
                   <div className="flex-1 min-w-0">
                     {isEditing ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         <input
                           autoFocus
                           type="text"
@@ -186,13 +186,13 @@ const TaskManager = () => {
                               handleSaveEdit(task.id);
                             }
                           }}
-                          className="flex-1 bg-black/40 py-1 border-[#00ffd5] border-b outline-none font-bold text-white text-sm"
+                          className="flex-1 bg-black/40 py-1 border-[#00ffd5] border-b outline-none font-bold text-white text-sm min-w-0"
                         />
 
                         <button
                           type="button"
                           onClick={() => handleSaveEdit(task.id)}
-                          className="p-1 text-[#00ffd5]"
+                          className="p-1 text-[#00ffd5] shrink-0"
                         >
                           <Check size={15} />
                         </button>
@@ -200,7 +200,7 @@ const TaskManager = () => {
                         <button
                           type="button"
                           onClick={() => setEditingId(null)}
-                          className="p-1 text-white/20 hover:text-white/60"
+                          className="p-1 text-white/20 hover:text-white/60 shrink-0"
                         >
                           <X size={15} />
                         </button>
@@ -219,11 +219,11 @@ const TaskManager = () => {
                     )}
 
                     {task.tag && (
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <TagIcon size={10} style={{ color: displayColor }} />
+                      <div className="flex items-center gap-1.5 mt-1 min-w-0">
+                        <TagIcon size={10} style={{ color: displayColor }} className="shrink-0" />
 
                         <span
-                          className="font-black text-[8px] uppercase tracking-widest"
+                          className="font-black text-[8px] uppercase tracking-widest truncate"
                           style={{
                             color: displayColor,
                             opacity: 0.55,
@@ -236,12 +236,12 @@ const TaskManager = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-0.5 opacity-100 sm:group-hover:opacity-100 sm:opacity-0 transition-all">
+                <div className="flex items-center gap-0.5 opacity-100 sm:group-hover:opacity-100 sm:opacity-0 transition-all shrink-0">
                   {!isEditing && (
                     <button
                       type="button"
                       onClick={() => handleStartEdit(task)}
-                      className="p-1.5 text-white/15 hover:text-white"
+                      className="p-1.5 text-white/20 sm:text-white/15 hover:text-white"
                     >
                       <Edit2 size={15} />
                     </button>
@@ -250,7 +250,7 @@ const TaskManager = () => {
                   <button
                     type="button"
                     onClick={() => removeTask(task.id)}
-                    className="p-1.5 text-white/15 hover:text-red-500"
+                    className="p-1.5 text-white/20 sm:text-white/15 hover:text-red-500"
                   >
                     <Trash2 size={15} />
                   </button>
