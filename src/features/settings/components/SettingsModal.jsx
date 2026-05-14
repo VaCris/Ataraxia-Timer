@@ -274,7 +274,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="z-[100] fixed inset-0 flex justify-center items-center p-4">
+    <div className="z-[100] fixed inset-0 flex justify-center items-end sm:items-center p-0 sm:p-4">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -284,35 +284,35 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
       />
 
       <motion.div
-        initial={{ scale: 0.96, opacity: 0, y: 12 }}
+        initial={{ scale: 0.98, opacity: 0, y: 24 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.96, opacity: 0, y: 12 }}
+        exit={{ scale: 0.98, opacity: 0, y: 24 }}
         transition={{ duration: 0.18 }}
-        className="relative flex flex-col shadow-2xl p-6 md:p-8 border border-white/10 rounded-[3rem] w-full max-w-lg max-h-[90vh] overflow-hidden glass"
+        className="relative flex flex-col shadow-2xl p-4 xs:p-5 sm:p-6 md:p-8 border border-white/10 rounded-t-[2rem] sm:rounded-[3rem] w-full sm:max-w-lg h-[92dvh] sm:h-auto sm:max-h-[90vh] overflow-hidden glass"
       >
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="flex items-center gap-3 font-black text-2xl tracking-tighter">
+        <div className="flex justify-between items-center mb-5 sm:mb-6 shrink-0">
+          <h2 className="flex items-center gap-3 font-black text-xl xs:text-2xl tracking-tighter min-w-0">
             <span style={{ color: localAccentColor }}>/</span>
-            CONFIGURATION
+            <span className="truncate">CONFIGURATION</span>
           </h2>
 
           <button
             type="button"
             onClick={onClose}
-            className="hover:bg-white/5 p-3 rounded-full text-white/40 hover:text-white transition-colors"
+            className="hover:bg-white/5 p-3 rounded-full text-white/40 hover:text-white transition-colors shrink-0"
           >
-            <X size={24} />
+            <X size={22} />
           </button>
         </div>
 
-        <div className="flex-1 space-y-10 pr-2 pb-4 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 space-y-8 sm:space-y-10 pr-1 sm:pr-2 pb-4 overflow-y-auto custom-scrollbar min-h-0">
           <section>
-            <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.3em]">
+            <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.24em] sm:tracking-[0.3em]">
               <Clock size={14} />
               Timer Durations
             </div>
 
-            <div className="gap-4 grid grid-cols-3 bg-white/5 p-6 border border-white/5 rounded-[2rem]">
+            <div className="gap-3 sm:gap-4 grid grid-cols-1 xs:grid-cols-3 bg-white/5 p-4 sm:p-6 border border-white/5 rounded-[1.5rem] sm:rounded-[2rem]">
               <TimeInput
                 label="Focus"
                 value={localTimers.FOCUS}
@@ -334,36 +334,36 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
           </section>
 
           <section>
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-2 font-bold text-[10px] text-white/30 uppercase tracking-[0.3em]">
-                <Keyboard size={14} />
-                Global Shortcuts
+            <div className="flex justify-between items-center gap-3 mb-4">
+              <div className="flex items-center gap-2 font-bold text-[10px] text-white/30 uppercase tracking-[0.24em] sm:tracking-[0.3em] min-w-0">
+                <Keyboard size={14} className="shrink-0" />
+                <span className="truncate">Global Shortcuts</span>
               </div>
 
               <button
                 type="button"
                 onClick={handleResetShortcuts}
-                className="flex items-center gap-1 text-[10px] text-white/30 hover:text-white uppercase tracking-widest"
+                className="flex items-center gap-1 text-[10px] text-white/30 hover:text-white uppercase tracking-widest shrink-0"
               >
                 <RotateCcw size={12} />
                 reset
               </button>
             </div>
 
-            <div className="gap-3 grid grid-cols-2 bg-white/5 p-6 rounded-[2rem]">
+            <div className="gap-3 grid grid-cols-1 xs:grid-cols-2 bg-white/5 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem]">
               {Object.entries(visibleShortcuts).map(([action, key]) => (
                 <div
                   key={action}
-                  className="flex justify-between items-center bg-black/20 p-3 border border-white/5 rounded-xl"
+                  className="flex justify-between items-center gap-3 bg-black/20 p-3 border border-white/5 rounded-xl min-w-0"
                 >
-                  <span className="font-bold text-[10px] text-white/40 uppercase tracking-tighter">
+                  <span className="font-bold text-[10px] text-white/40 uppercase tracking-tighter truncate">
                     {action}
                   </span>
 
                   <button
                     type="button"
                     onClick={() => recordShortcut(action)}
-                    className={`px-3 py-1 rounded text-xs font-mono transition-colors ${activeShortcutKey === action
+                    className={`px-3 py-1 rounded text-xs font-mono transition-colors shrink-0 ${activeShortcutKey === action
                       ? 'bg-accent text-white'
                       : 'bg-white/10 text-white/80'
                       }`}
@@ -377,13 +377,13 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
           </section>
 
           <section>
-            <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.3em]">
+            <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.24em] sm:tracking-[0.3em]">
               <Monitor size={14} />
               Workflow & Automation
             </div>
 
-            <div className="space-y-4 bg-white/5 p-6 rounded-[2rem]">
-              <div className="flex justify-between items-center">
+            <div className="space-y-4 bg-white/5 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem]">
+              <div className="flex justify-between items-center gap-4">
                 <span className="text-white/60 text-xs">
                   Rounds before Long Break
                 </span>
@@ -396,11 +396,11 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                   onChange={(event) =>
                     handleApiSettingChange('longBreakInterval', clampNumber(event.target.value, 4))
                   }
-                  className="bg-black/40 px-3 py-1.5 border border-white/10 focus:border-white/30 rounded-lg outline-none w-16 text-white text-xs text-center"
+                  className="bg-black/40 px-3 py-1.5 border border-white/10 focus:border-white/30 rounded-lg outline-none w-16 text-white text-xs text-center shrink-0"
                 />
               </div>
 
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center gap-4">
                 <span className="text-white/60 text-xs">
                   Auto-start Breaks
                 </span>
@@ -414,7 +414,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                 />
               </div>
 
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center gap-4">
                 <span className="text-white/60 text-xs">
                   Auto-start Focus
                 </span>
@@ -428,7 +428,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                 />
               </div>
 
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center gap-4">
                 <span className="text-white/60 text-xs">
                   24-Hour Clock
                 </span>
@@ -445,12 +445,12 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
           </section>
 
           <section>
-            <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.3em]">
+            <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.24em] sm:tracking-[0.3em]">
               <Volume2 size={14} />
               Auditory Experience
             </div>
 
-            <div className="space-y-6 bg-white/5 p-6 rounded-[2rem]">
+            <div className="space-y-6 bg-white/5 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem]">
               <div className="space-y-3">
                 <div className="flex justify-between font-bold text-[10px] text-white/30 uppercase">
                   <span>Master Volume</span>
@@ -483,18 +483,18 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
           </section>
 
           <section>
-            <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.3em]">
+            <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.24em] sm:tracking-[0.3em]">
               <Sun size={14} />
               Visual Sanctuary
             </div>
 
-            <div className="space-y-6 bg-white/5 p-6 rounded-[2rem]">
-              <div className="flex justify-between items-center bg-black/20 p-4 border border-white/5 rounded-xl">
+            <div className="space-y-6 bg-white/5 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem]">
+              <div className="flex justify-between items-center gap-4 bg-black/20 p-4 border border-white/5 rounded-xl">
                 <span className="text-white/60 text-xs">
                   Accent Theme
                 </span>
 
-                <div className="relative border-2 border-white/20 rounded-full w-8 h-8 overflow-hidden">
+                <div className="relative border-2 border-white/20 rounded-full w-8 h-8 overflow-hidden shrink-0">
                   <input
                     type="color"
                     value={localAccentColor}
@@ -537,9 +537,9 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                 />
 
                 <div className="flex gap-2">
-                  <label className="flex flex-1 justify-center items-center gap-2 border border-white/10 hover:border-white/30 border-dashed rounded-xl h-12 text-white/40 text-xs transition-colors cursor-pointer">
-                    <Upload size={14} />
-                    Upload File
+                  <label className="flex flex-1 justify-center items-center gap-2 border border-white/10 hover:border-white/30 border-dashed rounded-xl h-12 text-white/40 text-xs transition-colors cursor-pointer min-w-0">
+                    <Upload size={14} className="shrink-0" />
+                    <span className="truncate">Upload File</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -564,7 +564,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                     <button
                       type="button"
                       onClick={() => handleUISettingChange('bgImage', '')}
-                      className="flex justify-center items-center bg-red-500/10 hover:bg-red-500/20 rounded-xl w-12 h-12 text-red-500"
+                      className="flex justify-center items-center bg-red-500/10 hover:bg-red-500/20 rounded-xl w-12 h-12 text-red-500 shrink-0"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -575,13 +575,13 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
           </section>
         </div>
 
-        <div className="mt-4 pt-6 border-white/10 border-t">
+        <div className="mt-4 pt-4 sm:pt-6 border-white/10 border-t shrink-0">
           <button
             type="button"
             onClick={handleSave}
             disabled={isSaving}
             style={{ backgroundColor: localAccentColor }}
-            className="flex justify-center items-center gap-2 disabled:opacity-50 shadow-lg py-5 rounded-3xl w-full font-black text-white text-xs uppercase tracking-[0.2em] transition-all"
+            className="flex justify-center items-center gap-2 disabled:opacity-50 shadow-lg py-4 sm:py-5 rounded-2xl sm:rounded-3xl w-full font-black text-white text-[11px] xs:text-xs uppercase tracking-[0.16em] xs:tracking-[0.2em] transition-all"
           >
             {isSaving ? (
               <Loader2 className="animate-spin" size={20} />
@@ -599,13 +599,13 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
 };
 
 const TimeInput = memo(({ label, value, onChange }) => (
-  <div className="flex flex-col gap-2">
+  <div className="flex xs:flex-col justify-between xs:justify-start items-center xs:items-stretch gap-2 bg-black/20 xs:bg-transparent p-3 xs:p-0 rounded-2xl">
     <input
       type="number"
       min="1"
       value={value || 0}
       onChange={(event) => onChange(Number(event.target.value))}
-      className="bg-black/40 py-4 border border-white/5 rounded-2xl text-white text-lg text-center"
+      className="bg-black/40 py-3 xs:py-4 border border-white/5 rounded-2xl w-24 xs:w-full text-white text-base xs:text-lg text-center"
     />
 
     <label className="font-bold text-[9px] text-white/20 text-center uppercase">
@@ -620,7 +620,7 @@ const Switch = memo(({ checked, onChange, accent }) => (
   <button
     type="button"
     onClick={onChange}
-    className="relative rounded-full w-11 h-6 transition-colors cursor-pointer"
+    className="relative rounded-full w-11 h-6 transition-colors cursor-pointer shrink-0"
     style={{
       backgroundColor: checked ? accent : 'rgba(255,255,255,0.05)',
     }}
