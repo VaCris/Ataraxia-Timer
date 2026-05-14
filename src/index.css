@@ -23,13 +23,33 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
 }
 
 html, body {
   background-color: var(--color-background);
   color: var(--color-cream);
   overflow-x: hidden;
-  height: 100%;
+}
+
+body {
+  min-width: 320px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
