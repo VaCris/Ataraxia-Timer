@@ -38,7 +38,7 @@ export const TimerDial: React.FC<TimerDialProps> = memo(({ controller }) => {
     }, [timerState.timeLeft, timerState.initialTime]);
 
     return (
-        <div className="relative flex justify-center items-center w-[17rem] h-[17rem] sm:w-[20rem] sm:h-[20rem] md:w-[22rem] md:h-[22rem] lg:w-[24rem] lg:h-[24rem] xl:w-[27rem] xl:h-[27rem] 2xl:w-[30rem] 2xl:h-[30rem]">
+        <div className="relative flex justify-center items-center w-[min(82vw,17rem)] h-[min(82vw,17rem)] xs:w-[18rem] xs:h-[18rem] sm:w-[20rem] sm:h-[20rem] md:w-[22rem] md:h-[22rem] lg:w-[24rem] lg:h-[24rem] xl:w-[27rem] xl:h-[27rem] 2xl:w-[30rem] 2xl:h-[30rem] shrink-0">
             <svg className="drop-shadow-[0_0_22px_rgba(0,0,0,0.45)] w-full h-full -rotate-90 transform">
                 <circle
                     cx="50%"
@@ -66,8 +66,8 @@ export const TimerDial: React.FC<TimerDialProps> = memo(({ controller }) => {
                 />
             </svg>
 
-            <div className="absolute flex flex-col items-center px-4">
-                <div className="flex items-center font-black text-white text-[4.5rem] sm:text-[5.4rem] md:text-[6rem] lg:text-[6.7rem] xl:text-[7.7rem] 2xl:text-[8.4rem] italic leading-none tracking-tighter">
+            <div className="absolute flex flex-col items-center px-4 max-w-full">
+                <div className="flex items-center font-black text-white text-[clamp(3.8rem,18vw,4.8rem)] xs:text-[4.9rem] sm:text-[5.4rem] md:text-[6rem] lg:text-[6.7rem] xl:text-[7.7rem] 2xl:text-[8.4rem] italic leading-none tracking-tighter">
                     {minutes}
                     <span
                         style={{ color: 'var(--color-accent)' }}
@@ -79,19 +79,19 @@ export const TimerDial: React.FC<TimerDialProps> = memo(({ controller }) => {
                 </div>
 
                 <div className="flex flex-col items-center gap-2 mt-3 sm:mt-4">
-                    <span className="font-black text-[10px] sm:text-[11px] md:text-xs xl:text-sm text-white/20 italic uppercase tracking-[0.45em] sm:tracking-[0.55em]">
+                    <span className="font-black text-[9px] xs:text-[10px] sm:text-[11px] md:text-xs xl:text-sm text-white/20 italic uppercase tracking-[0.34em] xs:tracking-[0.45em] sm:tracking-[0.55em]">
                         {timerState.mode.replace('_', ' ')}
                     </span>
 
                     <div
-                        className="px-4 sm:px-5 py-1.5 border rounded-full"
+                        className="px-3 xs:px-4 sm:px-5 py-1.5 border rounded-full"
                         style={{
                             backgroundColor: 'rgba(var(--color-accent-rgb), 0.15)',
                             borderColor: 'rgba(var(--color-accent-rgb), 0.3)',
                         }}
                     >
                         <span
-                            className="font-black text-[10px] sm:text-[11px] md:text-xs uppercase tracking-[0.24em] sm:tracking-[0.3em]"
+                            className="font-black text-[9px] xs:text-[10px] sm:text-[11px] md:text-xs uppercase tracking-[0.2em] xs:tracking-[0.24em] sm:tracking-[0.3em]"
                             style={{ color: 'var(--color-accent)' }}
                         >
                             ROUND {controller.currentRound}
@@ -103,7 +103,7 @@ export const TimerDial: React.FC<TimerDialProps> = memo(({ controller }) => {
             </div>
 
             <div
-                className={`absolute inset-2 sm:inset-3 rounded-full blur-[70px] sm:blur-[85px] xl:blur-[100px] transition-opacity duration-1000 -z-10 ${timerState.isActive ? 'opacity-[0.18]' : 'opacity-0'}`}
+                className={`absolute inset-2 sm:inset-3 rounded-full blur-[60px] sm:blur-[85px] xl:blur-[100px] transition-opacity duration-1000 -z-10 ${timerState.isActive ? 'opacity-[0.18]' : 'opacity-0'}`}
                 style={{ backgroundColor: 'var(--color-accent)' }}
             />
         </div>
