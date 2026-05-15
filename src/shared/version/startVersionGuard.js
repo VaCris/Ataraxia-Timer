@@ -28,11 +28,57 @@ async function cleanOldCaches() {
                     normalized.includes('ataraxia') ||
                     normalized.includes('workbox') ||
                     normalized.includes('precache') ||
-                    normalized.includes('runtime')
+                    normalized.includes('runtime') ||
+                    normalized.includes('api-cache')
                 )
             })
             .map((key) => caches.delete(key))
     )
+}
+
+async function cleanOldWorkboxDatabases() {
+    if (!('indexedDB' in window)) return
+
+    const databaseNames = ['workbox-expiration']
+
+    if (typeof indexedDB.databases === 'function') {
+        try {
+            const databases = await indexedDB.databases()
+
+            databases.forEach((database) => {
+                const name = database?.name || ''
+                const normalized = name.toLowerCase()
+
+                if (
+                    normalized.includes('workbox') ||
+                    normalized.includes('ataraxia-api-cache') ||
+                    normalized.includes('api-cache')
+                ) {
+                    databaseNames.push(name)
+                }
+            })
+        } catch {}
+    }
+
+    await Promise.allSettled(
+        [...new Set(databaseNames)].map(
+            (name) =>
+                new Promise((resolve) => {
+                    const request = indexedDB.deleteDatabase(name)
+
+                    request.onsuccess = resolve
+                    request.onerror = resolve
+                    request.onblocked = resolve
+                })
+        )
+    )
+}
+
+async function cleanLegacyPwaStorage() {
+    await Promise.all([
+        cleanOldCaches(),
+        cleanOldWorkboxDatabases(),
+    ])
 }
 
 async function updateRegistrations() {
@@ -56,6 +102,7 @@ async function checkVersion(registration) {
 
         if (!storedVersion) {
             localStorage.setItem(VERSION_STORAGE_KEY, remoteVersion)
+            await cleanLegacyPwaStorage()
             return
         }
 
@@ -65,7 +112,7 @@ async function checkVersion(registration) {
 
         await registration?.update()
         await updateRegistrations()
-        await cleanOldCaches()
+        await cleanLegacyPwaStorage()
 
         window.location.reload()
     } catch (error) {
