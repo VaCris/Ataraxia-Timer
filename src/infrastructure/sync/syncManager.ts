@@ -22,33 +22,35 @@ const isTransientError = (error: any) => {
   return status >= 500 || status === 408 || status === 429
 }
 
-const compactQueue = async (item: AddSyncQueueItem) => {
-  if (!item.entity || !item.entityId) return
+const mergeData = (a: unknown, b: unknown) => ({
+  ...(typeof a === 'object' && a ? a : {}),
+  ...(typeof b === 'object' && b ? b : {}),
+})
+
+const compactQueue = async (item: AddSyncQueueItem): Promise<boolean> => {
+  if (!item.entity || !item.entityId) return false
 
   const existing = await db.syncQueue
     .where('[entity+entityId]')
     .equals([item.entity, item.entityId])
     .toArray()
 
-  if (!existing.length) return
+  if (!existing.length) return false
 
   if (item.method === 'DELETE') {
     await db.syncQueue.bulkDelete(existing.map((entry) => entry.id))
-    return
+    return false
   }
 
   const pendingCreate = existing.find((entry) => entry.method === 'POST')
 
   if (pendingCreate && item.method === 'PATCH') {
     await db.syncQueue.update(pendingCreate.id, {
-      data: {
-        ...(typeof pendingCreate.data === 'object' && pendingCreate.data ? pendingCreate.data : {}),
-        ...(typeof item.data === 'object' && item.data ? item.data : {}),
-      },
+      data: mergeData(pendingCreate.data, item.data),
       ts: Date.now(),
     })
 
-    return
+    return true
   }
 
   if (item.method === 'PATCH') {
@@ -56,18 +58,20 @@ const compactQueue = async (item: AddSyncQueueItem) => {
 
     if (pendingUpdate) {
       await db.syncQueue.update(pendingUpdate.id, {
-        data: {
-          ...(typeof pendingUpdate.data === 'object' && pendingUpdate.data ? pendingUpdate.data : {}),
-          ...(typeof item.data === 'object' && item.data ? item.data : {}),
-        },
+        data: mergeData(pendingUpdate.data, item.data),
         ts: Date.now(),
       })
+
+      return true
     }
   }
+
+  return false
 }
 
 export const addToSyncQueue = async (req: AddSyncQueueItem) => {
-  await compactQueue(req)
+  const absorbed = await compactQueue(req)
+  if (absorbed) return
 
   if (req.entity && req.entityId) {
     const existing = await db.syncQueue
@@ -90,6 +94,28 @@ export const addToSyncQueue = async (req: AddSyncQueueItem) => {
 
 const getQueue = () => db.syncQueue.orderBy('ts').toArray()
 
+const applySyncedEntity = async (item: SyncQueueItem, responseData: any) => {
+  if (item.entity !== 'tasks') return
+
+  if (item.method === 'DELETE' && item.entityId) {
+    await db.tasks.delete(item.entityId)
+    return
+  }
+
+  if (!responseData?.id) return
+
+  if (item.method === 'POST' && item.entityId && item.entityId !== responseData.id) {
+    await db.tasks.delete(item.entityId)
+  }
+
+  await db.tasks.put({
+    ...responseData,
+    syncStatus: 'synced',
+    updatedAt: Date.now(),
+    deletedAt: null,
+  })
+}
+
 export const processSyncQueue = async () => {
   if (syncing || !navigator.onLine) return
   syncing = true
@@ -99,7 +125,7 @@ export const processSyncQueue = async () => {
 
     for (const item of queue) {
       try {
-        await api.request({
+        const response = await api.request({
           method: item.method,
           url: item.url,
           data: item.data,
@@ -108,6 +134,7 @@ export const processSyncQueue = async () => {
           },
         })
 
+        await applySyncedEntity(item, response.data)
         await db.syncQueue.delete(item.id)
       } catch (error: any) {
         if (isTransientError(error) && item.retries < MAX_RETRIES) {
