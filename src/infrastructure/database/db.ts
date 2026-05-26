@@ -38,6 +38,12 @@ export class AppDB extends Dexie {
             tasks: "id, userId, syncStatus, updatedAt, createdAt, deletedAt",
             syncQueue: "id, entity, entityId, method, url, retries, ts"
         })
+
+        this.version(3).stores({
+            settings: "id, userId, syncStatus, updatedAt",
+            tasks: "id, userId, syncStatus, updatedAt, createdAt, deletedAt",
+            syncQueue: "id, [entity+entityId], entity, entityId, method, url, retries, ts"
+        })
     }
 }
 
