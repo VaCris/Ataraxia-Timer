@@ -111,10 +111,16 @@ function* handleUpdateTask(action: ReturnType<typeof updateTaskRequest>) {
 
 function* handleDeleteTask(action: ReturnType<typeof deleteTaskRequest>) {
   try {
-    yield call([tasksLocalRepository, tasksLocalRepository.remove], action.payload);
+    const shouldSyncDelete: boolean = yield call(
+      [tasksLocalRepository, tasksLocalRepository.remove],
+      action.payload
+    );
+
     yield put(deleteTaskSuccess(action.payload));
 
-    if (navigator.onLine) {
+    if (!shouldSyncDelete) return;
+
+    if (navigator.onLine && !action.payload.startsWith('local-')) {
       try {
         yield call(tasksService.delete, action.payload);
         yield call([tasksLocalRepository, tasksLocalRepository.removeSynced], action.payload);
