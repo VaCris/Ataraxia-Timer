@@ -1,14 +1,14 @@
 {
-  "version": "2.0.0-2dbbe1e",
+  "version": "2.0.0-891f9a9",
   "appVersion": "2.0.0",
-  "build": "2dbbe1e",
-  "date": "2026-05-26T18:39:41.871Z",
+  "build": "891f9a9",
+  "date": "2026-05-26T18:46:25.024Z",
   "changelog": [
-    "Avoid syncing deletes for unsynced local tasks",
-    "Improve local task deletion sync behavior",
-    "Add offline-first task saga",
-    "Handle entity sync results in queue processor",
-    "Avoid queuing mutations from axios interceptor"
+    "chore(version): update build metadata and changelog for offline sync fixes",
+    "chore(deps): add pnpm lockfile and update project dependencies",
+    "feat(import): improve OCR schedule parsing and week detection\"",
+    "Add workbox-window dependency for PWA registration",
+    "Avoid syncing deletes for unsynced local tasks"
   ],
   "targetUrl": "/"
 }
