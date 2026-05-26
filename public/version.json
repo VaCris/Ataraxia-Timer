@@ -1,12 +1,14 @@
 {
-  "version": "2.0.0",
-  "date": "2026-05-12",
+  "version": "2.0.0-2dbbe1e",
+  "appVersion": "2.0.0",
+  "build": "2dbbe1e",
+  "date": "2026-05-26T18:39:41.871Z",
   "changelog": [
-    "fix: use persisted timer settings when api state is empty",
-    "fix: persist ui and api settings across refresh",
-    "fix: resolve timer dial conflict and keep responsive sizing",
-    "fix: resolve dashboard layout conflict and restore responsive view",
-    "feat: add clearTags and clearTasks actions to reset state"
+    "Avoid syncing deletes for unsynced local tasks",
+    "Improve local task deletion sync behavior",
+    "Add offline-first task saga",
+    "Handle entity sync results in queue processor",
+    "Avoid queuing mutations from axios interceptor"
   ],
   "targetUrl": "/"
 }
