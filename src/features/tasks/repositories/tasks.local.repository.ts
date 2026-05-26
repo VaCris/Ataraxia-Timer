@@ -39,7 +39,7 @@ export const tasksLocalRepository = {
 
     async create(payload: CreateTaskDto): Promise<TaskResponse> {
         const task: LocalTaskModel = {
-            id: crypto.randomUUID(),
+            id: `local-${crypto.randomUUID()}`,
             userId: LOCAL_USER_ID,
             title: payload.title,
             tag: payload.tag?.trim() || 'General',
@@ -98,14 +98,19 @@ export const tasksLocalRepository = {
         })
     },
 
-    async remove(id: string): Promise<void> {
+    async remove(id: string): Promise<boolean> {
         const current = await db.tasks.get(id)
 
-        if (!current) return
+        if (!current) return false
 
         if (current.syncStatus === 'pending_create') {
             await db.tasks.delete(id)
-            return
+            await db.syncQueue
+                .where('[entity+entityId]')
+                .equals(['tasks', id])
+                .delete()
+
+            return false
         }
 
         await db.tasks.put({
@@ -114,6 +119,8 @@ export const tasksLocalRepository = {
             deletedAt: nowMs(),
             updatedAt: nowMs(),
         })
+
+        return true
     },
 
     async removeSynced(id: string): Promise<void> {
