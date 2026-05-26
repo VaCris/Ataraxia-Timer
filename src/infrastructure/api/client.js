@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { addToSyncQueue } from '../sync/syncManager';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -14,28 +13,6 @@ const api = axios.create({
     },
     withCredentials: true,
 });
-
-const isNetworkError = (error) =>
-    error.message === 'Network Error' || error.code === 'ERR_NETWORK';
-
-const isMutationMethod = (method) =>
-    ['post', 'put', 'patch', 'delete'].includes(method?.toLowerCase());
-
-const isAuthUrl = (url = '') => url.includes('/auth/');
-
-const parseRequestData = (data) => {
-    if (!data) return null;
-
-    if (typeof data === 'object') {
-        return data;
-    }
-
-    try {
-        return JSON.parse(data);
-    } catch {
-        return data;
-    }
-};
 
 api.interceptors.request.use(
     (config) => {
@@ -57,25 +34,6 @@ api.interceptors.response.use(
 
         if (!originalRequest) {
             return Promise.reject(error);
-        }
-
-        if (
-            isNetworkError(error) &&
-            isMutationMethod(originalRequest.method) &&
-            !isAuthUrl(originalRequest.url)
-        ) {
-            addToSyncQueue({
-                method: originalRequest.method.toUpperCase(),
-                url: originalRequest.url,
-                data: parseRequestData(originalRequest.data),
-            });
-
-            return Promise.resolve({
-                data: {
-                    success: true,
-                    offline: true,
-                },
-            });
         }
 
         if (
