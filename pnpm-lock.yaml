@@ -56,6 +56,9 @@ importers:
       workbox-build:
         specifier: ^7.4.0
         version: 7.4.1(@types/babel__core@7.20.5)
+      workbox-window:
+        specifier: ^7.4.0
+        version: 7.4.1
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.1
