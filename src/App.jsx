@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 
 import { processSyncQueue } from '@/infrastructure/sync/syncManager';
 import { checkAuthRequest } from '@/features/auth/store/authSlice';
+import { fetchTasksRequest } from '@/features/tasks/store/tasksSlice';
 
 import Dashboard from '@/app/layout/Dashboard';
 import ResetPassword from '@/features/auth/components/ResetPassword';
@@ -32,16 +33,27 @@ function App() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (!isMaintenance && !isComingSoon && !isRestricted) {
-      if (navigator.onLine) processSyncQueue();
+    if (isMaintenance || isComingSoon || isRestricted) return;
 
-      const handleOnline = () => processSyncQueue();
+    const syncAndRefresh = async () => {
+      const token = localStorage.getItem('token');
 
-      window.addEventListener('online', handleOnline);
+      if (!navigator.onLine || !token) return;
 
-      return () => window.removeEventListener('online', handleOnline);
-    }
-  }, [isMaintenance, isComingSoon, isRestricted]);
+      await processSyncQueue();
+      dispatch(fetchTasksRequest());
+    };
+
+    syncAndRefresh();
+
+    window.addEventListener('online', syncAndRefresh);
+    document.addEventListener('visibilitychange', syncAndRefresh);
+
+    return () => {
+      window.removeEventListener('online', syncAndRefresh);
+      document.removeEventListener('visibilitychange', syncAndRefresh);
+    };
+  }, [dispatch, isMaintenance, isComingSoon, isRestricted]);
 
   if (isRestricted) return <Restricted />;
   if (isMaintenance) return <Maintenance />;
