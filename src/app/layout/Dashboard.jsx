@@ -42,7 +42,7 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
 
     return (
         <motion.div
-            className="relative flex bg-[#030303] w-full min-h-dvh lg:h-dvh overflow-x-hidden lg:overflow-hidden overflow-y-auto text-white"
+            className="dashboard-root"
             style={{
                 '--color-accent': uiSettings.accentColor,
             }}
@@ -72,19 +72,19 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                 customShortcuts={uiSettings.customShortcuts}
             />
 
-            <main className="z-10 relative flex flex-col flex-1 w-full min-w-0 min-h-dvh lg:h-dvh">
+            <main className="dashboard-main">
                 <Header
                     is24Hour={uiSettings.is24Hour}
                     accentColor={uiSettings.accentColor}
                     onOpenSidebar={() => setIsSidebarOpen(true)}
                 />
 
-                <section className="flex-1 gap-5 lg:gap-5 xl:gap-6 2xl:gap-10 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(320px,380px)] xl:grid-cols-[minmax(0,1fr)_minmax(340px,400px)] 2xl:grid-cols-[minmax(0,1fr)_minmax(420px,480px)] px-4 xs:px-5 sm:px-8 lg:px-8 xl:px-10 2xl:px-20 pb-28 md:pb-10 lg:pb-6 2xl:pb-8 min-h-0">
-                    <div className="flex flex-col justify-center items-center py-4 sm:py-6 lg:py-0 min-w-0 min-h-0">
-                        <div className="flex flex-col items-center gap-4 sm:gap-5 lg:gap-5 xl:gap-6 2xl:gap-8 w-full max-w-[48rem] 2xl:max-w-[52rem]">
+                <section className="dashboard-grid">
+                    <div className="dashboard-timer-zone">
+                        <div className="timer-stack">
                             <TimerDial controller={pomodoro} />
 
-                            <div className="flex items-center gap-1.5 sm:gap-2 bg-white/5 backdrop-blur-xl p-1.5 sm:p-2 border border-white/10 rounded-full max-w-full overflow-x-auto no-scrollbar">
+                            <div className="mode-tabs">
                                 {[
                                     { label: 'Focus', value: 'FOCUS' },
                                     { label: 'Short', value: 'SHORT_BREAK' },
@@ -97,7 +97,7 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                                             key={item.value}
                                             type="button"
                                             onClick={() => pomodoro.handleModeChange(item.value)}
-                                            className={`shrink-0 px-3 xs:px-4 sm:px-5 xl:px-5 2xl:px-6 py-2 2xl:py-2.5 rounded-full font-black text-[9px] sm:text-[10px] 2xl:text-[11px] uppercase tracking-[0.14em] xs:tracking-[0.18em] 2xl:tracking-[0.2em] transition-all ${isActive
+                                            className={`mode-tab ${isActive
                                                 ? 'bg-accent text-white shadow-[0_0_18px_rgba(var(--color-accent-rgb),0.45)]'
                                                 : 'text-white/30 hover:text-white hover:bg-white/10'
                                                 }`}
@@ -108,12 +108,12 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                                 })}
                             </div>
 
-                            <div className="flex justify-center items-center gap-2 xs:gap-3 bg-white/5 shadow-2xl backdrop-blur-xl p-2 sm:p-2.5 2xl:p-3 border border-white/10 rounded-full max-w-full">
+                            <div className="timer-actions">
                                 <button
                                     type="button"
                                     onClick={pip.togglePip}
                                     disabled={!pip.isPipSupported}
-                                    className="flex justify-center items-center hover:bg-white/10 disabled:hover:bg-transparent disabled:opacity-30 rounded-full w-10 xs:w-11 sm:w-11 2xl:w-[3.25rem] h-10 xs:h-11 sm:h-11 2xl:h-[3.25rem] text-white/50 hover:text-white transition-all shrink-0"
+                                    className="timer-icon-action"
                                     aria-label="Picture in Picture"
                                     title={
                                         pip.isPipSupported
@@ -127,7 +127,7 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                                 <button
                                     type="button"
                                     onClick={pomodoro.toggleSession}
-                                    className="flex justify-center items-center gap-2 xs:gap-3 bg-accent px-5 xs:px-8 sm:px-9 2xl:px-12 rounded-full min-w-28 xs:min-w-36 sm:min-w-36 2xl:min-w-48 h-11 xs:h-12 sm:h-12 2xl:h-16 font-black text-[10px] xs:text-[11px] sm:text-xs 2xl:text-sm text-white uppercase tracking-[0.16em] xs:tracking-[0.2em] 2xl:tracking-[0.22em] active:scale-95 transition-all"
+                                    className="timer-primary-action"
                                 >
                                     {pomodoro.isActive ? (
                                         <>
@@ -145,7 +145,7 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                                 <button
                                     type="button"
                                     onClick={pomodoro.resetSession}
-                                    className="flex justify-center items-center hover:bg-white/10 rounded-full w-10 xs:w-11 sm:w-11 2xl:w-[3.25rem] h-10 xs:h-11 sm:h-11 2xl:h-[3.25rem] text-white/50 hover:text-white transition-all shrink-0"
+                                    className="timer-icon-action"
                                     aria-label="Reset Timer"
                                 >
                                     <RotateCcw size={19} />
@@ -160,8 +160,8 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                         </div>
                     </div>
 
-                    <aside className="flex justify-center lg:justify-end items-stretch lg:items-center min-w-0 min-h-0">
-                        <div className="w-full max-w-[420px] 2xl:max-w-[480px] h-[560px] xs:h-[600px] max-h-[calc(100dvh-8rem)] lg:h-[520px] xl:h-[560px] 2xl:h-[620px] lg:max-h-[calc(100vh-112px)] 2xl:max-h-[calc(100vh-150px)]">
+                    <aside className="task-panel-zone">
+                        <div className="task-panel-shell">
                             <TaskManager />
                         </div>
                     </aside>
