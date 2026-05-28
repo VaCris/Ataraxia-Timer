@@ -10,7 +10,6 @@ import { fetchTasksRequest } from '@/features/tasks/store/tasksSlice';
 import Dashboard from '@/app/layout/Dashboard';
 import ResetPassword from '@/features/auth/components/ResetPassword';
 import InstallPrompt from '@/app/components/InstallPrompt';
-import CookieConsent from '@/app/components/CookieConsent';
 import Maintenance from '@/app/pages/Maintenance';
 import ComingSoon from '@/app/pages/ComingSoon';
 import Restricted from '@/app/pages/Restricted';
@@ -82,7 +81,6 @@ function App() {
     <>
       <Toaster position="top-right" />
       <InstallPrompt />
-      <CookieConsent />
 
       <Routes>
         <Route path="/" element={renderHomeContent()} />
