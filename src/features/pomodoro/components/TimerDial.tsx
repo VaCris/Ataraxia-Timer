@@ -38,7 +38,7 @@ export const TimerDial: React.FC<TimerDialProps> = memo(({ controller }) => {
     }, [timerState.timeLeft, timerState.initialTime]);
 
     return (
-        <div className="relative flex justify-center items-center w-[min(78vw,16rem)] h-[min(78vw,16rem)] xs:w-[17rem] xs:h-[17rem] sm:w-[18.5rem] sm:h-[18.5rem] md:w-[20rem] md:h-[20rem] lg:w-[20rem] lg:h-[20rem] xl:w-[22rem] xl:h-[22rem] 2xl:w-[27rem] 2xl:h-[27rem] 3xl:w-[30rem] 3xl:h-[30rem] shrink-0">
+        <div className="timer-dial">
             <svg className="drop-shadow-[0_0_22px_rgba(0,0,0,0.45)] w-full h-full -rotate-90 transform">
                 <circle
                     cx="50%"
@@ -67,7 +67,7 @@ export const TimerDial: React.FC<TimerDialProps> = memo(({ controller }) => {
             </svg>
 
             <div className="absolute flex flex-col items-center px-4 max-w-full">
-                <div className="flex items-center font-black text-white text-[clamp(3.5rem,17vw,4.4rem)] xs:text-[4.5rem] sm:text-[5rem] md:text-[5.4rem] lg:text-[5.6rem] xl:text-[6.2rem] 2xl:text-[7.4rem] 3xl:text-[8.4rem] italic leading-none tracking-tighter">
+                <div className="timer-digits flex items-center font-black text-white italic leading-none tracking-tighter">
                     {minutes}
                     <span
                         style={{ color: 'var(--color-accent)' }}
