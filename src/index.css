@@ -79,9 +79,15 @@
   }
 
   .mode-tabs {
-    @apply flex items-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-full max-w-full overflow-x-auto no-scrollbar;
+    @apply flex items-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-full max-w-full overflow-x-auto;
     gap: clamp(0.375rem, 1vw, 0.5rem);
     padding: clamp(0.375rem, 0.8vw, 0.5rem);
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .mode-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .mode-tab {
