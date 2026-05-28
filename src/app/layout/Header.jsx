@@ -68,8 +68,8 @@ const Header = ({ is24Hour = false, accentColor = '#e11d48', onOpenSidebar }) =>
   };
 
   return (
-    <header className="z-50 flex justify-between items-center gap-3 px-4 xs:px-5 sm:px-8 lg:px-8 xl:px-10 2xl:px-16 3xl:px-20 py-4 sm:py-5 lg:py-5 xl:py-6 2xl:py-10 w-full min-w-0">
-      <div className="flex items-center gap-3 sm:gap-5 lg:gap-8 2xl:gap-12 min-w-0">
+    <header className="app-header">
+      <div className="app-header-brand">
         <button
           type="button"
           onClick={onOpenSidebar}
@@ -81,16 +81,16 @@ const Header = ({ is24Hour = false, accentColor = '#e11d48', onOpenSidebar }) =>
 
         <div className="flex flex-col min-w-0">
           <div className="flex items-baseline gap-2 sm:gap-4 min-w-0">
-            <h1 className="font-black text-white text-xl xs:text-2xl sm:text-3xl lg:text-2xl xl:text-3xl 2xl:text-5xl italic uppercase leading-none tracking-tighter truncate">
+            <h1 className="app-header-title">
               ATARAXIA
             </h1>
 
             <div
-              className="hidden xs:block bg-accent/10 px-2 py-1 border border-accent/20 rounded-lg shrink-0"
+              className="app-header-badge"
               style={{ borderColor: `${accentColor}33` }}
             >
               <span
-                className="font-black text-[9px] sm:text-xs lg:text-[10px] xl:text-xs 2xl:text-lg uppercase leading-none tracking-widest"
+                className="app-header-badge-text"
                 style={{ color: accentColor }}
               >
                 BETA V2
@@ -99,34 +99,34 @@ const Header = ({ is24Hour = false, accentColor = '#e11d48', onOpenSidebar }) =>
           </div>
         </div>
 
-        <div className="hidden xl:flex items-center gap-3 2xl:gap-4 bg-white/5 shadow-xl backdrop-blur-2xl px-4 2xl:px-6 py-2.5 2xl:py-3 border border-white/5 rounded-2xl">
+        <div className="app-header-clock">
           <Clock
             size={15}
             style={{ color: accentColor }}
-            className="animate-pulse"
+            className="animate-pulse shrink-0"
             strokeWidth={3}
           />
 
-          <span className="font-black tabular-nums text-white/60 text-xs 2xl:text-2xl tracking-widest">
+          <span className="app-header-clock-text">
             {formatTime(currentTime)}
           </span>
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-2 xs:gap-3 sm:gap-4 2xl:gap-6 min-w-0 shrink-0">
+      <div className="app-header-actions">
         {isInstallable && (
           <button
             type="button"
             onClick={handleInstallClick}
-            className="flex justify-center items-center bg-accent/10 hover:bg-accent/20 shadow-glow px-0 sm:px-5 2xl:px-6 border border-accent/30 rounded-xl sm:rounded-2xl w-10 xs:w-11 sm:w-auto h-10 xs:h-11 sm:h-12 2xl:h-14 text-accent active:scale-95 transition-all"
+            className="app-header-install"
             style={{
               color: accentColor,
               borderColor: `${accentColor}4d`,
             }}
           >
-            <Download size={18} className="animate-bounce" />
+            <Download size={18} className="animate-bounce shrink-0" />
 
-            <span className="hidden sm:block ml-3 font-black text-[11px] 2xl:text-xl uppercase">
+            <span className="hidden sm:block ml-3 font-black text-[11px] 2xl:text-sm uppercase">
               Install
             </span>
           </button>
@@ -135,7 +135,7 @@ const Header = ({ is24Hour = false, accentColor = '#e11d48', onOpenSidebar }) =>
         <button
           type="button"
           onClick={requestPermission}
-          className={`flex justify-center items-center border rounded-xl sm:rounded-2xl w-10 xs:w-11 sm:w-12 2xl:w-14 h-10 xs:h-11 sm:h-12 2xl:h-14 transition-all active:scale-95 ${isGranted
+          className={`app-header-icon-button ${isGranted
               ? 'bg-accent/10 border-accent/30 text-accent shadow-glow'
               : 'bg-white/5 border-white/10 text-white/20'
             }`}
@@ -153,7 +153,7 @@ const Header = ({ is24Hour = false, accentColor = '#e11d48', onOpenSidebar }) =>
         </button>
 
         {authStatus === 'loading' ? (
-          <div className="flex justify-center items-center bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl w-10 xs:w-11 sm:w-12 2xl:w-14 h-10 xs:h-11 sm:h-12 2xl:h-14">
+          <div className="app-header-icon-button bg-white/5 border-white/10">
             <Loader2
               className="animate-spin"
               size={20}
@@ -161,18 +161,18 @@ const Header = ({ is24Hour = false, accentColor = '#e11d48', onOpenSidebar }) =>
             />
           </div>
         ) : profile ? (
-          <div className="flex items-center gap-2 sm:gap-3 bg-white/5 shadow-lg p-1.5 sm:py-2 sm:pr-2 sm:pl-5 2xl:sm:pl-8 border border-white/10 rounded-xl sm:rounded-2xl">
-            <div className="hidden md:flex flex-col items-end">
-              <div className="flex items-center gap-2">
+          <div className="app-header-profile">
+            <div className="hidden md:flex flex-col items-end min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
                 {profile.showIcon && (
                   <User
                     size={12}
-                    className="opacity-60"
+                    className="opacity-60 shrink-0"
                     style={{ color: accentColor }}
                   />
                 )}
 
-                <span className="font-black text-[10px] text-white sm:text-xs 2xl:text-xl uppercase leading-none tracking-widest">
+                <span className="font-black text-[10px] text-white sm:text-xs 2xl:text-sm uppercase leading-none tracking-widest truncate max-w-32 2xl:max-w-48">
                   {profile.text}
                 </span>
               </div>
@@ -189,7 +189,7 @@ const Header = ({ is24Hour = false, accentColor = '#e11d48', onOpenSidebar }) =>
             <button
               type="button"
               onClick={logout}
-              className="flex justify-center items-center bg-black/40 hover:bg-red-500/10 border border-white/5 rounded-lg sm:rounded-xl w-8 sm:w-10 2xl:w-11 h-8 sm:h-10 2xl:h-11 text-white/20 hover:text-red-500 transition-all"
+              className="flex justify-center items-center bg-black/40 hover:bg-red-500/10 border border-white/5 rounded-lg sm:rounded-xl w-8 sm:w-10 h-8 sm:h-10 text-white/20 hover:text-red-500 transition-all shrink-0"
             >
               <LogOut size={16} />
             </button>
@@ -198,7 +198,7 @@ const Header = ({ is24Hour = false, accentColor = '#e11d48', onOpenSidebar }) =>
           <button
             type="button"
             onClick={() => setIsAuthOpen(true)}
-            className="flex justify-center items-center bg-white/5 hover:bg-accent/10 shadow-xl border border-white/10 rounded-xl sm:rounded-2xl w-10 xs:w-11 sm:w-12 2xl:w-14 h-10 xs:h-11 sm:h-12 2xl:h-14 text-white/20 hover:text-accent transition-all"
+            className="app-header-icon-button bg-white/5 hover:bg-accent/10 shadow-xl border-white/10 text-white/20 hover:text-accent"
             style={{ '--hover-color': accentColor }}
           >
             <User size={21} className="hover:text-[var(--hover-color)]" />
