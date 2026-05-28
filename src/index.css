@@ -30,6 +30,16 @@
   }
 
   .dashboard-root {
+    --shell-x: clamp(1rem, 4vw, 2rem);
+    --shell-top: clamp(1rem, 3dvh, 1.5rem);
+    --shell-bottom: clamp(6.5rem, 12dvh, 8rem);
+    --layout-gap: clamp(1.5rem, 4vw, 3rem);
+    --panel-width: min(100%, 31rem);
+    --panel-height: min(66dvh, 38rem);
+    --panel-min-height: 31rem;
+    --dial-size: clamp(16rem, 78vw, 22rem);
+    --digit-size: clamp(3.5rem, 17vw, 4.7rem);
+
     @apply relative flex bg-[#030303] w-full min-h-dvh overflow-x-hidden overflow-y-auto text-white;
   }
 
@@ -37,13 +47,74 @@
     @apply z-10 relative flex flex-col flex-1 w-full min-w-0 min-h-dvh;
   }
 
+  .app-header {
+    @apply z-50 flex justify-between items-center w-full min-w-0;
+    gap: clamp(0.75rem, 1.6vw, 1.5rem);
+    padding: var(--shell-top) var(--shell-x) clamp(0.75rem, 2dvh, 1.25rem);
+  }
+
+  .app-header-brand {
+    @apply flex items-center min-w-0;
+    gap: clamp(0.75rem, 1.8vw, 1.6rem);
+  }
+
+  .app-header-title {
+    @apply font-black text-white italic uppercase leading-none tracking-tighter truncate;
+    font-size: clamp(1.25rem, 2vw, 2rem);
+  }
+
+  .app-header-badge {
+    @apply hidden xs:block bg-accent/10 px-2 py-1 border border-accent/20 rounded-lg shrink-0;
+  }
+
+  .app-header-badge-text {
+    @apply font-black uppercase leading-none tracking-widest;
+    font-size: clamp(0.56rem, 0.75vw, 0.8rem);
+  }
+
+  .app-header-clock {
+    @apply hidden xl:flex items-center bg-white/5 shadow-xl backdrop-blur-2xl border border-white/5 rounded-2xl;
+    gap: clamp(0.65rem, 0.9vw, 1rem);
+    padding: clamp(0.6rem, 0.8vw, 0.8rem) clamp(1rem, 1.4vw, 1.5rem);
+  }
+
+  .app-header-clock-text {
+    @apply font-black tabular-nums text-white/60 tracking-widest;
+    font-size: clamp(0.8rem, 1vw, 1.25rem);
+  }
+
+  .app-header-actions {
+    @apply flex items-center justify-end min-w-0 shrink-0;
+    gap: clamp(0.5rem, 1vw, 1rem);
+  }
+
+  .app-header-icon-button {
+    @apply flex justify-center items-center border rounded-xl sm:rounded-2xl transition-all active:scale-95 shrink-0;
+    width: clamp(2.5rem, 3.1vw, 3.5rem);
+    height: clamp(2.5rem, 3.1vw, 3.5rem);
+  }
+
+  .app-header-install {
+    @apply flex justify-center items-center bg-accent/10 hover:bg-accent/20 shadow-glow border border-accent/30 rounded-xl sm:rounded-2xl text-accent active:scale-95 transition-all shrink-0;
+    width: clamp(2.5rem, 3.1vw, 3.5rem);
+    height: clamp(2.5rem, 3.1vw, 3.5rem);
+    padding-inline: 0;
+  }
+
+  .app-header-profile {
+    @apply flex items-center bg-white/5 shadow-lg border border-white/10 rounded-xl sm:rounded-2xl min-w-0 shrink-0;
+    gap: clamp(0.5rem, 0.8vw, 0.75rem);
+    padding: 0.375rem;
+  }
+
   .dashboard-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: clamp(1.5rem, 4vw, 3rem);
+    gap: var(--layout-gap);
     flex: 1;
+    min-width: 0;
     min-height: 0;
-    padding: 0 clamp(1rem, 4vw, 2rem) clamp(7rem, 12dvh, 8rem);
+    padding: 0 var(--shell-x) var(--shell-bottom);
   }
 
   .dashboard-timer-zone {
@@ -52,20 +123,21 @@
   }
 
   .timer-stack {
-    @apply flex flex-col items-center w-full;
+    @apply flex flex-col items-center w-full min-w-0;
     gap: clamp(1rem, 2.4dvh, 1.65rem);
     max-width: min(100%, 58rem);
   }
 
   .timer-dial {
-    --dial-size: clamp(16rem, 78vw, 22rem);
     @apply relative flex justify-center items-center shrink-0;
     width: var(--dial-size);
     height: var(--dial-size);
+    max-width: calc(100vw - (var(--shell-x) * 2));
+    max-height: calc(100dvh - 16rem);
   }
 
   .timer-digits {
-    font-size: clamp(3.5rem, 17vw, 4.7rem);
+    font-size: var(--digit-size);
   }
 
   .task-panel-zone {
@@ -73,9 +145,10 @@
   }
 
   .task-panel-shell {
-    width: min(100%, 31rem);
-    height: min(66dvh, 38rem);
-    min-height: 31rem;
+    width: var(--panel-width);
+    height: var(--panel-height);
+    min-height: var(--panel-min-height);
+    max-width: 100%;
   }
 
   .mode-tabs {
@@ -120,8 +193,55 @@
   }
 }
 
+@media (min-width: 640px) {
+  .app-header-install {
+    width: auto;
+    padding-inline: clamp(1.25rem, 1.6vw, 1.75rem);
+  }
+
+  .app-header-profile {
+    padding: 0.5rem 0.5rem 0.5rem clamp(1.1rem, 1.6vw, 2rem);
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-root {
+    --shell-x: clamp(0.875rem, 4vw, 1.25rem);
+    --dial-size: min(78vw, 20rem);
+    --digit-size: clamp(3.25rem, 16vw, 4.8rem);
+    --panel-height: auto;
+    --panel-min-height: 30rem;
+  }
+
+  .app-header-actions {
+    max-width: 48vw;
+  }
+
+  .app-header-title {
+    max-width: 46vw;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dashboard-root {
+    --dial-size: min(64vw, 30rem);
+    --digit-size: clamp(5rem, 10vw, 7rem);
+    --panel-width: min(100%, 34rem);
+    --panel-height: min(62dvh, 38rem);
+  }
+}
+
 @media (min-width: 1024px) {
   .dashboard-root {
+    --shell-x: clamp(1.5rem, 2.8vw, 4rem);
+    --shell-top: clamp(1rem, 2.4dvh, 1.6rem);
+    --layout-gap: clamp(1.5rem, 3.4vw, 4.5rem);
+    --panel-width: min(30vw, 33rem);
+    --panel-height: min(72dvh, 42rem);
+    --panel-min-height: 32rem;
+    --dial-size: min(40vw, 68dvh, 39rem);
+    --digit-size: clamp(6.3rem, 8vw, 9rem);
+
     @apply h-dvh overflow-hidden;
   }
 
@@ -130,79 +250,69 @@
   }
 
   .dashboard-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(24rem, min(30vw, 33rem));
+    grid-template-columns: minmax(0, 1fr) minmax(24rem, var(--panel-width));
     align-items: center;
-    gap: clamp(2rem, 4vw, 4.75rem);
-    padding-inline: clamp(1.75rem, 3vw, 4.5rem);
-    padding-bottom: clamp(1.25rem, 3dvh, 2.5rem);
   }
 
   .task-panel-zone {
     @apply justify-end items-center;
   }
-
-  .task-panel-shell {
-    width: min(30vw, 33rem);
-    min-width: 24rem;
-    height: min(72dvh, 42rem);
-    min-height: 32rem;
-  }
-
-  .timer-dial {
-    --dial-size: min(40vw, 68dvh, 39rem);
-  }
-
-  .timer-digits {
-    font-size: clamp(6.3rem, 8vw, 9rem);
-  }
 }
 
 @media (min-width: 1024px) and (max-height: 820px) {
-  .dashboard-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(22rem, min(29vw, 28rem));
-    gap: clamp(1.5rem, 3vw, 3rem);
-    padding-inline: clamp(1.25rem, 2.8vw, 3rem);
-    padding-bottom: clamp(1rem, 2dvh, 1.5rem);
+  .dashboard-root {
+    --shell-x: clamp(1.25rem, 2.5vw, 3rem);
+    --layout-gap: clamp(1.25rem, 2.8vw, 3rem);
+    --panel-width: min(29vw, 28rem);
+    --panel-height: min(72dvh, 36rem);
+    --panel-min-height: 29rem;
+    --dial-size: min(36vw, 64dvh, 34rem);
+    --digit-size: clamp(5.8rem, 7.4vw, 8rem);
   }
 
   .timer-stack {
     gap: clamp(0.9rem, 2dvh, 1.25rem);
   }
+}
 
-  .timer-dial {
-    --dial-size: min(36vw, 64dvh, 34rem);
-  }
-
-  .timer-digits {
-    font-size: clamp(5.8rem, 7.4vw, 8rem);
-  }
-
-  .task-panel-shell {
-    width: min(29vw, 28rem);
-    min-width: 22rem;
-    height: min(72dvh, 36rem);
-    min-height: 29rem;
+@media (min-width: 1280px) and (max-width: 1535px) and (min-height: 821px) {
+  .dashboard-root {
+    --panel-width: min(30vw, 31rem);
+    --dial-size: min(38vw, 64dvh, 36rem);
+    --digit-size: clamp(6.2rem, 7.4vw, 8.4rem);
   }
 }
 
 @media (min-width: 1536px) and (min-height: 900px) {
-  .dashboard-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(28rem, min(31vw, 35rem));
-    gap: clamp(3rem, 4.8vw, 5.5rem);
-    padding-inline: clamp(3rem, 4vw, 5rem);
-  }
-
-  .timer-dial {
+  .dashboard-root {
+    --shell-x: clamp(3rem, 4vw, 5rem);
+    --layout-gap: clamp(3rem, 4.8vw, 5.5rem);
+    --panel-width: min(31vw, 35rem);
+    --panel-height: min(72dvh, 44rem);
+    --panel-min-height: 34rem;
     --dial-size: min(34vw, 68dvh, 42rem);
+    --digit-size: clamp(8rem, 8.4vw, 10rem);
   }
 
-  .timer-digits {
-    font-size: clamp(8rem, 8.4vw, 10rem);
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(28rem, var(--panel-width));
+  }
+}
+
+@media (max-width: 380px) {
+  .dashboard-root {
+    --dial-size: min(74vw, 17rem);
+    --digit-size: clamp(3rem, 15vw, 4rem);
   }
 
-  .task-panel-shell {
-    width: min(31vw, 35rem);
-    height: min(72dvh, 44rem);
+  .timer-primary-action {
+    min-width: 8.25rem;
+    padding-inline: 1.25rem;
+  }
+
+  .timer-icon-action {
+    width: 2.45rem;
+    height: 2.45rem;
   }
 }
 
@@ -220,6 +330,21 @@ html, body {
 
 body {
   min-width: 320px;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe {
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 *,
