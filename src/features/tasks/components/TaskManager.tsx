@@ -68,26 +68,26 @@ const TaskManager = () => {
   };
 
   return (
-    <div className="flex flex-col bg-[#0a0a0a]/80 shadow-2xl backdrop-blur-xl p-3 xs:p-4 sm:p-5 border border-white/5 rounded-[1.75rem] sm:rounded-[2.25rem] h-full min-h-0 overflow-hidden">
-      <div className="flex justify-between items-center mb-4 px-1 shrink-0">
-        <h2 className="flex items-center gap-3 font-black text-white text-[11px] sm:text-sm uppercase tracking-[0.18em] sm:tracking-[0.2em] min-w-0">
+    <div className="flex flex-col bg-[#0a0a0a]/80 shadow-2xl backdrop-blur-xl p-3 xs:p-4 lg:p-4 2xl:p-5 border border-white/5 rounded-[1.75rem] sm:rounded-[2rem] 2xl:rounded-[2.25rem] h-full min-h-0 overflow-hidden">
+      <div className="flex justify-between items-center mb-3 2xl:mb-4 px-1 shrink-0">
+        <h2 className="flex items-center gap-2.5 2xl:gap-3 font-black text-white text-[11px] 2xl:text-sm uppercase tracking-[0.18em] sm:tracking-[0.2em] min-w-0">
           <span className="bg-[#00ffd5] shadow-[0_0_10px_#00ffd5] rounded-full w-2 h-2 shrink-0" />
           <span className="truncate">Mission Log</span>
         </h2>
 
         <Settings2
-          size={17}
+          size={16}
           className="text-white/20 hover:text-white transition-colors cursor-pointer shrink-0"
         />
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-2.5 mb-4 sm:mb-5 px-1 shrink-0">
+      <form onSubmit={handleSubmit} className="space-y-2 mb-3 2xl:mb-5 px-1 shrink-0">
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="What's the next objective?"
-          className="bg-black/40 shadow-inner px-4 py-3.5 border border-white/5 focus:border-[#00ffd5]/30 rounded-2xl focus:outline-none w-full text-white placeholder:text-white/10 text-sm"
+          className="bg-black/40 shadow-inner px-4 py-3 2xl:py-3.5 border border-white/5 focus:border-[#00ffd5]/30 rounded-2xl focus:outline-none w-full text-white placeholder:text-white/10 text-sm"
           maxLength={40}
         />
 
@@ -98,13 +98,13 @@ const TaskManager = () => {
           setTagColor={setTagColor}
         />
 
-        <div className="flex items-center gap-2.5">
-          <div className="flex flex-1 justify-between items-center bg-black/40 px-3 xs:px-4 py-2.5 border border-white/5 rounded-2xl min-w-0">
+        <div className="flex items-center gap-2">
+          <div className="flex flex-1 justify-between items-center bg-black/40 px-3 py-2 2xl:py-2.5 border border-white/5 rounded-2xl min-w-0">
             <span className="font-black text-[8px] xs:text-[9px] text-white/20 uppercase tracking-widest truncate">
               Est. Pomos
             </span>
 
-            <div className="flex items-center gap-2 xs:gap-3 font-bold text-white shrink-0">
+            <div className="flex items-center gap-2 font-bold text-white shrink-0">
               <button
                 type="button"
                 onClick={() => setEst(Math.max(1, est - 1))}
@@ -128,18 +128,18 @@ const TaskManager = () => {
           <button
             type="submit"
             disabled={loading}
-            className="bg-white hover:bg-[#00ffd5] disabled:opacity-60 p-3.5 rounded-2xl text-black active:scale-95 transition-all shrink-0"
+            className="bg-white hover:bg-[#00ffd5] disabled:opacity-60 p-3 2xl:p-3.5 rounded-2xl text-black active:scale-95 transition-all shrink-0"
           >
             {loading ? (
-              <Loader2 className="animate-spin" size={22} />
+              <Loader2 className="animate-spin" size={21} />
             ) : (
-              <Plus size={22} strokeWidth={3} />
+              <Plus size={21} strokeWidth={3} />
             )}
           </button>
         </div>
       </form>
 
-      <div className="flex-1 space-y-2.5 px-1 overflow-y-auto custom-scrollbar min-h-0">
+      <div className="flex-1 space-y-2 px-1 overflow-y-auto custom-scrollbar min-h-0">
         {tasks.length === 0 && !loading ? (
           <EmptyTasks />
         ) : (
@@ -154,22 +154,22 @@ const TaskManager = () => {
             return (
               <div
                 key={task.id}
-                className={`group flex items-center justify-between gap-2 px-3 xs:px-4 py-3.5 border rounded-2xl transition-all ${
+                className={`group flex items-center justify-between gap-2 px-3 py-3 2xl:px-4 2xl:py-3.5 border rounded-2xl transition-all ${
                   task.completed
                     ? 'bg-black/20 border-white/5 opacity-40'
                     : 'bg-surface/40 border-white/5 hover:border-white/10'
                 }`}
               >
-                <div className="flex flex-1 items-center gap-3 min-w-0">
+                <div className="flex flex-1 items-center gap-2.5 2xl:gap-3 min-w-0">
                   <button
                     type="button"
                     onClick={() => toggleTask(task)}
                     className="shrink-0"
                   >
                     {task.completed ? (
-                      <CheckCircle2 className="text-[#00ffd5]" size={21} />
+                      <CheckCircle2 className="text-[#00ffd5]" size={20} />
                     ) : (
-                      <Circle className="text-white/20" size={21} />
+                      <Circle className="text-white/20" size={20} />
                     )}
                   </button>
 
@@ -207,7 +207,7 @@ const TaskManager = () => {
                       </div>
                     ) : (
                       <p
-                        className={`font-bold text-sm truncate cursor-text ${
+                        className={`font-bold text-[13px] 2xl:text-sm truncate cursor-text ${
                           task.completed
                             ? 'line-through text-white/20'
                             : 'text-white/80'
@@ -243,7 +243,7 @@ const TaskManager = () => {
                       onClick={() => handleStartEdit(task)}
                       className="p-1.5 text-white/20 sm:text-white/15 hover:text-white"
                     >
-                      <Edit2 size={15} />
+                      <Edit2 size={14} />
                     </button>
                   )}
 
@@ -252,7 +252,7 @@ const TaskManager = () => {
                     onClick={() => removeTask(task.id)}
                     className="p-1.5 text-white/20 sm:text-white/15 hover:text-red-500"
                   >
-                    <Trash2 size={15} />
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>
