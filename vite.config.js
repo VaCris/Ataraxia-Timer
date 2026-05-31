@@ -19,25 +19,39 @@ export default defineConfig({
         navigateFallback: 'index.html'
       },
       includeAssets: [
-        'vite.svg',
+        'pwa-192x192.svg',
         'pwa-192x192.png',
         'pwa-512x512.png',
         'screenshot-desktop.png',
-        'screenshot-mobile.png'
+        'screenshot-mobile.png',
+        'robots.txt',
+        'sitemap.xml'
       ],
       manifest: {
         id: '/',
         name: 'Ataraxia Timer',
         short_name: 'Ataraxia',
+        description: 'A clean Pomodoro focus timer and task manager for deep work, study sessions, breaks, offline use and distraction-free productivity.',
+        lang: 'en',
+        dir: 'ltr',
+        start_url: '/',
+        scope: '/',
         theme_color: '#0a0a0a',
         background_color: '#0a0a0a',
         display: 'standalone',
         orientation: 'portrait',
+        categories: ['productivity', 'utilities', 'education'],
         icons: [
           {
             src: 'pwa-192x192.png',
             type: 'image/png',
             sizes: '192x192',
+            purpose: 'any'
+          },
+          {
+            src: 'pwa-512x512.png',
+            type: 'image/png',
+            sizes: '512x512',
             purpose: 'any'
           },
           {
@@ -53,20 +67,21 @@ export default defineConfig({
             sizes: '1280x720',
             type: 'image/png',
             form_factor: 'wide',
-            label: 'Ataraxia Desktop'
+            label: 'Ataraxia Timer desktop focus dashboard'
           },
           {
             src: 'screenshot-mobile.png',
             sizes: '720x1280',
             type: 'image/png',
-            label: 'Ataraxia Mobile'
+            form_factor: 'narrow',
+            label: 'Ataraxia Timer mobile Pomodoro dashboard'
           }
         ]
       },
       workbox: {
         skipWaiting: true,
         clientsClaim: true,
-        globPatterns: ['**/*.{js,css,html,png,svg,mp3}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,mp3,xml,txt,webmanifest}'],
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
