@@ -5,8 +5,10 @@ import { mapSettings } from '../mappers/mapSettings'
 import {
     Mode,
     resetTimer,
-    toggleTimer,
+    pauseTimer,
+    resumeTimer,
     updateDurations,
+    startTimer,
 } from '../store/timerSlice'
 import { useTimer } from './useTimer'
 
@@ -43,12 +45,15 @@ export const usePomodoroController = () => {
     )
 
     useEffect(() => {
-        if (timerState.isActive) return
+        if (timerState.isActive || timerState.isPaused) return
 
         const duration = getDurationForMode(timerState.mode)
         const seconds = duration * 60
 
-        if (timerState.initialTime !== seconds || timerState.timeLeft !== seconds) {
+        if (
+            timerState.initialTime !== seconds &&
+            timerState.timeLeft === timerState.initialTime
+        ) {
             dispatch(updateDurations({ mode: timerState.mode, duration }))
         }
     }, [
@@ -56,6 +61,7 @@ export const usePomodoroController = () => {
         getDurationForMode,
         timerState.initialTime,
         timerState.isActive,
+        timerState.isPaused,
         timerState.mode,
         timerState.timeLeft,
     ])
@@ -91,7 +97,7 @@ export const usePomodoroController = () => {
 
         if (shouldAutoStart) {
             window.setTimeout(() => {
-                dispatch(toggleTimer())
+                dispatch(startTimer())
             }, 1200)
         }
     }, [settings, timerState.mode, currentRound, dispatch])
@@ -107,8 +113,18 @@ export const usePomodoroController = () => {
     )
 
     const toggleSession = useCallback(() => {
-        dispatch(toggleTimer())
-    }, [dispatch])
+        if (timerState.isActive) {
+            dispatch(pauseTimer())
+            return
+        }
+
+        if (timerState.isPaused) {
+            dispatch(resumeTimer())
+            return
+        }
+
+        dispatch(startTimer())
+    }, [dispatch, timerState.isActive, timerState.isPaused])
 
     const resetSession = useCallback(() => {
         const duration = getDurationForMode(timerState.mode)
@@ -120,6 +136,7 @@ export const usePomodoroController = () => {
         isActive: timerState.isActive,
         timeLeft: timerState.timeLeft,
         initialTime: timerState.initialTime,
+        isPaused: timerState.isPaused,
         currentRound,
         handleTimerComplete,
         handleModeChange,

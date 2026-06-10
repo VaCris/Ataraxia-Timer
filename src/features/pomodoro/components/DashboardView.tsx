@@ -33,7 +33,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isSupportOpen, setIsSupportOpen] = useState<boolean>(false);
   const [isMusicOpen, setIsMusicOpen] = useState<boolean>(false);
-
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const uiSettings = useUISettings();
   const pomodoroController = usePomodoroController();
   const { pipWindow, togglePip } = usePipController();
@@ -75,16 +75,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <Sidebar
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenSupport={() => setIsSupportOpen(true)}
-        onOpenGames={onOpenGames}
-        onOpenStats={onOpenStats}
-        onOpenAchievements={onOpenAchievements}
         onOpenMusic={toggleMusic}
         isMusicOpen={isMusicOpen}
         customShortcuts={uiSettings.customShortcuts}
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
       />
 
       <main className="z-10 relative flex flex-col flex-1 lg:ml-24 pb-20 lg:pb-0">
-        <Header />
+        <Header
+          onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+        />
 
         <div className="flex flex-col flex-1 justify-center items-center gap-10 md:gap-14 mx-auto px-6 pt-8 w-full max-w-4xl">
           <TimerDial controller={pomodoroController} />
@@ -112,7 +113,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               ) : (
                 <>
                   <Play size={20} fill="currentColor" />
-                  <span>Start</span>
+                  <span>{timerState.isPaused ? 'Resume' : 'Start'}</span>
                 </>
               )}
             </button>

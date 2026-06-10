@@ -5,6 +5,7 @@ export type Mode = 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK'
 interface TimerState {
     mode: Mode
     isActive: boolean
+    isPaused: boolean
     timeLeft: number
     initialTime: number
     toast: { isOpen: boolean; message: string }
@@ -15,6 +16,7 @@ const DEFAULT_FOCUS_TIME = 25 * 60
 const initialState: TimerState = {
     mode: 'FOCUS',
     isActive: false,
+    isPaused: false,
     timeLeft: DEFAULT_FOCUS_TIME,
     initialTime: DEFAULT_FOCUS_TIME,
     toast: { isOpen: false, message: '' },
@@ -30,10 +32,22 @@ const slice = createSlice({
 
         startTimer: (state) => {
             state.isActive = true
+            state.isPaused = false
+        },
+        pauseTimer: (state) => {
+            state.isActive = false
+            state.isPaused = true
         },
 
+        resumeTimer: (state) => {
+            if (state.timeLeft > 0) {
+                state.isActive = true
+                state.isPaused = false
+            }
+        },
         stopTimer: (state) => {
             state.isActive = false
+            state.isPaused = false
         },
 
         toggleTimer: (state) => {
@@ -42,6 +56,7 @@ const slice = createSlice({
 
         resetTimer: (state, action: PayloadAction<number>) => {
             state.isActive = false
+            state.isPaused = false
             state.initialTime = action.payload
             state.timeLeft = action.payload
         },
@@ -60,6 +75,7 @@ const slice = createSlice({
 
             state.mode = action.payload.mode
             state.isActive = false
+            state.isPaused = false
             state.initialTime = seconds
             state.timeLeft = seconds
         },
@@ -78,7 +94,8 @@ export const {
     setMode,
     startTimer,
     stopTimer,
-    toggleTimer,
+    pauseTimer,
+    resumeTimer,
     resetTimer,
     tick,
     updateDurations,

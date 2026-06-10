@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { RootState } from '@/store'
-import { tick, stopTimer } from '@/features/pomodoro/store/timerSlice'
+import { tick, pauseTimer } from '@/features/pomodoro/store/timerSlice'
 
 export const useTimer = (onComplete?: () => void) => {
   const timer = useSelector((state: RootState) => state.timer)
@@ -11,7 +11,7 @@ export const useTimer = (onComplete?: () => void) => {
     if (!timer.isActive) return
 
     if (timer.timeLeft <= 0) {
-      dispatch(stopTimer())
+      dispatch(pauseTimer())
 
       if (onComplete) {
         onComplete()

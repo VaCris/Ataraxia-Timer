@@ -17,7 +17,7 @@ import { useInstallPrompt } from '@/shared/hooks/useInstallPrompt';
 
 const AuthModal = React.lazy(() => import('@/features/auth/components/AuthModal'));
 
-const Header = ({ is24Hour = false, accentColor = '#e11d48', onOpenSidebar }) => {
+const Header = ({ is24Hour = false, accentColor = '#e11d48', onOpenSidebar = () => { }, }) => {
   const dispatch = useDispatch();
 
   const { permission, requestPermission } = useNotifications();
@@ -136,8 +136,8 @@ const Header = ({ is24Hour = false, accentColor = '#e11d48', onOpenSidebar }) =>
           type="button"
           onClick={requestPermission}
           className={`app-header-icon-button ${isGranted
-              ? 'bg-accent/10 border-accent/30 text-accent shadow-glow'
-              : 'bg-white/5 border-white/10 text-white/20'
+            ? 'bg-accent/10 border-accent/30 text-accent shadow-glow'
+            : 'bg-white/5 border-white/10 text-white/20'
             }`}
           style={
             isGranted
