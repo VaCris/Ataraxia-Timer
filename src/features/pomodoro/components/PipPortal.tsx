@@ -1,5 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { Play, Pause, RotateCcw } from 'lucide-react';
 
 export interface PipPortalProps {
     pipWindow: Window;
@@ -9,7 +10,10 @@ export interface PipPortalProps {
     timeLeft: number;
     initialTime: number;
     isActive: boolean;
+    isPaused: boolean;
     accentColor: string;
+    toggleSession: () => void;
+    resetSession: () => void;
 }
 
 export const PipPortal: React.FC<PipPortalProps> = ({
@@ -20,7 +24,9 @@ export const PipPortal: React.FC<PipPortalProps> = ({
     timeLeft,
     initialTime,
     isActive,
-    accentColor
+    accentColor,
+    toggleSession,
+    resetSession
 }) => {
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
@@ -111,7 +117,64 @@ export const PipPortal: React.FC<PipPortalProps> = ({
             </div>
 
             <div style={{
-                fontSize: '2.5vw',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                marginBottom: '2vh'
+            }}>
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', paddingRight: '4vw' }}>
+                    <button
+                        onClick={resetSession}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'rgba(255,255,255,0.5)',
+                            cursor: 'pointer',
+                            padding: '2vw',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'color 0.2s'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.color = '#ffffff'}
+                        onMouseOut={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
+                    >
+                        <RotateCcw size={24} strokeWidth={2.5} />
+                    </button>
+                </div>
+
+                <button
+                    onClick={toggleSession}
+                    style={{
+                        background: accentColor,
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '14vw',
+                        height: '14vw',
+                        minWidth: '64px',
+                        minHeight: '64px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#ffffff',
+                        cursor: 'pointer',
+                        boxShadow: `0 0 25px ${accentColor}80`,
+                        flexShrink: 0
+                    }}
+                >
+                    {isActive ? (
+                        <Pause size={28} fill="currentColor" />
+                    ) : (
+                        <Play size={28} fill="currentColor" style={{ marginLeft: '4px' }} />
+                    )}
+                </button>
+
+                <div style={{ flex: 1 }} />
+            </div>
+
+            <div style={{
+                fontSize: '2vw',
                 fontWeight: '900',
                 color: 'rgba(255,255,255,0.1)',
                 letterSpacing: '0.8em',

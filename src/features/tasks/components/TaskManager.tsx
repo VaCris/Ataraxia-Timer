@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useTasks } from '@/features/tasks/hooks/useTasks';
 import { useTags } from '@/features/tags/hooks/useTags';
-import TagInput from '../../tags/components/TagInput';
 import EmptyTasks from './EmptyTasks';
+import TagSelector from '@/features/tags/components/TagSelector';
 import { TaskResponse } from '@/features/tasks/types/task.dto';
 import {
   Plus,
@@ -19,12 +19,10 @@ import {
 
 const TaskManager = () => {
   const { tasks, loading, addTask, toggleTask, removeTask, updateTask } = useTasks();
-  const { tags, addTag, updateTag } = useTags();
-
+  const { tags } = useTags();
+  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [est, setEst] = useState(1);
-  const [tagName, setTagName] = useState('General');
-  const [tagColor, setTagColor] = useState('#e11d48');
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -34,16 +32,9 @@ const TaskManager = () => {
 
     if (name.trim().length < 2) return;
 
-    const cleanTagName = tagName.trim() || 'General';
-    const existingTag = tags.find(
-      (tag) => tag.name.toLowerCase() === cleanTagName.toLowerCase()
-    );
-
-    if (!existingTag) {
-      await addTag({ name: cleanTagName, color: tagColor });
-    } else if (existingTag.color !== tagColor) {
-      await updateTag(existingTag.id, { color: tagColor });
-    }
+    // Buscamos la categoría seleccionada para extraer su nombre string
+    const selectedTag = tags.find((tag) => tag.id === selectedTagId);
+    const cleanTagName = selectedTag ? selectedTag.name : '';
 
     await addTask({
       title: name.trim(),
@@ -52,6 +43,7 @@ const TaskManager = () => {
 
     setName('');
     setEst(1);
+    setSelectedTagId(null);
   };
 
   const handleStartEdit = (task: TaskResponse) => {
@@ -91,11 +83,10 @@ const TaskManager = () => {
           maxLength={40}
         />
 
-        <TagInput
-          tagName={tagName}
-          setTagName={setTagName}
-          tagColor={tagColor}
-          setTagColor={setTagColor}
+        {/* Reemplazo de TagInput por tu nuevo TagSelector */}
+        <TagSelector
+          selectedTagId={selectedTagId}
+          onSelectTag={setSelectedTagId}
         />
 
         <div className="flex items-center gap-2">
@@ -154,11 +145,10 @@ const TaskManager = () => {
             return (
               <div
                 key={task.id}
-                className={`group flex items-center justify-between gap-2 px-3 py-3 2xl:px-4 2xl:py-3.5 border rounded-2xl transition-all ${
-                  task.completed
-                    ? 'bg-black/20 border-white/5 opacity-40'
-                    : 'bg-surface/40 border-white/5 hover:border-white/10'
-                }`}
+                className={`group flex items-center justify-between gap-2 px-3 py-3 2xl:px-4 2xl:py-3.5 border rounded-2xl transition-all ${task.completed
+                  ? 'bg-black/20 border-white/5 opacity-40'
+                  : 'bg-surface/40 border-white/5 hover:border-white/10'
+                  }`}
               >
                 <div className="flex flex-1 items-center gap-2.5 2xl:gap-3 min-w-0">
                   <button
@@ -207,11 +197,10 @@ const TaskManager = () => {
                       </div>
                     ) : (
                       <p
-                        className={`font-bold text-[13px] 2xl:text-sm truncate cursor-text ${
-                          task.completed
-                            ? 'line-through text-white/20'
-                            : 'text-white/80'
-                        }`}
+                        className={`font-bold text-[13px] 2xl:text-sm truncate cursor-text ${task.completed
+                          ? 'line-through text-white/20'
+                          : 'text-white/80'
+                          }`}
                         onDoubleClick={() => handleStartEdit(task)}
                       >
                         {task.title}

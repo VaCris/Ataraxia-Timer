@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { RootState } from '@/store'
+import { db } from '@/infrastructure/database/db'
 import { mapSettings } from '../mappers/mapSettings'
 import {
     Mode,
@@ -9,6 +10,7 @@ import {
     resumeTimer,
     updateDurations,
     startTimer,
+    restoreSession
 } from '../store/timerSlice'
 import { useTimer } from './useTimer'
 
@@ -20,17 +22,69 @@ export const usePomodoroController = () => {
 
     const settings = useMemo(() => mapSettings(apiSettings), [apiSettings])
 
-    const [currentRound, setCurrentRound] = useState<number>(() => {
-        const saved = localStorage.getItem('ataraxia_currentRound')
-        return saved ? Number(saved) : 1
-    })
+    const [currentRound, setCurrentRound] = useState<number>(1)
+    const [isSessionLoaded, setIsSessionLoaded] = useState(false)
 
     const [showModeModal, setShowModeModal] = useState(false)
     const [pendingMode, setPendingMode] = useState<Mode | null>(null)
 
     useEffect(() => {
+        const loadSession = async () => {
+            try {
+                const savedSession = await db.timerSessions.get('current_session')
+                if (savedSession) {
+                    setCurrentRound(savedSession.currentRound)
+                    dispatch(restoreSession({
+                        mode: savedSession.mode,
+                        timeLeft: savedSession.timeLeft,
+                        initialTime: savedSession.initialTime,
+                        isActive: savedSession.isActive,
+                        isPaused: savedSession.isPaused
+                    }))
+                } else {
+                    const savedRound = localStorage.getItem('ataraxia_currentRound')
+                    if (savedRound) setCurrentRound(Number(savedRound))
+                }
+            } catch (error) {
+                console.error("Error loading offline session:", error)
+            } finally {
+                setIsSessionLoaded(true)
+            }
+        }
+        loadSession()
+    }, [dispatch])
+
+    useEffect(() => {
+        if (!isSessionLoaded) return;
+
         localStorage.setItem('ataraxia_currentRound', currentRound.toString())
-    }, [currentRound])
+
+        const saveTimer = setTimeout(async () => {
+            try {
+                await db.timerSessions.put({
+                    id: 'current_session',
+                    mode: timerState.mode,
+                    timeLeft: timerState.timeLeft,
+                    initialTime: timerState.initialTime,
+                    isActive: timerState.isActive,
+                    isPaused: timerState.isPaused,
+                    currentRound: currentRound,
+                    lastUpdatedAt: Date.now()
+                })
+            } catch (error) {
+                console.error("Error saving offline session:", error)
+            }
+        }, 1000)
+
+        return () => clearTimeout(saveTimer)
+    }, [
+        timerState.mode,
+        timerState.timeLeft,
+        timerState.isActive,
+        timerState.isPaused,
+        currentRound,
+        isSessionLoaded
+    ])
 
     const getDurationForMode = useCallback(
         (mode: Mode): number => {
@@ -48,7 +102,7 @@ export const usePomodoroController = () => {
     )
 
     useEffect(() => {
-        if (timerState.isActive || timerState.isPaused) return
+        if (timerState.isActive || timerState.isPaused || !isSessionLoaded) return
 
         const duration = getDurationForMode(timerState.mode)
         const seconds = duration * 60
@@ -67,6 +121,7 @@ export const usePomodoroController = () => {
         timerState.isPaused,
         timerState.mode,
         timerState.timeLeft,
+        isSessionLoaded
     ])
 
     const handleTimerComplete = useCallback(() => {

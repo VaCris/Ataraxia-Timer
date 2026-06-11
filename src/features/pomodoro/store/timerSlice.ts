@@ -61,6 +61,23 @@ const slice = createSlice({
             state.timeLeft = action.payload
         },
 
+        restoreSession: (
+            state,
+            action: PayloadAction<{
+                mode: Mode;
+                timeLeft: number;
+                initialTime: number;
+                isActive: boolean;
+                isPaused: boolean;
+            }>
+        ) => {
+            state.mode = action.payload.mode;
+            state.timeLeft = action.payload.timeLeft;
+            state.initialTime = action.payload.initialTime;
+            state.isActive = false;
+            state.isPaused = action.payload.isActive || action.payload.isPaused;
+        },
+
         tick: (state) => {
             if (state.timeLeft > 0) {
                 state.timeLeft -= 1
@@ -97,6 +114,7 @@ export const {
     pauseTimer,
     resumeTimer,
     resetTimer,
+    restoreSession,
     tick,
     updateDurations,
     showToast,

@@ -177,6 +177,9 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                     timeLeft={pomodoro.timeLeft}
                     initialTime={pomodoro.initialTime}
                     isActive={pomodoro.isActive}
+                    isPaused={pomodoro.isPaused}
+                    toggleSession={pomodoro.toggleSession}
+                    resetSession={pomodoro.resetSession}
                     accentColor={uiSettings.accentColor}
                 />
             )}
@@ -196,7 +199,6 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                     />
                 )}
 
-                {/* NUEVO MODAL DE CONFIRMACIÓN DE MODO */}
                 {pomodoro.showModeModal && (
                     <motion.div
                         initial={{ opacity: 0 }}

@@ -1,7 +1,9 @@
 import { call, put, takeLatest, all } from 'redux-saga/effects';
-import { tagsService } from '@/features/tags/api/tags.api';
-import { TagResponse } from '@/features/tags/types/tag.dto';
 import { toast } from 'react-hot-toast';
+import { db } from '@/infrastructure/database/db';
+import { tagsLocalRepository } from '../repositories/tags.local.repository';
+import { TagResponse } from '@/features/tags/types/tag.dto';
+import { v4 as uuidv4 } from 'uuid';
 import {
     fetchTagsRequest, fetchTagsSuccess, fetchTagsFailure,
     addTagRequest, addTagSuccess,
@@ -12,8 +14,8 @@ import {
 
 function* handleFetchTags() {
     try {
-        const data: TagResponse[] = yield call(tagsService.getAll);
-        yield put(fetchTagsSuccess(data));
+        const localTags: TagResponse[] = yield call(tagsLocalRepository.getAll);
+        yield put(fetchTagsSuccess(localTags));
     } catch (e: any) {
         yield put(fetchTagsFailure(e.message));
     }
@@ -21,9 +23,31 @@ function* handleFetchTags() {
 
 function* handleAddTag(action: any) {
     try {
-        const newTag: TagResponse = yield call(tagsService.create, action.payload);
+        const tempId = `local-tag-${Date.now()}`;
+        const newTag: TagResponse = {
+            id: tempId,
+            ...action.payload,
+        };
+
+        yield call(tagsLocalRepository.create, {
+            ...newTag,
+            syncStatus: 'pending_create',
+            updatedAt: Date.now()
+        });
+
         yield put(addTagSuccess(newTag));
-        toast.success(`Category "${newTag.name}" ready`);
+        toast.success(`Category ready`);
+
+        yield call([db.syncQueue, db.syncQueue.put], {
+            id: uuidv4(),
+            method: 'POST',
+            url: '/tags',
+            entity: 'tags',
+            entityId: tempId,
+            data: action.payload,
+            retries: 0,
+            ts: Date.now()
+        });
     } catch (e: any) {
         yield put(tagsOperationFailure(e.message));
         toast.error('Failed to create category');
@@ -32,9 +56,26 @@ function* handleAddTag(action: any) {
 
 function* handleUpdateTag(action: any) {
     try {
-        const updated: TagResponse = yield call(tagsService.update, action.payload.id, action.payload.data);
-        yield put(updateTagSuccess(updated));
+        const { id, data } = action.payload;
+
+        yield call(tagsLocalRepository.update, id, {
+            ...data,
+            syncStatus: 'pending_update'
+        });
+
+        yield put(updateTagSuccess({ id, ...data }));
         toast.success('Category updated');
+
+        yield call([db.syncQueue, db.syncQueue.put], {
+            id: uuidv4(),
+            method: 'PATCH',
+            url: `/tags/${id}`,
+            entity: 'tags',
+            entityId: id,
+            data: data,
+            retries: 0,
+            ts: Date.now()
+        });
     } catch (e: any) {
         yield put(tagsOperationFailure(e.message));
         toast.error('Update failed');
@@ -43,9 +84,20 @@ function* handleUpdateTag(action: any) {
 
 function* handleDeleteTag(action: any) {
     try {
-        yield call(tagsService.delete, action.payload);
-        yield put(deleteTagSuccess(action.payload));
+        const id = action.payload;
+        yield call(tagsLocalRepository.delete, id);
+        yield put(deleteTagSuccess(id));
         toast.success('Category removed');
+
+        yield call([db.syncQueue, db.syncQueue.put], {
+            id: uuidv4(),
+            method: 'DELETE',
+            url: `/tags/${id}`,
+            entity: 'tags',
+            entityId: id,
+            retries: 0,
+            ts: Date.now()
+        });
     } catch (e: any) {
         yield put(tagsOperationFailure(e.message));
         toast.error('Could not delete category');
