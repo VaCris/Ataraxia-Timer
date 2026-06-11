@@ -25,6 +25,9 @@ export const usePomodoroController = () => {
         return saved ? Number(saved) : 1
     })
 
+    const [showModeModal, setShowModeModal] = useState(false)
+    const [pendingMode, setPendingMode] = useState<Mode | null>(null)
+
     useEffect(() => {
         localStorage.setItem('ataraxia_currentRound', currentRound.toString())
     }, [currentRound])
@@ -105,12 +108,35 @@ export const usePomodoroController = () => {
     useTimer(handleTimerComplete)
 
     const handleModeChange = useCallback(
-        (mode: Mode) => {
-            const duration = getDurationForMode(mode)
-            dispatch(updateDurations({ mode, duration }))
+        (newMode: Mode) => {
+            if (newMode === timerState.mode) return;
+
+            const isTimerIntact = !timerState.isActive && !timerState.isPaused && timerState.timeLeft === timerState.initialTime;
+
+            if (isTimerIntact) {
+                const duration = getDurationForMode(newMode);
+                dispatch(updateDurations({ mode: newMode, duration }));
+            } else {
+                setPendingMode(newMode);
+                setShowModeModal(true);
+            }
         },
-        [dispatch, getDurationForMode]
+        [dispatch, getDurationForMode, timerState.mode, timerState.isActive, timerState.isPaused, timerState.timeLeft, timerState.initialTime]
     )
+
+    const confirmModeChange = useCallback(() => {
+        if (pendingMode) {
+            const duration = getDurationForMode(pendingMode);
+            dispatch(updateDurations({ mode: pendingMode, duration }));
+        }
+        setShowModeModal(false);
+        setPendingMode(null);
+    }, [dispatch, getDurationForMode, pendingMode])
+
+    const cancelModeChange = useCallback(() => {
+        setShowModeModal(false);
+        setPendingMode(null);
+    }, [])
 
     const toggleSession = useCallback(() => {
         if (timerState.isActive) {
@@ -138,6 +164,9 @@ export const usePomodoroController = () => {
         initialTime: timerState.initialTime,
         isPaused: timerState.isPaused,
         currentRound,
+        showModeModal,
+        confirmModeChange,
+        cancelModeChange,
         handleTimerComplete,
         handleModeChange,
         toggleSession,

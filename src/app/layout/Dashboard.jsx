@@ -195,6 +195,41 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                         onClose={() => setIsSupportOpen(false)}
                     />
                 )}
+
+                {/* NUEVO MODAL DE CONFIRMACIÓN DE MODO */}
+                {pomodoro.showModeModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-[#1a1a1a] border border-white/10 p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center"
+                        >
+                            <h3 className="text-xl font-bold mb-2 text-white">Change mode?</h3>
+                            <p className="text-white/60 mb-6">Your current session will be reset.</p>
+
+                            <div className="flex gap-3 justify-center">
+                                <button
+                                    onClick={pomodoro.cancelModeChange}
+                                    className="flex-1 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors font-medium text-white/80"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={pomodoro.confirmModeChange}
+                                    className="flex-1 py-3 px-4 rounded-xl bg-accent hover:opacity-90 transition-opacity font-bold text-white shadow-[0_0_15px_rgba(var(--color-accent-rgb),0.3)]"
+                                >
+                                    Change Mode
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
             </AnimatePresence>
 
             <MusicWidget

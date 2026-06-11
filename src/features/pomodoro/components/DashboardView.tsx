@@ -168,6 +168,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             onClose={() => setIsSupportOpen(false)}
           />
         )}
+
+
       </AnimatePresence>
 
       <MusicWidget
