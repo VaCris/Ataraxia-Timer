@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTasks } from '@/features/tasks/hooks/useTasks';
 import { useTags } from '@/features/tags/hooks/useTags';
+import TagInput from '../../tags/components/TagInput';
 import EmptyTasks from './EmptyTasks';
 import TagSelector from '@/features/tags/components/TagSelector';
 import { TaskResponse } from '@/features/tasks/types/task.dto';
@@ -19,10 +20,14 @@ import {
 
 const TaskManager = () => {
   const { tasks, loading, addTask, toggleTask, removeTask, updateTask } = useTasks();
-  const { tags } = useTags();
+  const { tags, addTag, updateTag } = useTags();
+
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+
   const [name, setName] = useState('');
   const [est, setEst] = useState(1);
+  const [tagName, setTagName] = useState('General');
+  const [tagColor, setTagColor] = useState('#e11d48');
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -32,20 +37,36 @@ const TaskManager = () => {
 
     if (name.trim().length < 2) return;
 
-    // Buscamos la categoría seleccionada para extraer su nombre string
-    const selectedTag = tags.find((tag) => tag.id === selectedTagId);
-    const cleanTagName = selectedTag ? selectedTag.name : '';
+    let finalTagName = '';
+
+    if (selectedTagId) {
+      const selectedTag = tags.find((tag) => tag.id === selectedTagId);
+      if (selectedTag) {
+        finalTagName = selectedTag.name;
+      }
+    } else {
+      finalTagName = tagName.trim() || 'General';
+      const existingTag = tags.find(
+        (tag) => tag.name.toLowerCase() === finalTagName.toLowerCase()
+      );
+
+      if (!existingTag) {
+        await addTag({ name: finalTagName, color: tagColor });
+      } else if (existingTag.color !== tagColor) {
+        await updateTag(existingTag.id, { color: tagColor });
+      }
+    }
 
     await addTask({
       title: name.trim(),
-      tag: cleanTagName,
+      tag: finalTagName,
     });
 
     setName('');
     setEst(1);
     setSelectedTagId(null);
+    setTagName('General');
   };
-
   const handleStartEdit = (task: TaskResponse) => {
     setEditingId(task.id);
     setEditValue(task.title);
@@ -55,7 +76,6 @@ const TaskManager = () => {
     if (editValue.trim().length >= 2) {
       await updateTask(id, { title: editValue.trim() });
     }
-
     setEditingId(null);
   };
 
@@ -83,39 +103,21 @@ const TaskManager = () => {
           maxLength={40}
         />
 
-        {/* Reemplazo de TagInput por tu nuevo TagSelector */}
         <TagSelector
           selectedTagId={selectedTagId}
           onSelectTag={setSelectedTagId}
         />
 
+        {!selectedTagId && (
+          <TagInput
+            tagName={tagName}
+            setTagName={setTagName}
+            tagColor={tagColor}
+            setTagColor={setTagColor}
+          />
+        )}
+
         <div className="flex items-center gap-2">
-          <div className="flex flex-1 justify-between items-center bg-black/40 px-3 py-2 2xl:py-2.5 border border-white/5 rounded-2xl min-w-0">
-            <span className="font-black text-[8px] xs:text-[9px] text-white/20 uppercase tracking-widest truncate">
-              Est. Pomos
-            </span>
-
-            <div className="flex items-center gap-2 font-bold text-white shrink-0">
-              <button
-                type="button"
-                onClick={() => setEst(Math.max(1, est - 1))}
-                className="opacity-40 hover:opacity-100 px-1 transition-opacity"
-              >
-                -
-              </button>
-
-              <span className="w-4 text-sm text-center">{est}</span>
-
-              <button
-                type="button"
-                onClick={() => setEst(Math.min(10, est + 1))}
-                className="opacity-40 hover:opacity-100 px-1 transition-opacity"
-              >
-                +
-              </button>
-            </div>
-          </div>
-
           <button
             type="submit"
             disabled={loading}
