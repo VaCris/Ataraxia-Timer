@@ -7,14 +7,17 @@ import { CreateTaskDto, UpdateTaskDto } from '@/features/tasks/types/task.dto';
 export const useTasks = () => {
   const dispatch = useDispatch()
   const { items, loading, error } = useSelector((state: RootState) => state.tasks);
+  const authUser = useSelector((state: RootState) => state.auth.user);
 
   const fetchTasks = useCallback(() => {
     dispatch(actions.fetchTasksRequest());
   }, [dispatch]);
 
   useEffect(() => {
-    dispatch(actions.fetchTasksRequest())
-  }, [dispatch])
+    if (!authUser || authUser.isGuest) return;
+
+    dispatch(actions.fetchTasksRequest());
+  }, [dispatch, authUser]);
 
   const addTask = (data: CreateTaskDto) =>
     dispatch(actions.createTaskRequest(data))

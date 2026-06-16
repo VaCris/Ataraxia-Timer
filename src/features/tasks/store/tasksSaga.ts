@@ -15,20 +15,42 @@ const isNetworkError = (error: any) =>
 
 function* handleFetchTasks() {
   try {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      const localTasks: TaskResponse[] = yield call(
+        [tasksLocalRepository, tasksLocalRepository.getAll]
+      );
+
+      yield put(fetchTasksSuccess(localTasks));
+      return;
+    }
+
     if (navigator.onLine) {
       yield call(processSyncQueue);
 
       const data: TaskResponse[] = yield call(tasksService.getAll);
-      yield call([tasksLocalRepository, tasksLocalRepository.replaceAll], data);
+
+      yield call(
+        [tasksLocalRepository, tasksLocalRepository.replaceAll],
+        data
+      );
+
       yield put(fetchTasksSuccess(data));
       return;
     }
 
-    const localTasks: TaskResponse[] = yield call([tasksLocalRepository, tasksLocalRepository.getAll]);
+    const localTasks: TaskResponse[] = yield call(
+      [tasksLocalRepository, tasksLocalRepository.getAll]
+    );
+
     yield put(fetchTasksSuccess(localTasks));
   } catch (e: any) {
     try {
-      const localTasks: TaskResponse[] = yield call([tasksLocalRepository, tasksLocalRepository.getAll]);
+      const localTasks: TaskResponse[] = yield call(
+        [tasksLocalRepository, tasksLocalRepository.getAll]
+      );
+
       yield put(fetchTasksSuccess(localTasks));
     } catch {
       yield put(fetchTasksFailure(e.response?.data?.message || e.message));
