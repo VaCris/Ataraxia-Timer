@@ -30,15 +30,17 @@
   }
 
   .dashboard-root {
-    --shell-x: clamp(1rem, 4vw, 2rem);
+    --shell-x: clamp(1rem, 4vw, 1.5rem);
     --shell-top: clamp(1rem, 3dvh, 1.5rem);
-    --shell-bottom: clamp(6.5rem, 12dvh, 8rem);
-    --layout-gap: clamp(1.5rem, 4vw, 3rem);
-    --panel-width: min(100%, 31rem);
-    --panel-height: min(66dvh, 38rem);
-    --panel-min-height: 31rem;
-    --dial-size: clamp(16rem, 78vw, 22rem);
-    --digit-size: clamp(3.5rem, 17vw, 4.7rem);
+    --shell-bottom: clamp(5.5rem, 10dvh, 7rem);
+    --layout-gap: clamp(1.5rem, 4vw, 2.5rem);
+
+    --panel-width: 100%;
+    --panel-height: auto;
+    --panel-min-height: 40dvh;
+
+    --dial-size: min(75vw, 19rem);
+    --digit-size: clamp(3.2rem, 15vw, 4.5rem);
 
     @apply relative flex bg-[#030303] w-full min-h-dvh overflow-x-hidden overflow-y-auto text-white;
   }
@@ -48,7 +50,7 @@
   }
 
   .app-header {
-    @apply z-50 flex justify-between items-center w-full min-w-0;
+    @apply z-50 flex justify-between items-center w-full min-w-0 shrink-0;
     gap: clamp(0.75rem, 1.6vw, 1.5rem);
     padding: var(--shell-top) var(--shell-x) clamp(0.75rem, 2dvh, 1.25rem);
   }
@@ -119,30 +121,32 @@
   }
 
   .dashboard-timer-zone {
-    @apply flex flex-col justify-center items-center min-w-0 min-h-0;
-    padding-block: clamp(1rem, 4dvh, 2rem);
+    @apply flex flex-col justify-center items-center min-w-0 min-h-0 w-full h-full;
+    padding-block: clamp(0.5rem, 2dvh, 2rem);
   }
 
   .timer-stack {
-    @apply flex flex-col items-center w-full min-w-0;
-    gap: clamp(1rem, 2.4dvh, 1.65rem);
-    max-width: min(100%, 58rem);
+    @apply flex flex-col items-center justify-center w-full min-w-0 h-full;
+    gap: clamp(1rem, 2.5dvh, 2rem);
+    max-width: min(100%, 50rem);
   }
 
   .timer-dial {
-    @apply relative flex justify-center items-center shrink-0;
+    @apply relative flex justify-center items-center shrink-0 mx-auto;
     width: var(--dial-size);
     height: var(--dial-size);
-    max-width: calc(100vw - (var(--shell-x) * 2));
-    max-height: calc(100dvh - 16rem);
+    max-width: 100%;
+    aspect-ratio: 1 / 1;
+    max-height: 50dvh;
   }
 
   .timer-digits {
     font-size: var(--digit-size);
+    line-height: 1;
   }
 
   .task-panel-zone {
-    @apply flex justify-center items-stretch min-w-0 min-h-0;
+    @apply flex justify-center items-stretch min-w-0 min-h-0 w-full h-full;
   }
 
   .task-panel-shell {
@@ -150,47 +154,77 @@
     height: var(--panel-height);
     min-height: var(--panel-min-height);
     max-width: 100%;
+    @apply flex flex-col mx-auto;
   }
 
   .mode-tabs {
-    @apply flex items-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-full max-w-full overflow-x-auto;
-    gap: clamp(0.375rem, 1vw, 0.5rem);
+    @apply flex items-center justify-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-full max-w-full overflow-x-auto;
+    gap: clamp(0.25rem, 1vw, 0.5rem);
     padding: clamp(0.375rem, 0.8vw, 0.5rem);
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
 
-  .mode-tabs::-webkit-scrollbar {
-    display: none;
-  }
-
   .mode-tab {
     @apply shrink-0 rounded-full font-black uppercase transition-all;
-    padding: clamp(0.55rem, 1vw, 0.75rem) clamp(1rem, 1.8vw, 1.55rem);
-    font-size: clamp(0.58rem, 0.78vw, 0.74rem);
+    padding: clamp(0.6rem, 1.2vw, 0.75rem) clamp(1rem, 2vw, 1.55rem);
+    font-size: clamp(0.6rem, 0.8vw, 0.75rem);
     letter-spacing: clamp(0.12em, 0.3vw, 0.2em);
   }
 
   .timer-actions {
-    @apply flex justify-center items-center bg-white/5 shadow-2xl backdrop-blur-xl border border-white/10 rounded-full max-w-full;
-    gap: clamp(0.55rem, 1vw, 0.95rem);
-    padding: clamp(0.55rem, 1vw, 0.8rem);
+    @apply flex flex-wrap justify-center items-center bg-white/5 shadow-2xl backdrop-blur-xl border border-white/10 rounded-[2rem] max-w-full;
+    gap: clamp(0.5rem, 1.5vw, 1rem);
+    padding: clamp(0.5rem, 1vw, 0.8rem);
   }
 
   .timer-icon-action {
     @apply flex justify-center items-center hover:bg-white/10 disabled:hover:bg-transparent disabled:opacity-30 rounded-full text-white/50 hover:text-white transition-all shrink-0;
-    width: clamp(2.8rem, 3.6vw, 3.4rem);
-    height: clamp(2.8rem, 3.6vw, 3.4rem);
+    width: clamp(2.7rem, 4vw, 3.4rem);
+    height: clamp(2.7rem, 4vw, 3.4rem);
   }
 
   .timer-primary-action {
     @apply flex justify-center items-center bg-accent rounded-full font-black text-white uppercase active:scale-95 transition-all;
-    gap: clamp(0.55rem, 1vw, 0.8rem);
-    min-width: clamp(10rem, 13vw, 13rem);
-    height: clamp(3.2rem, 4.4vw, 4.2rem);
-    padding-inline: clamp(1.75rem, 3.2vw, 3.25rem);
-    font-size: clamp(0.72rem, 0.94vw, 0.92rem);
-    letter-spacing: clamp(0.16em, 0.35vw, 0.22em);
+    gap: clamp(0.4rem, 1vw, 0.8rem);
+    min-width: clamp(9rem, 20vw, 12rem);
+    height: clamp(3rem, 4.5vw, 4.2rem);
+    padding-inline: clamp(1.2rem, 3vw, 3.25rem);
+    font-size: clamp(0.7rem, 1vw, 0.92rem);
+    letter-spacing: clamp(0.1em, 0.35vw, 0.22em);
+  }
+}
+
+@media (max-width: 380px) {
+  .dashboard-root {
+    --shell-x: 0.75rem;
+    --dial-size: min(85vw, 15rem);
+    --digit-size: clamp(2.8rem, 14vw, 3.5rem);
+  }
+
+  .app-header-brand {
+    gap: 0.5rem;
+  }
+
+  .timer-actions {
+    border-radius: 1.5rem;
+  }
+}
+
+@media (max-height: 600px) and (orientation: landscape) {
+  .dashboard-root {
+    --dial-size: min(35vw, 12rem);
+    --digit-size: 2.8rem;
+    --shell-bottom: 2rem;
+    --layout-gap: 1rem;
+    --panel-min-height: 15rem;
+  }
+
+  .timer-stack {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
   }
 }
 
@@ -203,45 +237,23 @@
   .app-header-profile {
     padding: 0.5rem 0.5rem 0.5rem clamp(1.1rem, 1.6vw, 2rem);
   }
-}
 
-@media (max-width: 767px) {
   .dashboard-root {
-    --shell-x: clamp(0.875rem, 4vw, 1.25rem);
-    --dial-size: min(78vw, 20rem);
-    --digit-size: clamp(3.25rem, 16vw, 4.8rem);
-    --panel-height: auto;
-    --panel-min-height: 30rem;
-  }
-
-  .app-header-actions {
-    max-width: 48vw;
-  }
-
-  .app-header-title {
-    max-width: 46vw;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1023px) {
-  .dashboard-root {
-    --dial-size: min(64vw, 30rem);
-    --digit-size: clamp(5rem, 10vw, 7rem);
     --panel-width: min(100%, 34rem);
-    --panel-height: min(62dvh, 38rem);
   }
 }
 
 @media (min-width: 1024px) {
   .dashboard-root {
-    --shell-x: clamp(1.5rem, 2.8vw, 4rem);
-    --shell-top: clamp(1rem, 2.4dvh, 1.6rem);
-    --layout-gap: clamp(1.5rem, 3.4vw, 4.5rem);
-    --panel-width: min(30vw, 33rem);
-    --panel-height: min(72dvh, 42rem);
-    --panel-min-height: 32rem;
-    --dial-size: min(40vw, 68dvh, 39rem);
-    --digit-size: clamp(6.3rem, 8vw, 9rem);
+    --shell-x: clamp(1.5rem, 2.8vw, 3rem);
+    --shell-top: clamp(1rem, 2dvh, 1.5rem);
+    --shell-bottom: 2rem;
+    --layout-gap: clamp(1.5rem, 3vw, 3rem);
+
+    --panel-width: min(35vw, 32rem);
+    --panel-height: min(75dvh, 42rem);
+    --dial-size: min(35vw, 45dvh, 32rem);
+    --digit-size: clamp(4.5rem, 6vw, 7rem);
 
     @apply h-dvh overflow-hidden;
   }
@@ -251,8 +263,9 @@
   }
 
   .dashboard-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(24rem, var(--panel-width));
-    align-items: center;
+    grid-template-columns: minmax(0, 1fr) minmax(22rem, var(--panel-width));
+    align-items: stretch;
+    padding-bottom: clamp(1rem, 3dvh, 2rem);
   }
 
   .task-panel-zone {
@@ -260,60 +273,22 @@
   }
 }
 
-@media (min-width: 1024px) and (max-height: 820px) {
+@media (min-width: 1280px) and (min-height: 800px) {
   .dashboard-root {
-    --shell-x: clamp(1.25rem, 2.5vw, 3rem);
-    --layout-gap: clamp(1.25rem, 2.8vw, 3rem);
-    --panel-width: min(29vw, 28rem);
-    --panel-height: min(72dvh, 36rem);
-    --panel-min-height: 29rem;
-    --dial-size: min(36vw, 64dvh, 34rem);
-    --digit-size: clamp(5.8rem, 7.4vw, 8rem);
-  }
-
-  .timer-stack {
-    gap: clamp(0.9rem, 2dvh, 1.25rem);
+    --panel-width: min(32vw, 34rem);
+    --dial-size: min(38vw, 50dvh, 38rem);
+    --digit-size: clamp(6rem, 7vw, 8.5rem);
   }
 }
 
-@media (min-width: 1280px) and (max-width: 1535px) and (min-height: 821px) {
+@media (min-width: 1920px) {
   .dashboard-root {
-    --panel-width: min(30vw, 31rem);
-    --dial-size: min(38vw, 64dvh, 36rem);
-    --digit-size: clamp(6.2rem, 7.4vw, 8.4rem);
-  }
-}
-
-@media (min-width: 1536px) and (min-height: 900px) {
-  .dashboard-root {
-    --shell-x: clamp(3rem, 4vw, 5rem);
-    --layout-gap: clamp(3rem, 4.8vw, 5.5rem);
-    --panel-width: min(31vw, 35rem);
-    --panel-height: min(72dvh, 44rem);
-    --panel-min-height: 34rem;
-    --dial-size: min(34vw, 68dvh, 42rem);
-    --digit-size: clamp(8rem, 8.4vw, 10rem);
-  }
-
-  .dashboard-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(28rem, var(--panel-width));
-  }
-}
-
-@media (max-width: 380px) {
-  .dashboard-root {
-    --dial-size: min(74vw, 17rem);
-    --digit-size: clamp(3rem, 15vw, 4rem);
-  }
-
-  .timer-primary-action {
-    min-width: 8.25rem;
-    padding-inline: 1.25rem;
-  }
-
-  .timer-icon-action {
-    width: 2.45rem;
-    height: 2.45rem;
+    --shell-x: 5rem;
+    --layout-gap: 5rem;
+    --panel-width: 38rem;
+    --panel-height: 48rem;
+    --dial-size: min(35vw, 55dvh, 45rem);
+    --digit-size: 10rem;
   }
 }
 
@@ -323,7 +298,8 @@ body,
   min-height: 100%;
 }
 
-html, body {
+html,
+body {
   background-color: var(--color-background);
   color: var(--color-cream);
   overflow-x: hidden;
@@ -354,7 +330,19 @@ select {
   box-sizing: border-box;
 }
 
-.custom-scrollbar::-webkit-scrollbar { width: 6px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.1); border-radius: 10px; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(255, 255, 255, 0.25); }
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+}

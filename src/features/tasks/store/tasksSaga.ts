@@ -16,7 +16,6 @@ const isNetworkError = (error: any) =>
 
 
 function* handleFetchTasks() {
-  console.log('FETCH TASKS');
   try {
     const token = localStorage.getItem('token');
 
@@ -49,7 +48,6 @@ function* handleFetchTasks() {
 
     yield put(fetchTasksSuccess(localTasks));
   } catch (e: any) {
-    console.log('FETCH TASKS ERROR', e?.response?.status);
     try {
       const localTasks: TaskResponse[] = yield call(
         [tasksLocalRepository, tasksLocalRepository.getAll]

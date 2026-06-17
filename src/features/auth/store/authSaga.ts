@@ -175,7 +175,7 @@ function* handleCheckAuth(): Generator<any, void, any> {
       localStorage.getItem('refreshToken');
 
     if (!user || (!user.id && !user._id)) {
-      throw new Error('Formato de usuario no reconocido');
+      throw new Error('Unrecognized user format in server response.');
     }
 
     yield put(

@@ -40,7 +40,7 @@ const SupportModal = ({ isOpen, onClose }) => {
                 </p>
 
                 <div className="space-y-3">
-                    <a
+                    {/* <a
                         href="https://buymeacoffee.com/avid0"
                         target="_blank"
                         className="group flex justify-between items-center bg-white/5 hover:bg-white/10 p-5 border border-white/5 hover:border-accent/30 rounded-2xl transition-all"
@@ -50,7 +50,7 @@ const SupportModal = ({ isOpen, onClose }) => {
                             <span className="font-bold text-sm tracking-tight">Buy me a Coffee</span>
                         </div>
                         <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </a>
+                    </a> */}
 
                     <a
                         href="https://github.com/VaCris"
@@ -67,7 +67,7 @@ const SupportModal = ({ isOpen, onClose }) => {
 
                 <div className="flex justify-center gap-6 mt-8 pt-8 border-white/5 border-t">
                     <Globe className="text-white/10 hover:text-accent transition-colors cursor-pointer" size={18} />
-                    <span className="font-black text-[10px] text-white/10 uppercase tracking-[0.3em]">Studios TKOH</span>
+                    <span className="font-black text-[10px] text-white/10 uppercase tracking-[0.3em]">Vidal :D </span>
                 </div>
             </motion.div>
         </div>

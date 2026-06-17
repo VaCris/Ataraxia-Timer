@@ -57,7 +57,9 @@ async function cleanOldWorkboxDatabases() {
                     databaseNames.push(name)
                 }
             })
-        } catch {}
+        } catch {
+            console.warn('Failed to list IndexedDB databases. Old Workbox caches may not be cleaned up.')
+        }
     }
 
     await Promise.allSettled(

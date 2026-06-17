@@ -19,7 +19,6 @@ export default defineConfig({
         navigateFallback: 'index.html'
       },
       includeAssets: [
-        'pwa-192x192.svg',
         'pwa-192x192.png',
         'pwa-512x512.png',
         'screenshot-desktop.png',

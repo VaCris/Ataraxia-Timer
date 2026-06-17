@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useDispatch } from 'react-redux';
 
-import { processSyncQueue } from '@/infrastructure/sync/syncManager';
-import { checkAuthRequest } from '@/features/auth/store/authSlice';
-import { fetchTasksRequest } from '@/features/tasks/store/tasksSlice';
+import { processSyncQueue } from './infrastructure/sync/syncManager';
+import { checkAuthRequest } from './features/auth/store/authSlice';
+import { fetchTasksRequest } from './features/tasks/store/tasksSlice';
 
-import Dashboard from '@/app/layout/Dashboard';
-import ResetPassword from '@/features/auth/components/ResetPassword';
-import InstallPrompt from '@/app/components/InstallPrompt';
-import Maintenance from '@/app/pages/Maintenance';
-import ComingSoon from '@/app/pages/ComingSoon';
-import Restricted from '@/app/pages/Restricted';
+import InstallPrompt from './app/components/InstallPrompt';
+import Maintenance from './app/pages/Maintenance';
+import ComingSoon from './app/pages/ComingSoon';
+import Restricted from './app/pages/Restricted';
+import { Loader } from './shared/ui/feedback/Loader';
+
+const Dashboard = lazy(() => import('./app/layout/Dashboard'));
+const ResetPassword = lazy(() => import('./features/auth/components/ResetPassword'));
 
 function App() {
   const dispatch = useDispatch();
@@ -22,13 +24,12 @@ function App() {
   const isRestricted = import.meta.env.VITE_RESTRICT_ACCESS === 'true';
 
   const [activeView, setActiveView] = useState('main');
+  const [isBooting, setIsBooting] = useState(true);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-
-    if (token) {
-      dispatch(checkAuthRequest());
-    }
+    if (token) dispatch(checkAuthRequest());
   }, [dispatch]);
 
   useEffect(() => {
@@ -36,15 +37,16 @@ function App() {
 
     const syncAndRefresh = async () => {
       const token = localStorage.getItem('token');
-
-      if (!navigator.onLine || !token) return;
-
+      if (!navigator.onLine || !token) {
+        setIsBooting(false);
+        return;
+      }
       await processSyncQueue();
       dispatch(fetchTasksRequest());
+      setIsBooting(false);
     };
 
     syncAndRefresh();
-
     window.addEventListener('online', syncAndRefresh);
     document.addEventListener('visibilitychange', syncAndRefresh);
 
@@ -60,14 +62,8 @@ function App() {
 
   const renderHomeContent = () => {
     if (['games', 'stats', 'achievements'].includes(activeView)) {
-      return (
-        <ComingSoon
-          type={activeView}
-          onBack={() => setActiveView('main')}
-        />
-      );
+      return <ComingSoon type={activeView} onBack={() => setActiveView('main')} />;
     }
-
     return (
       <Dashboard
         onOpenGames={() => setActiveView('games')}
@@ -79,14 +75,24 @@ function App() {
 
   return (
     <>
+      <Loader
+        isLoading={isBooting}
+        fullScreen={true}
+        onComplete={() => setIsReady(true)}
+      />
+
       <Toaster position="top-right" />
       <InstallPrompt />
 
-      <Routes>
-        <Route path="/" element={renderHomeContent()} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+      {isReady && (
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path="/" element={renderHomeContent()} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </Suspense>
+      )}
     </>
   );
 }

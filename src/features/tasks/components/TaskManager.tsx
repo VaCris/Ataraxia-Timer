@@ -118,6 +118,33 @@ const TaskManager = () => {
         )}
 
         <div className="flex items-center gap-2">
+          <div className="flex flex-1 justify-between items-center bg-black/40 px-3 py-2 2xl:py-2.5 border border-white/5 rounded-2xl min-w-0">
+            <span className="font-black text-[8px] xs:text-[9px] text-white/20 uppercase tracking-widest truncate">
+              Est. Pomos
+            </span>
+
+            <div className="flex items-center gap-2 font-bold text-white shrink-0">
+              <button
+                type="button"
+                onClick={() => setEst(Math.max(1, est - 1))}
+                className="opacity-40 hover:opacity-100 px-1 transition-opacity"
+              >
+                -
+              </button>
+
+              <span className="w-4 text-sm text-center">{est}</span>
+
+              <button
+                type="button"
+                onClick={() => setEst(Math.min(10, est + 1))}
+                className="opacity-40 hover:opacity-100 px-1 transition-opacity"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+
           <button
             type="submit"
             disabled={loading}
