@@ -6,8 +6,6 @@ const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'
 const TagInput = ({ tagName, setTagName, tagColor, setTagColor }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef(null);
-
-    // Cierra el selector si se hace click fuera
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (containerRef.current && !containerRef.current.contains(e.target)) {
