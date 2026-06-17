@@ -13,7 +13,10 @@ import { TaskResponse } from '@/features/tasks/types/task.dto';
 const isNetworkError = (error: any) =>
   error.message === 'Network Error' || error.code === 'ERR_NETWORK' || !navigator.onLine;
 
+
+
 function* handleFetchTasks() {
+  console.log('FETCH TASKS');
   try {
     const token = localStorage.getItem('token');
 
@@ -46,6 +49,7 @@ function* handleFetchTasks() {
 
     yield put(fetchTasksSuccess(localTasks));
   } catch (e: any) {
+    console.log('FETCH TASKS ERROR', e?.response?.status);
     try {
       const localTasks: TaskResponse[] = yield call(
         [tasksLocalRepository, tasksLocalRepository.getAll]
