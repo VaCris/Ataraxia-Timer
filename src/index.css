@@ -317,13 +317,6 @@ iframe {
   max-width: 100%;
 }
 
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
-
 *,
 *::before,
 *::after {
