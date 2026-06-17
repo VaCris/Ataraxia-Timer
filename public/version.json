@@ -1,14 +1,14 @@
 {
-  "version": "2.0.0-891f9a9",
+  "version": "2.0.0-f9314bb",
   "appVersion": "2.0.0",
-  "build": "891f9a9",
-  "date": "2026-05-26T18:46:25.024Z",
+  "build": "f9314bb",
+  "date": "2026-06-17T01:31:30.631Z",
   "changelog": [
-    "chore(version): update build metadata and changelog for offline sync fixes",
-    "chore(deps): add pnpm lockfile and update project dependencies",
-    "feat(import): improve OCR schedule parsing and week detection\"",
-    "Add workbox-window dependency for PWA registration",
-    "Avoid syncing deletes for unsynced local tasks"
+    "refactor(index.html, main.jsx): format meta tags for consistency and remove unused service worker registration",
+    "feat(tasks): enhance task fetching logic with user authentication and local storage fallback",
+    "Enhance TaskManager to support dynamic tag creation and updates; integrate TagInput for manual tag entry when no tag is selected",
+    "Implement offline session management for Pomodoro timer; add tag management features and refactor related components",
+    "Add confirmation modal for mode changes in Pomodoro timer"
   ],
   "targetUrl": "/"
 }
