@@ -1,27 +1,44 @@
-const fs = require('fs');
-const { execSync } = require('child_process');
-const path = require('path');
+const fs = require('fs')
+const { execSync } = require('child_process')
+const path = require('path')
 
 try {
-    const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
-    const newVersion = packageJson.version;
+    const packageJson = JSON.parse(
+        fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8')
+    )
 
-    const gitLog = execSync('git log -5 --pretty=format:"%s" --no-merges').toString().trim();
-    const changelog = gitLog.split('\n').filter(line => line.length > 0);
+    let commit = 'local'
+
+    try {
+        commit = execSync('git rev-parse --short HEAD').toString().trim()
+    } catch { }
+
+    let changelog = []
+
+    try {
+        const gitLog = execSync('git log -5 --pretty=format:"%s" --no-merges')
+            .toString()
+            .trim()
+
+        changelog = gitLog.split('\n').filter(Boolean)
+    } catch { }
 
     const versionData = {
-        version: newVersion,
-        date: new Date().toISOString().split('T')[0],
-        changelog: changelog,
-        targetUrl: "/"
-    };
+        version: `${packageJson.version}-${commit}`,
+        appVersion: packageJson.version,
+        build: commit,
+        date: new Date().toISOString(),
+        changelog,
+        targetUrl: '/',
+    }
 
     fs.writeFileSync(
         path.join(__dirname, '../public/version.json'),
         JSON.stringify(versionData, null, 2)
-    );
+    )
 
-    console.log(`V${newVersion}`);
+    console.log(`Ataraxia version: ${versionData.version}`)
 } catch (error) {
-    console.error(error.message);
+    console.error(error.message)
+    process.exit(1)
 }

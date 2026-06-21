@@ -3,21 +3,91 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="theme-color" content="#141414" />
-  
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
-  
-  <title>Ataraxia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <title>Ataraxia Timer | Pomodoro Focus Timer & Task Manager</title>
+  <meta name="title" content="Ataraxia Timer | Pomodoro Focus Timer & Task Manager" />
+  <meta name="description"
+    content="Ataraxia Timer is a clean Pomodoro focus app for deep work, task planning, focus sessions, short breaks, long breaks, offline use and distraction-free productivity." />
+  <meta name="keywords"
+    content="Ataraxia Timer, Pomodoro timer, focus timer, productivity app, task manager, deep work, study timer, work timer, PWA timer, offline Pomodoro app" />
+  <meta name="author" content="Ataraxia" />
+  <meta name="application-name" content="Ataraxia Timer" />
+  <meta name="creator" content="Ataraxia" />
+  <meta name="publisher" content="Ataraxia" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+  <link rel="canonical" href="https://ataraxiatimer.app/" />
+  <link rel="icon" type="image/svg+xml" href="/pwa-192x192.svg" />
+  <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Ataraxia" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="format-detection" content="telephone=no" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Ataraxia Timer" />
+  <meta property="og:title" content="Ataraxia Timer | Pomodoro Focus Timer & Task Manager" />
+  <meta property="og:description"
+    content="A clean Pomodoro focus timer with tasks, rounds, break sessions, offline support and a distraction-free workspace for deep work." />
+  <meta property="og:url" content="https://ataraxiatimer.app/" />
+  <meta property="og:image" content="https://ataraxiatimer.app/screenshot-desktop.png" />
+  <meta property="og:image:secure_url" content="https://ataraxiatimer.app/screenshot-desktop.png" />
+  <meta property="og:image:alt" content="Ataraxia Timer dashboard with Pomodoro timer and mission log" />
+  <meta property="og:locale" content="en_US" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Ataraxia Timer | Pomodoro Focus Timer & Task Manager" />
+  <meta name="twitter:description"
+    content="Plan tasks, run focus sessions and keep your Pomodoro workflow available as an installable offline PWA." />
+  <meta name="twitter:image" content="https://ataraxiatimer.app/screenshot-desktop.png" />
+  <meta name="twitter:image:alt" content="Ataraxia Timer focus dashboard" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Outfit:wght@100..900&display=swap" rel="stylesheet" />
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Ataraxia Timer",
+      "alternateName": "Ataraxia",
+      "applicationCategory": "ProductivityApplication",
+      "operatingSystem": "Web, Android, iOS, Windows, macOS, Linux",
+      "description": "Ataraxia Timer is a Pomodoro focus timer and task manager designed for deep work, study sessions, breaks, offline use and distraction-free productivity.",
+      "url": "https://ataraxiatimer.app/",
+      "image": "https://ataraxiatimer.app/screenshot-desktop.png",
+      "screenshot": "https://ataraxiatimer.app/screenshot-desktop.png",
+      "featureList": [
+        "Pomodoro focus timer",
+        "Short and long break sessions",
+        "Task and mission log",
+        "Offline-first local storage",
+        "Installable progressive web app",
+        "Custom focus settings",
+        "Responsive dashboard"
+      ],
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+  </script>
 </head>
 
 <body>
+  <noscript>
+    <strong>Ataraxia Timer needs JavaScript to run the Pomodoro timer, task manager and offline PWA experience.</strong>
+  </noscript>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>

@@ -1,23 +1,10 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import { Provider } from 'react-redux';
-import { store } from '@store/index';
-import App from '@/App';
-import './index.css';
-import { registerSW } from 'virtual:pwa-register';
-
-if ('serviceWorker' in navigator) {
-  registerSW({
-    immediate: true,
-    onRegistered(r) {
-      r && setInterval(() => { r.update() }, 3600000);
-    },
-    onRegisterError(error) {
-      console.error(error);
-    }
-  });
-}
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import { Provider } from 'react-redux'
+import { store } from '@store/index'
+import App from '@/App'
+import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -27,4 +14,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       </BrowserRouter>
     </Provider>
   </React.StrictMode>
-);
+)

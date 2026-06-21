@@ -4,32 +4,61 @@ import path from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'inline',
+      injectRegister: null,
       devOptions: {
         enabled: false,
         type: 'module',
         navigateFallback: 'index.html'
       },
-      includeAssets: ['vite.svg', 'pwa-192x192.png', 'pwa-512x512.png', 'screenshot-desktop.png', 'screenshot-mobile.png'],
+      includeAssets: [
+        'pwa-192x192.png',
+        'pwa-512x512.png',
+        'screenshot-desktop.png',
+        'screenshot-mobile.png',
+        'robots.txt',
+        'sitemap.xml'
+      ],
       manifest: {
         id: '/',
         name: 'Ataraxia Timer',
         short_name: 'Ataraxia',
+        description: 'A clean Pomodoro focus timer and task manager for deep work, study sessions, breaks, offline use and distraction-free productivity.',
+        lang: 'en',
+        dir: 'ltr',
+        start_url: '/',
+        scope: '/',
         theme_color: '#0a0a0a',
         background_color: '#0a0a0a',
         display: 'standalone',
         orientation: 'portrait',
+        categories: ['productivity', 'utilities', 'education'],
         icons: [
-          { "src": "pwa-192x192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
-          { "src": "pwa-512x512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+          {
+            src: 'pwa-192x192.png',
+            type: 'image/png',
+            sizes: '192x192',
+            purpose: 'any'
+          },
+          {
+            src: 'pwa-512x512.png',
+            type: 'image/png',
+            sizes: '512x512',
+            purpose: 'any'
+          },
+          {
+            src: 'pwa-512x512.png',
+            type: 'image/png',
+            sizes: '512x512',
+            purpose: 'maskable'
+          }
         ],
         screenshots: [
           {
@@ -37,44 +66,31 @@ export default defineConfig({
             sizes: '1280x720',
             type: 'image/png',
             form_factor: 'wide',
-            label: 'Ataraxia Desktop'
+            label: 'Ataraxia Timer desktop focus dashboard'
           },
           {
             src: 'screenshot-mobile.png',
             sizes: '720x1280',
             type: 'image/png',
-            label: 'Ataraxia Mobile'
+            form_factor: 'narrow',
+            label: 'Ataraxia Timer mobile Pomodoro dashboard'
           }
         ]
       },
       workbox: {
         skipWaiting: true,
         clientsClaim: true,
-        globPatterns: ['**/*.{js,css,html,png,svg,mp3}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,mp3,xml,txt,webmanifest}'],
         cleanupOutdatedCaches: true,
         runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/ataraxia-api\.studios-tkoh\.online\/api\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'ataraxia-api-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 7,
-              },
-              networkTimeoutSeconds: 5,
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'google-fonts-cache',
-              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] }
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
             }
           },
           {
@@ -82,40 +98,48 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: 'gstatic-fonts-cache',
-              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] }
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
             }
           }
         ]
       }
     })
   ],
+
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'framer-motion'],
-          redux: ['@reduxjs/toolkit', 'react-redux'],
+          redux: ['@reduxjs/toolkit', 'react-redux']
         }
       }
     }
   },
+
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@components': path.resolve(__dirname, './src/components'),
-      '@context': path.resolve(__dirname, './src/context'),
-      '@hooks': path.resolve(__dirname, './src/hooks'),
-      '@utils': path.resolve(__dirname, './src/utils'),
-      '@assets': path.resolve(__dirname, './src/assets'),
-      '@styles': path.resolve(__dirname, './src/styles'),
-      '@api': path.resolve(__dirname, './src/api'),
+
+      '@app': path.resolve(__dirname, './src/app'),
+      '@components': path.resolve(__dirname, './src/app/components'),
+      '@pages': path.resolve(__dirname, './src/app/pages'),
+
+      '@features': path.resolve(__dirname, './src/features'),
+      '@shared': path.resolve(__dirname, './src/shared'),
+      '@infrastructure': path.resolve(__dirname, './src/infrastructure'),
+
+      '@api': path.resolve(__dirname, './src/infrastructure/api'),
+      '@sync': path.resolve(__dirname, './src/infrastructure/sync'),
       '@store': path.resolve(__dirname, './src/store'),
-      '@pages': path.resolve(__dirname, './src/pages'),
-      '@db': path.resolve(__dirname, './src/db'),
-      '@core': path.resolve(__dirname, './src/core'),
-    },
+
+      '@assets': path.resolve(__dirname, './src/assets'),
+      '@utils': path.resolve(__dirname, './src/shared/utils')
+    }
   },
+
   server: {
     host: '127.0.0.1',
     port: 5173,
