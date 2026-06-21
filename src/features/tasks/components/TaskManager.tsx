@@ -80,7 +80,7 @@ const TaskManager = () => {
   };
 
   return (
-    <div className="flex flex-col bg-[#0a0a0a]/80 shadow-2xl backdrop-blur-xl p-3 xs:p-4 lg:p-4 2xl:p-5 border border-white/5 rounded-[1.75rem] sm:rounded-[2rem] 2xl:rounded-[2.25rem] h-full min-h-0 overflow-hidden">
+    <div className="flex flex-col bg-[#0a0a0a]/80 shadow-2xl backdrop-blur-xl p-3 xs:p-4 lg:p-4 2xl:p-5 border border-white/5 rounded-[1.75rem] sm:rounded-[2rem] 2xl:rounded-[2.25rem] h-full min-h-0 overflow-hidden task-manager-card">
       <div className="flex justify-between items-center mb-3 2xl:mb-4 px-1 shrink-0">
         <h2 className="flex items-center gap-2.5 2xl:gap-3 font-black text-white text-[11px] 2xl:text-sm uppercase tracking-[0.18em] sm:tracking-[0.2em] min-w-0">
           <span className="bg-[#00ffd5] shadow-[0_0_10px_#00ffd5] rounded-full w-2 h-2 shrink-0" />
@@ -205,7 +205,7 @@ const TaskManager = () => {
                               handleSaveEdit(task.id);
                             }
                           }}
-                          className="flex-1 bg-black/40 py-1 border-[#00ffd5] border-b outline-none font-bold text-white text-sm min-w-0"
+                          className="flex-1 bg-transparent py-1 border-[#00ffd5] border-b outline-none font-bold text-white text-sm min-w-0"
                         />
 
                         <button

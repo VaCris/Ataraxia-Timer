@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Tag as TagIcon, ChevronDown, Check } from 'lucide-react';
+import { Tag as TagIcon, ChevronDown, Check, Trash2, Edit2, X } from 'lucide-react';
 import { useTags } from '@/features/tags/hooks/useTags';
 
 interface TagSelectorProps {
@@ -8,9 +8,12 @@ interface TagSelectorProps {
 }
 
 const TagSelector: React.FC<TagSelectorProps> = ({ selectedTagId, onSelectTag }) => {
-    const { tags } = useTags();
+    const { tags, removeTag, updateTag } = useTags();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const [editingTagId, setEditingTagId] = useState<string | null>(null);
+    const [editingTagName, setEditingTagName] = useState('');
 
     // Encontramos el tag seleccionado para mostrar su nombre y color en el botón
     const selectedTag = tags.find(t => t.id === selectedTagId);
@@ -25,6 +28,24 @@ const TagSelector: React.FC<TagSelectorProps> = ({ selectedTagId, onSelectTag })
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    const startEdit = (tag: any) => {
+        setEditingTagId(tag.id);
+        setEditingTagName(tag.name);
+    };
+
+    const cancelEdit = () => {
+        setEditingTagId(null);
+        setEditingTagName('');
+    };
+
+    const saveEdit = async (id: string) => {
+        if (editingTagName.trim().length >= 2) {
+            await updateTag(id, { name: editingTagName.trim() });
+        }
+        setEditingTagId(null);
+        setEditingTagName('');
+    };
 
     return (
         <div className="relative w-full" ref={dropdownRef}>
@@ -80,28 +101,102 @@ const TagSelector: React.FC<TagSelectorProps> = ({ selectedTagId, onSelectTag })
                     {/* Mapeo de Tags del usuario */}
                     {tags.map((tag) => {
                         const isSelected = selectedTagId === tag.id;
+                        const isEditing = editingTagId === tag.id;
+
                         return (
-                            <button
+                            <div
                                 key={tag.id}
-                                type="button"
-                                onClick={() => { onSelectTag(tag.id); setIsOpen(false); }}
-                                className={`flex justify-between items-center px-3 py-2.5 rounded-xl transition-colors ${isSelected ? 'bg-white/10' : 'hover:bg-white/5'
-                                    }`}
+                                className={`flex items-center justify-between px-3 py-1.5 rounded-xl transition-colors group/item ${
+                                    isSelected ? 'bg-white/10' : 'hover:bg-white/5'
+                                }`}
                             >
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className="shadow-[0_0_8px] shadow-current rounded-full w-2 h-2"
-                                        style={{
-                                            color: tag.color || '#5fbfff',
-                                            backgroundColor: tag.color || '#5fbfff'
-                                        }}
-                                    />
-                                    <span className="font-bold text-white/80 text-xs uppercase tracking-widest">
-                                        {tag.name}
-                                    </span>
-                                </div>
-                                {isSelected && <Check size={14} className="text-[#00ffd5]" />}
-                            </button>
+                                {isEditing ? (
+                                    <div className="flex flex-1 items-center gap-2 min-w-0" onClick={(e) => e.stopPropagation()}>
+                                        <input
+                                            autoFocus
+                                            type="text"
+                                            value={editingTagName}
+                                            onChange={(e) => setEditingTagName(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    saveEdit(tag.id);
+                                                } else if (e.key === 'Escape') {
+                                                    cancelEdit();
+                                                }
+                                            }}
+                                            className="flex-1 bg-transparent py-0.5 border-b border-[#00ffd5] outline-none font-bold text-white text-xs uppercase tracking-widest min-w-0"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => saveEdit(tag.id)}
+                                            className="p-1 text-[#00ffd5] shrink-0 hover:scale-110 transition-transform"
+                                        >
+                                            <Check size={13} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={cancelEdit}
+                                            className="p-1 text-white/20 hover:text-white/60 shrink-0 hover:scale-110 transition-transform"
+                                        >
+                                            <X size={13} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                onSelectTag(tag.id);
+                                                setIsOpen(false);
+                                            }}
+                                            className="flex flex-1 items-center gap-3 text-left py-1 min-w-0 cursor-pointer"
+                                        >
+                                            <div
+                                                className="shadow-[0_0_8px] shadow-current rounded-full w-2 h-2 shrink-0"
+                                                style={{
+                                                    color: tag.color || '#5fbfff',
+                                                    backgroundColor: tag.color || '#5fbfff'
+                                                }}
+                                            />
+                                            <span className="font-bold text-white/80 text-xs uppercase tracking-widest truncate">
+                                                {tag.name}
+                                            </span>
+                                        </button>
+
+                                        <div className="flex items-center gap-0.5 opacity-100 sm:group-hover/item:opacity-100 sm:opacity-0 transition-all shrink-0 ml-2">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    startEdit(tag);
+                                                }}
+                                                className="p-1 text-white/20 hover:text-[#00ffd5] hover:scale-115 transition-all cursor-pointer"
+                                                title="Edit Tag"
+                                            >
+                                                <Edit2 size={13} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    removeTag(tag.id);
+                                                    if (selectedTagId === tag.id) {
+                                                        onSelectTag(null);
+                                                    }
+                                                }}
+                                                className="p-1 text-white/20 hover:text-red-500 hover:scale-115 transition-all cursor-pointer"
+                                                title="Delete Tag"
+                                            >
+                                                <Trash2 size={13} />
+                                            </button>
+                                        </div>
+
+                                        {isSelected && (
+                                            <Check size={14} className="text-[#00ffd5] shrink-0 ml-2" />
+                                        )}
+                                    </>
+                                )}
+                            </div>
                         );
                     })}
                 </div>

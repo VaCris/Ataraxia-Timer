@@ -2,6 +2,7 @@ import { call, put, takeLatest, all } from 'redux-saga/effects';
 import { toast } from 'react-hot-toast';
 import { db } from '@/infrastructure/database/db';
 import { tagsLocalRepository } from '../repositories/tags.local.repository';
+import { tagsService } from '../api/tags.api';
 import { TagResponse } from '@/features/tags/types/tag.dto';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -14,10 +15,30 @@ import {
 
 function* handleFetchTags() {
     try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            const localTags: TagResponse[] = yield call(tagsLocalRepository.getAll);
+            yield put(fetchTagsSuccess(localTags));
+            return;
+        }
+
+        if (navigator.onLine) {
+            const data: TagResponse[] = yield call(tagsService.getAll);
+            yield call([tagsLocalRepository, tagsLocalRepository.replaceAll], data);
+            yield put(fetchTagsSuccess(data));
+            return;
+        }
+
         const localTags: TagResponse[] = yield call(tagsLocalRepository.getAll);
         yield put(fetchTagsSuccess(localTags));
     } catch (e: any) {
-        yield put(fetchTagsFailure(e.message));
+        try {
+            const localTags: TagResponse[] = yield call(tagsLocalRepository.getAll);
+            yield put(fetchTagsSuccess(localTags));
+        } catch {
+            yield put(fetchTagsFailure(e.message));
+        }
     }
 }
 

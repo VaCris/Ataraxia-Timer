@@ -18,5 +18,18 @@ export const tagsLocalRepository = {
             deletedAt: Date.now(),
             syncStatus: 'pending_delete'
         });
+    },
+
+    async replaceAll(tags: LocalTagModel[]): Promise<void> {
+        const localOnly = await db.tags
+            .filter(tag => !!tag.syncStatus && tag.syncStatus !== 'synced')
+            .toArray();
+        await db.tags.clear();
+        for (const tag of tags) {
+            await db.tags.put({ ...tag, syncStatus: 'synced' });
+        }
+        for (const tag of localOnly) {
+            await db.tags.put(tag);
+        }
     }
 };
