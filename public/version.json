@@ -1,14 +1,14 @@
 {
-  "version": "2.0.0-08037e0",
+  "version": "2.0.0-c26e0ab",
   "appVersion": "2.0.0",
-  "build": "08037e0",
-  "date": "2026-06-21T21:16:16.307Z",
+  "build": "c26e0ab",
+  "date": "2026-06-21T23:19:05.358Z",
   "changelog": [
+    "style: apply Aputrak design system and visual style to Ataraxia timer",
     "fix(dependencies): update axios version to ^1.18.0",
     "refactor(TagInput): remove commented code for clarity",
     "feat(tags): implement color picker for tag selection and close on outside click",
-    "Refactor Sidebar component for improved readability and performance; remove unused auth and gamification features; enhance DashboardView with new props; add estimated Pomodoros feature in TaskManager; clean up tasksSaga logging; update CSS for better responsiveness; introduce Loader component with motivational quotes; modify SupportModal for better user experience; improve version guard error handling; update Vite config to exclude unused assets.",
-    "feat(tasks): add logging for task fetch success and error handling"
+    "Refactor Sidebar component for improved readability and performance; remove unused auth and gamification features; enhance DashboardView with new props; add estimated Pomodoros feature in TaskManager; clean up tasksSaga logging; update CSS for better responsiveness; introduce Loader component with motivational quotes; modify SupportModal for better user experience; improve version guard error handling; update Vite config to exclude unused assets."
   ],
   "targetUrl": "/"
 }

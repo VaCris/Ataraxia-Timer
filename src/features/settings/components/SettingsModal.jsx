@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useState } from 'react';
+import React, { memo, useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
@@ -156,6 +156,21 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
 
   const [activeShortcutKey, setActiveShortcutKey] = useState(null);
 
+  useEffect(() => {
+    // When the modal unmounts, if we didn't save, we should restore the original Redux values
+    return () => {
+      document.documentElement.style.setProperty('--color-accent', accentColor);
+      const rgb = accentColor.match(/\w\w/g)?.map(x => parseInt(x, 16)).join(',') || '225,29,72';
+      document.documentElement.style.setProperty('--color-accent-rgb', rgb);
+      document.documentElement.style.setProperty('--bg-blur', `${(blurIntensity / 100) * 40}px`);
+      if (bgImage) {
+        document.documentElement.style.setProperty('--bg-image', `url("${bgImage}")`);
+      } else {
+        document.documentElement.style.removeProperty('--bg-image');
+      }
+    };
+  }, [accentColor, blurIntensity, bgImage]);
+
   const isSaving = settings.status === 'loading';
   const localAccentColor = localUISettings.accentColor;
   const visibleShortcuts = normalizeShortcuts(localUISettings.customShortcuts);
@@ -168,10 +183,37 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
   }, []);
 
   const handleTimerChange = useCallback((mode, value) => {
+    // Allow empty string to let user delete the digits normally to type custom values
+    if (value === '') {
+      setLocalTimers((prev) => ({
+        ...prev,
+        [mode]: '',
+      }));
+      return;
+    }
+
+    const numValue = Number(value);
+    if (isNaN(numValue)) return;
+
+    if (numValue <= 0) {
+      toast.error('Duration must be greater than 0', { id: 'settings-validation-error' });
+      return;
+    }
+
     setLocalTimers((prev) => ({
       ...prev,
-      [mode]: clampNumber(value, prev[mode]),
+      [mode]: numValue,
     }));
+  }, []);
+
+  const handleTimerBlur = useCallback((mode, value, fallback) => {
+    if (value === '' || Number(value) <= 0) {
+      toast.error('Duration must be greater than 0. Resetting to fallback.', { id: 'settings-validation-error' });
+      setLocalTimers((prev) => ({
+        ...prev,
+        [mode]: fallback,
+      }));
+    }
   }, []);
 
   const handleApiSettingChange = useCallback((key, value) => {
@@ -186,10 +228,19 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
   }, [handleUISettingChange]);
 
   const handleSave = useCallback(() => {
+    const focusVal = Number(localTimers.FOCUS);
+    const shortVal = Number(localTimers.SHORT_BREAK);
+    const longVal = Number(localTimers.LONG_BREAK);
+
+    if (isNaN(focusVal) || focusVal <= 0 || isNaN(shortVal) || shortVal <= 0 || isNaN(longVal) || longVal <= 0) {
+      toast.error('All durations must be greater than 0 minutes', { id: 'settings-save-validation' });
+      return;
+    }
+
     const payload = {
-      focusDuration: localTimers.FOCUS,
-      shortBreakDuration: localTimers.SHORT_BREAK,
-      longBreakDuration: localTimers.LONG_BREAK,
+      focusDuration: focusVal,
+      shortBreakDuration: shortVal,
+      longBreakDuration: longVal,
       autoStartBreaks: localApiSettings.autoStartBreaks,
       autoStartPomodoros: localApiSettings.autoStartPomodoros,
       longBreakInterval: localApiSettings.longBreakInterval,
@@ -199,9 +250,9 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
     };
 
     const durationByMode = {
-      FOCUS: localTimers.FOCUS,
-      SHORT_BREAK: localTimers.SHORT_BREAK,
-      LONG_BREAK: localTimers.LONG_BREAK,
+      FOCUS: focusVal,
+      SHORT_BREAK: shortVal,
+      LONG_BREAK: longVal,
     };
 
     const uiPayload = {
@@ -317,18 +368,21 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                 label="Focus"
                 value={localTimers.FOCUS}
                 onChange={(value) => handleTimerChange('FOCUS', value)}
+                onBlur={() => handleTimerBlur('FOCUS', localTimers.FOCUS, focusDuration)}
               />
 
               <TimeInput
                 label="Short"
                 value={localTimers.SHORT_BREAK}
                 onChange={(value) => handleTimerChange('SHORT_BREAK', value)}
+                onBlur={() => handleTimerBlur('SHORT_BREAK', localTimers.SHORT_BREAK, shortBreakDuration)}
               />
 
               <TimeInput
                 label="Long"
                 value={localTimers.LONG_BREAK}
                 onChange={(value) => handleTimerChange('LONG_BREAK', value)}
+                onBlur={() => handleTimerBlur('LONG_BREAK', localTimers.LONG_BREAK, longBreakDuration)}
               />
             </div>
           </section>
@@ -498,9 +552,13 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                   <input
                     type="color"
                     value={localAccentColor}
-                    onChange={(event) =>
-                      handleUISettingChange('accentColor', event.target.value)
-                    }
+                    onChange={(event) => {
+                      const val = event.target.value;
+                      handleUISettingChange('accentColor', val);
+                      document.documentElement.style.setProperty('--color-accent', val);
+                      const rgb = val.match(/\w\w/g)?.map(x => parseInt(x, 16)).join(',') || '225,29,72';
+                      document.documentElement.style.setProperty('--color-accent-rgb', rgb);
+                    }}
                     className="absolute -inset-2 w-12 h-12 cursor-pointer"
                   />
                 </div>
@@ -509,17 +567,20 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
               <div className="space-y-3">
                 <div className="flex justify-between font-bold text-[10px] text-white/30 uppercase">
                   <span>Glass Blur Intensity</span>
-                  <span>{localUISettings.blurIntensity}px</span>
+                  <span>{localUISettings.blurIntensity}%</span>
                 </div>
 
                 <input
                   type="range"
                   min="0"
-                  max="40"
+                  max="100"
                   value={localUISettings.blurIntensity}
-                  onChange={(event) =>
-                    handleUISettingChange('blurIntensity', clampNumber(event.target.value, 0))
-                  }
+                  onChange={(event) => {
+                    const val = clampNumber(event.target.value, 0);
+                    handleUISettingChange('blurIntensity', val);
+                    const pxValue = (val / 100) * 40;
+                    document.documentElement.style.setProperty('--bg-blur', `${pxValue}px`);
+                  }}
                   className="w-full"
                   style={{ accentColor: localAccentColor }}
                 />
@@ -529,9 +590,15 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                 <input
                   type="text"
                   value={localUISettings.bgImage || ''}
-                  onChange={(event) =>
-                    handleUISettingChange('bgImage', event.target.value)
-                  }
+                  onChange={(event) => {
+                    const val = event.target.value;
+                    handleUISettingChange('bgImage', val);
+                    if (val) {
+                      document.documentElement.style.setProperty('--bg-image', `url("${val}")`);
+                    } else {
+                      document.documentElement.style.removeProperty('--bg-image');
+                    }
+                  }}
                   placeholder="Custom Image URL..."
                   className="bg-black/20 px-4 py-3 border border-white/10 focus:border-white/30 rounded-xl outline-none w-full text-white/80 text-xs"
                 />
@@ -551,7 +618,9 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                         const reader = new FileReader();
 
                         reader.onloadend = () => {
-                          handleUISettingChange('bgImage', reader.result);
+                          const result = reader.result;
+                          handleUISettingChange('bgImage', result);
+                          document.documentElement.style.setProperty('--bg-image', `url("${result}")`);
                         };
 
                         reader.readAsDataURL(file);
@@ -563,7 +632,10 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                   {localUISettings.bgImage && (
                     <button
                       type="button"
-                      onClick={() => handleUISettingChange('bgImage', '')}
+                      onClick={() => {
+                        handleUISettingChange('bgImage', '');
+                        document.documentElement.style.removeProperty('--bg-image');
+                      }}
                       className="flex justify-center items-center bg-red-500/10 hover:bg-red-500/20 rounded-xl w-12 h-12 text-red-500 shrink-0"
                     >
                       <Trash2 size={18} />
@@ -598,14 +670,14 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
   );
 };
 
-const TimeInput = memo(({ label, value, onChange }) => (
+const TimeInput = memo(({ label, value, onChange, onBlur }) => (
   <div className="flex xs:flex-col justify-between xs:justify-start items-center xs:items-stretch gap-2 bg-black/20 xs:bg-transparent p-3 xs:p-0 rounded-2xl">
     <input
       type="number"
-      min="1"
-      value={value || 0}
-      onChange={(event) => onChange(Number(event.target.value))}
-      className="bg-black/40 py-3 xs:py-4 border border-white/5 rounded-2xl w-24 xs:w-full text-white text-base xs:text-lg text-center"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      onBlur={onBlur}
+      className="bg-black/40 py-3 xs:py-4 border border-white/5 rounded-2xl w-24 xs:w-full text-white text-base xs:text-lg text-center no-spinner"
     />
 
     <label className="font-bold text-[9px] text-white/20 text-center uppercase">

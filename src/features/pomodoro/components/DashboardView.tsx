@@ -52,7 +52,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   useThemeEffect(
     uiSettings.accentColor,
     uiSettings.bgImage,
-    uiSettings.blurIntensity
+    uiSettings.blurIntensity,
+    uiSettings.theme
   );
 
   return (
@@ -61,7 +62,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       style={{ '--color-accent': uiSettings.accentColor } as React.CSSProperties}
     >
       <div
-        className="z-0 fixed inset-0 transition-opacity duration-700 pointer-events-none"
+        className="z-0 fixed inset-0 transition-opacity duration-700 pointer-events-none dashboard-background-image"
         style={{
           backgroundImage: uiSettings.bgImage ? `url(${uiSettings.bgImage})` : 'none',
           backgroundSize: 'cover',

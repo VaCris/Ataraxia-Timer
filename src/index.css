@@ -355,7 +355,7 @@ iframe {
 }
 
 /* ========================================================= */
-/* PREMIUM REDESIGN: APUTRAK ESTHETIC FOR ATARAXIA */
+/* PREMIUM REDESIGN: APUTRAK ESTHETIC FOR ATARAXIA (LIGHT & DARK) */
 /* ========================================================= */
 
 * {
@@ -366,33 +366,90 @@ h1, h2, h3, h4, h5, h6, .app-header-title, .timer-digits {
   font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Dynamic theme custom properties */
+:root, .theme-light {
+  --color-background: #f5f0e6;
+  --color-surface: #fffcf4;
+  --color-surface-trans: rgba(255, 252, 244, 0.65);
+  --color-sidebar-trans: rgba(255, 252, 244, 0.82);
+  --bg-blur: 0px;
+  --color-cream: #111111;
+  --color-sborder: rgba(17, 17, 17, 0.08);
+  --color-hover: #fffcf4;
+  --color-glass-overlay: rgba(245, 240, 230, 0.35);
+  
+  --color-text-100: rgba(17, 17, 17, 0.85);
+  --color-text-80: rgba(17, 17, 17, 0.65);
+  --color-text-45: rgba(17, 17, 17, 0.45);
+  
+  --color-tabs-bg: rgba(17, 17, 17, 0.05);
+  --shadow-box: 0 10px 30px -10px rgba(17, 17, 17, 0.06), 0 1px 3px rgba(17, 17, 17, 0.01);
+}
+
+.theme-dark {
+  --color-background: #0a0a0a;
+  --color-surface: #141414;
+  --color-surface-trans: rgba(20, 20, 20, 0.65);
+  --color-sidebar-trans: rgba(20, 20, 20, 0.82);
+  --bg-blur: 0px;
+  --color-cream: #fffcf4;
+  --color-sborder: rgba(255, 255, 255, 0.08);
+  --color-hover: #1e1e1e;
+  --color-glass-overlay: rgba(0, 0, 0, 0.6);
+  
+  --color-text-100: rgba(255, 255, 255, 0.9);
+  --color-text-80: rgba(255, 255, 255, 0.65);
+  --color-text-45: rgba(255, 255, 255, 0.4);
+  
+  --color-tabs-bg: rgba(255, 255, 255, 0.06);
+  --shadow-box: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
 /* Dashboard root background override */
 .dashboard-root {
   background-color: var(--color-background) !important;
   color: var(--color-cream) !important;
+  transition: background-color 0.6s ease, color 0.6s ease;
 }
 
-/* Override background colors of the dark theme to soft/light theme */
+/* Override background colors of the dark theme */
 .bg-\[\#030303\], .bg-\[\#050505\] {
   background-color: var(--color-background) !important;
+  transition: background-color 0.6s ease;
 }
 
-/* Override task panel shell, widgets, etc. */
-.task-panel-shell, 
-.bg-\[\#0a0a0a\]\/80, 
+/* Override task panel elements, widgets, etc. */
+.task-manager-card, 
 .glass, 
 .bg-surface\/30 {
-  background-color: var(--color-surface) !important;
+  background-color: var(--color-surface-trans) !important;
   border: 1px solid var(--color-sborder) !important;
-  box-shadow: 0 10px 30px -10px rgba(17, 17, 17, 0.06), 0 1px 3px rgba(17, 17, 17, 0.01) !important;
+  box-shadow: var(--shadow-box) !important;
+  -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
   border-radius: 20px !important;
+  transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease !important;
 }
 
-/* Sidebar and Header overrides */
-aside {
-  background-color: var(--color-surface) !important;
+/* Sidebar overrides */
+aside.app-sidebar {
+  background-color: var(--color-sidebar-trans) !important;
   border-right: 1px solid var(--color-sborder) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  transition: background-color 0.5s ease, border-color 0.5s ease !important;
+}
+
+/* Foreground typography and element color transitions to prevent snapping */
+.app-header-title,
+.app-header-clock-text,
+.text-white,
+.text-white\/90, .text-white\/80, .text-white\/70, .text-white\/75,
+.text-white\/60, .text-white\/50, .text-white\/40,
+.text-white\/30, .text-white\/20, .text-white\/15, .text-white\/10,
+.timer-icon-action,
+.mode-tab {
+  transition: color 0.5s ease, background-color 0.5s ease, border-color 0.5s ease !important;
 }
 
 aside nav button,
@@ -404,7 +461,7 @@ aside button {
 aside nav button:hover:not(.bg-accent),
 aside button:hover:not(.bg-accent) {
   transform: translateX(3px) !important;
-  background-color: rgba(17, 17, 17, 0.04) !important;
+  background-color: var(--color-tabs-bg) !important;
 }
 
 header {
@@ -413,7 +470,7 @@ header {
 
 /* Translucent bg overrides */
 .bg-white\/5, .bg-white\/10, .bg-black\/40, .bg-black\/20, .bg-black\/45 {
-  background-color: rgba(17, 17, 17, 0.04) !important;
+  background-color: var(--color-tabs-bg) !important;
   border-color: var(--color-sborder) !important;
 }
 
@@ -421,18 +478,30 @@ header {
   border-color: var(--color-sborder) !important;
 }
 
-/* Text overrides */
+/* Text overrides using variables to scale themes */
 .text-white {
   color: var(--color-cream) !important;
 }
 .text-white\/90, .text-white\/80, .text-white\/70, .text-white\/75 {
-  color: rgba(17, 17, 17, 0.8) !important;
+  color: var(--color-text-100) !important;
 }
 .text-white\/60, .text-white\/50, .text-white\/40 {
-  color: rgba(17, 17, 17, 0.6) !important;
+  color: var(--color-text-80) !important;
 }
 .text-white\/30, .text-white\/20, .text-white\/15, .text-white\/10 {
-  color: rgba(17, 17, 17, 0.3) !important;
+  color: var(--color-text-45) !important;
+}
+
+/* Header logo and clock brand styling to maximize contrast */
+.app-header-title {
+  color: var(--color-cream) !important;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.app-header-clock-text {
+  color: var(--color-cream) !important;
+  font-weight: 800;
 }
 
 /* Exception: text inside accent or black buttons should remain white/cream */
@@ -440,7 +509,6 @@ header {
 .bg-accent *,
 .timer-primary-action,
 .mode-tab.bg-accent,
-.app-header-clock-text,
 .bg-black,
 .bg-black * {
   color: #fffcf4 !important;
@@ -453,7 +521,7 @@ header {
 
 /* Mode tabs redesign */
 .mode-tabs {
-  background-color: rgba(17, 17, 17, 0.04) !important;
+  background-color: var(--color-tabs-bg) !important;
   border: 1px solid var(--color-sborder) !important;
   border-radius: 9999px !important;
 }
@@ -465,27 +533,27 @@ header {
   box-shadow: 0 4px 12px rgba(20, 184, 166, 0.25) !important;
 }
 .mode-tab.text-white\/30 {
-  color: rgba(17, 17, 17, 0.4) !important;
+  color: var(--color-text-45) !important;
 }
 .mode-tab.text-white\/30:hover {
   color: var(--color-cream) !important;
-  background-color: rgba(17, 17, 17, 0.04) !important;
+  background-color: var(--color-tabs-bg) !important;
 }
 
 /* Timer actions buttons design */
 .timer-actions {
   background-color: var(--color-surface) !important;
   border: 1px solid var(--color-sborder) !important;
-  box-shadow: 0 10px 30px -10px rgba(17, 17, 17, 0.06), 0 1px 3px rgba(17, 17, 17, 0.01) !important;
+  box-shadow: var(--shadow-box) !important;
 }
 .timer-icon-action {
   border-radius: 9999px !important;
-  color: rgba(17, 17, 17, 0.4) !important;
+  color: var(--color-text-45) !important;
   transition: all 0.2s ease !important;
 }
 .timer-icon-action:hover {
   color: var(--color-cream) !important;
-  background-color: rgba(17, 17, 17, 0.04) !important;
+  background-color: var(--color-tabs-bg) !important;
 }
 .timer-primary-action {
   background-color: var(--color-accent) !important;
@@ -502,18 +570,33 @@ header {
 }
 
 /* Forms & inputs inside widgets */
-form input,
-input[type="text"] {
+form input:not(.bg-transparent),
+input[type="text"]:not(.bg-transparent) {
   background-color: var(--color-surface) !important;
   border: 1px solid var(--color-sborder) !important;
   color: var(--color-cream) !important;
   border-radius: 12px !important;
   transition: all 0.25s ease !important;
 }
-form input:focus,
-input[type="text"]:focus {
+
+form input:not(.bg-transparent):focus,
+input[type="text"]:not(.bg-transparent):focus {
   border-color: var(--color-accent) !important;
   box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.15) !important;
+}
+
+/* Custom styles for transparent/inline text inputs */
+input.bg-transparent {
+  color: var(--color-cream) !important;
+}
+
+/* Global placeholder overrides to ensure high contrast in both themes */
+input::placeholder,
+textarea::placeholder,
+.placeholder\:text-white\/10::placeholder,
+.placeholder\:text-white\/20::placeholder {
+  color: var(--color-text-45) !important;
+  opacity: 1 !important;
 }
 
 /* Task list items */
@@ -541,23 +624,32 @@ button.bg-white:hover {
 
 /* Scrollbar styles matching aputrak */
 ::-webkit-scrollbar-thumb {
-  background: rgba(17, 17, 17, 0.15) !important;
+  background: var(--color-sborder) !important;
   border-radius: 10px !important;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(17, 17, 17, 0.3) !important;
+  background: var(--color-text-45) !important;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(17, 17, 17, 0.15) !important;
+  background-color: var(--color-sborder) !important;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(17, 17, 17, 0.3) !important;
+  background-color: var(--color-text-45) !important;
 }
 
-/* Background gradient overlay fix for light mode */
-.dashboard-root > .z-0.fixed.inset-0.bg-black\/70 {
-  background-color: rgba(245, 240, 230, 0.3) !important;
+/* Background gradient overlay fix for theme modes */
+.dashboard-glass-overlay {
+  background-color: var(--color-glass-overlay) !important;
+  transition: background-color 0.6s ease;
+}
+
+/* Real-time blurring of the background image */
+.dashboard-background-image {
+  filter: blur(var(--bg-blur, 0px)) !important;
+  transform: scale(1.08) !important;
+  transform-origin: center !important;
+  transition: filter 0.3s ease, opacity 0.5s ease !important;
 }
 
 /* Status colors and active badges */
@@ -570,4 +662,60 @@ button.bg-white:hover {
 }
 .border-\[\#00ffd5\] {
   border-color: var(--color-accent) !important;
+}
+
+/* UNIVERSAL REAL-TIME SMOOTH THEME MORPHING (crossfades in sync with paint animation) */
+html.theme-transitioning,
+html.theme-transitioning * {
+  transition: color 1.8s cubic-bezier(0.25, 1, 0.3, 1),
+              background-color 1.8s cubic-bezier(0.25, 1, 0.3, 1),
+              border-color 1.8s cubic-bezier(0.25, 1, 0.3, 1),
+              box-shadow 1.8s cubic-bezier(0.25, 1, 0.3, 1),
+              opacity 1.8s cubic-bezier(0.25, 1, 0.3, 1),
+              filter 1.8s cubic-bezier(0.25, 1, 0.3, 1) !important;
+}
+
+/* Explicit high-specificity overrides to slow down container backgrounds during transition */
+html.theme-transitioning body,
+html.theme-transitioning .dashboard-root,
+html.theme-transitioning .bg-\[\#030303\],
+html.theme-transitioning .bg-\[\#050505\],
+html.theme-transitioning aside.app-sidebar,
+html.theme-transitioning .task-manager-card,
+html.theme-transitioning .glass,
+html.theme-transitioning .dashboard-glass-overlay,
+html.theme-transitioning .dashboard-background-image {
+  transition: background-color 1.8s cubic-bezier(0.25, 1, 0.3, 1),
+              color 1.8s cubic-bezier(0.25, 1, 0.3, 1),
+              border-color 1.8s cubic-bezier(0.25, 1, 0.3, 1),
+              box-shadow 1.8s cubic-bezier(0.25, 1, 0.3, 1),
+              opacity 1.8s cubic-bezier(0.25, 1, 0.3, 1),
+              filter 1.8s cubic-bezier(0.25, 1, 0.3, 1) !important;
+}
+
+/* Dropdown/Select Menu overlays to adapt to Light & Dark themes */
+.relative div[class*="z-[100]"],
+.relative div[class*="z-50"] {
+  background-color: var(--color-surface) !important;
+  border: 1px solid var(--color-sborder) !important;
+}
+
+.relative div[class*="z-50"] button,
+.relative div[class*="z-[100]"] button {
+  color: var(--color-cream) !important;
+}
+
+.relative div[class*="z-50"] button:hover,
+.relative div[class*="z-[100]"] button:hover {
+  background-color: var(--color-tabs-bg) !important;
+}
+
+/* Hide spin buttons/arrows for TimeInputs with .no-spinner */
+input.no-spinner::-webkit-outer-spin-button,
+input.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input.no-spinner {
+  -moz-appearance: textfield;
 }

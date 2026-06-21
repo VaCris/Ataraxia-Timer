@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink, Play, Pause, RotateCcw } from 'lucide-react';
+import { useDispatch } from 'react-redux';
 
 import { usePomodoroController } from '@/features/pomodoro/hooks/usePomodoroController';
 import { usePipController } from '@/features/pomodoro/hooks/usePipController';
 import { useUISettings } from '@/features/settings/hooks/useUISettings';
 import { useThemeEffect } from '@/app/providers/theme/useThemeEffect';
+import { updateUISettings, updateSettingsRequest } from '@/features/settings/store/settingsSlice';
 
 import Sidebar from '@/app/layout/Sidebar';
 import Header from '@/app/layout/Header';
@@ -15,6 +17,7 @@ import SettingsModal from '@/features/settings/components/SettingsModal';
 import SupportModal from '@/shared/ui/modals/SupportModal';
 import MusicWidget from '@/features/pomodoro/components/MusicWidget';
 import PipPortal from '@/features/pomodoro/components/PipPortal';
+import PaintTransitionOverlay from '@/app/components/PaintTransitionOverlay';
 
 const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -26,6 +29,9 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
     const pomodoro = usePomodoroController();
     const pip = usePipController();
 
+    const dispatch = useDispatch();
+    const triggerPaintRef = useRef(null);
+
     const toggleMusic = () => {
         setIsMusicOpen((prev) => !prev);
     };
@@ -34,10 +40,27 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
         setIsMusicOpen(false);
     };
 
+    const applyThemeChange = useCallback((newTheme) => {
+        localStorage.setItem('ataraxia_theme', newTheme);
+        dispatch(updateUISettings({ theme: newTheme }));
+        dispatch(updateSettingsRequest({ theme: newTheme }));
+    }, [dispatch]);
+
+    const toggleTheme = useCallback(() => {
+        const currentTheme = uiSettings.theme || 'dark';
+        const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        if (triggerPaintRef.current) {
+            triggerPaintRef.current(nextTheme);
+        }
+        applyThemeChange(nextTheme);
+    }, [uiSettings.theme, applyThemeChange]);
+
     useThemeEffect(
         uiSettings.accentColor,
         uiSettings.bgImage,
-        uiSettings.blurIntensity
+        uiSettings.blurIntensity,
+        uiSettings.theme
     );
 
     return (
@@ -48,7 +71,7 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
             }}
         >
             <div
-                className="z-0 fixed inset-0 transition-opacity duration-500 pointer-events-none"
+                className="z-0 fixed inset-0 transition-opacity duration-500 pointer-events-none dashboard-background-image"
                 style={{
                     backgroundImage: uiSettings.bgImage ? `url(${uiSettings.bgImage})` : 'none',
                     backgroundSize: 'cover',
@@ -57,7 +80,7 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                 }}
             />
 
-            <div className="z-0 fixed inset-0 bg-black/70 pointer-events-none" />
+            <div className="z-0 fixed inset-0 bg-black/70 pointer-events-none dashboard-glass-overlay" />
 
             <Sidebar
                 isMobileOpen={isSidebarOpen}
@@ -70,6 +93,8 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                 onOpenMusic={toggleMusic}
                 isMusicOpen={isMusicOpen}
                 customShortcuts={uiSettings.customShortcuts}
+                theme={uiSettings.theme}
+                onToggleTheme={toggleTheme}
             />
 
             <main className="dashboard-main">
@@ -181,6 +206,8 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                     toggleSession={pomodoro.toggleSession}
                     resetSession={pomodoro.resetSession}
                     accentColor={uiSettings.accentColor}
+                    bgImage={uiSettings.bgImage}
+                    blurIntensity={uiSettings.blurIntensity}
                 />
             )}
 
@@ -237,6 +264,11 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
             <MusicWidget
                 isOpen={isMusicOpen}
                 onClose={closeMusic}
+            />
+
+            <PaintTransitionOverlay
+                triggerRef={triggerPaintRef}
+                onMidpoint={() => {}}
             />
         </motion.div>
     );

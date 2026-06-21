@@ -13,5 +13,6 @@ export const applyBgImage = (url: string) => {
 }
 
 export const applyBlur = (intensity: number) => {
-    document.documentElement.style.setProperty('--bg-blur', `${intensity}px`)
+    const pxValue = (intensity / 100) * 40
+    document.documentElement.style.setProperty('--bg-blur', `${pxValue}px`)
 }

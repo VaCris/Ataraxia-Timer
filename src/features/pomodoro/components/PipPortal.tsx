@@ -12,6 +12,8 @@ export interface PipPortalProps {
     isActive: boolean;
     isPaused: boolean;
     accentColor: string;
+    bgImage?: string | null;
+    blurIntensity?: number;
     toggleSession: () => void;
     resetSession: () => void;
 }
@@ -25,6 +27,8 @@ export const PipPortal: React.FC<PipPortalProps> = ({
     initialTime,
     isActive,
     accentColor,
+    bgImage,
+    blurIntensity = 0,
     toggleSession,
     resetSession
 }) => {
@@ -36,6 +40,7 @@ export const PipPortal: React.FC<PipPortalProps> = ({
 
     return createPortal(
         <div style={{
+            position: 'relative',
             width: '100%',
             height: '100vh',
             backgroundColor: '#050505',
@@ -49,6 +54,44 @@ export const PipPortal: React.FC<PipPortalProps> = ({
             boxSizing: 'border-box',
             overflow: 'hidden'
         }}>
+            {/* Background Image */}
+            {bgImage && (
+                <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    backgroundImage: `url(${bgImage})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    zIndex: 0,
+                    pointerEvents: 'none',
+                    filter: `blur(${(blurIntensity / 100) * 40}px)`,
+                    transform: 'scale(1.08)',
+                    transformOrigin: 'center',
+                }} />
+            )}
+
+            {/* Dark Overlay */}
+            {bgImage && (
+                <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    zIndex: 0,
+                    pointerEvents: 'none',
+                }} />
+            )}
+
+            {/* Content Container */}
+            <div style={{
+                position: 'relative',
+                zIndex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                height: '100%',
+            }}>
             <div style={{
                 fontSize: '4.5vw',
                 fontWeight: '900',
@@ -182,6 +225,8 @@ export const PipPortal: React.FC<PipPortalProps> = ({
                 fontStyle: 'italic'
             }}>
                 ATARAXIA V2
+            </div>
+
             </div>
 
             <style>{`

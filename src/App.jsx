@@ -28,6 +28,21 @@ function App() {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    const storedTheme = localStorage.getItem('ataraxia_theme') || 'dark';
+    const root = document.documentElement;
+    root.classList.remove('theme-light', 'theme-dark');
+    
+    if (storedTheme === 'light') {
+      root.classList.add('theme-light');
+    } else if (storedTheme === 'dark') {
+      root.classList.add('theme-dark');
+    } else {
+      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.classList.add(systemDark ? 'theme-dark' : 'theme-light');
+    }
+  }, []);
+
+  useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) dispatch(checkAuthRequest());
   }, [dispatch]);
