@@ -1,47 +1,54 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Rocket, Gamepad2, BarChart2, Trophy, ChevronLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 
-const ComingSoon = ({ onBack, type }) => {
+const ComingSoon = ({ onBack, type, customImage }) => {
     const content = {
-        games: { icon: Gamepad2, title: 'Games Module' },
-        stats: { icon: BarChart2, title: 'Advanced Insights' },
-        achievements: { icon: Trophy, title: 'Achievement System' },
-        default: { icon: Rocket, title: 'Something Big' }
+        games: { title: 'Games Module', desc: 'Interactive focus tools and scheduled micro-breaks.' },
+        stats: { title: 'Advanced Insights', desc: 'Analytical logs and productivity diagnostics.' },
+        achievements: { title: 'Achievements', desc: 'Performance milestones and accomplishments.' },
+        default: { title: 'New Module', desc: 'Feature preparation is currently in progress.' }
     };
 
-    const { icon: Icon, title } = content[type] || content.default;
+    const { title, desc } = content[type] || content.default;
 
     return (
-        <div className="relative flex flex-col justify-center items-center bg-[#050505] w-screen h-screen overflow-hidden text-cream">
-            <div className="top-0 left-0 absolute bg-[radial-gradient(circle_at_50%_50%,#e11d48_0%,transparent_50%)] opacity-20 w-full h-full pointer-events-none" />
-
+        <div className="flex flex-col justify-center items-center bg-[#0a0a0a] w-screen min-h-screen p-8 md:p-16 text-white font-sans relative">
             {onBack && (
-                <button onClick={onBack} className="top-10 left-10 absolute flex items-center gap-2 font-black text-[10px] text-white/30 hover:text-white uppercase tracking-[0.2em] transition-colors">
-                    <ChevronLeft size={16} /> Back to Terminal
+                <button 
+                    onClick={onBack} 
+                    className="absolute top-8 left-8 flex items-center gap-1.5 text-[10px] text-white/40 hover:text-white uppercase tracking-widest transition-all cursor-pointer"
+                >
+                    <ChevronLeft size={12} /> Back
                 </button>
             )}
 
-            <main className="z-10 flex flex-col items-center px-6 max-w-xl text-center">
-                <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="bg-white/5 shadow-glow mb-8 p-5 border border-white/10 rounded-full">
-                    <Icon size={48} className="text-accent" />
-                </motion.div>
-
-                <h1 className="mb-4 font-black text-5xl md:text-7xl italic uppercase tracking-tighter">
-                    {title} <span className="text-accent">is Coming</span>
-                </h1>
-
-                <p className="mb-10 font-bold text-white/40 text-xs md:text-sm uppercase tracking-[0.3em]">
-                    Ataraxia V2
-                </p>
-
-                <div className="relative bg-white/5 rounded-full w-64 h-1 overflow-hidden">
-                    <motion.div initial={{ width: "0%" }} animate={{ width: "75%" }} transition={{ duration: 2, ease: "easeOut" }} className="bg-accent shadow-glow h-full" />
+            <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-20 max-w-5xl w-full">
+                {/* Left: Text */}
+                <div className="flex flex-col text-left max-w-md w-full">
+                    <h1 className="font-display font-black text-4xl md:text-5xl tracking-tight uppercase mb-4 leading-none">
+                        {title} <br />
+                        <span className="text-white/40">In Development</span>
+                    </h1>
+                    <p className="text-white/60 text-xs md:text-sm font-light leading-relaxed">
+                        {desc}
+                    </p>
                 </div>
-                <span className="mt-4 font-black text-[10px] text-accent uppercase tracking-widest animate-pulse">
-                    System Loading: 79%
-                </span>
-            </main>
+
+                {/* Right: Image */}
+                <div className="w-full max-w-md aspect-video rounded-lg overflow-hidden bg-white/[0.02] flex items-center justify-center relative">
+                    {customImage ? (
+                        <img 
+                            src={customImage} 
+                            alt={title} 
+                            className="object-cover w-full h-full" 
+                        />
+                    ) : (
+                        <div className="text-white/20 font-mono text-[10px] tracking-widest uppercase">
+                            Feature Preview
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

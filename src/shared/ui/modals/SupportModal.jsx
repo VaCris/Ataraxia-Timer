@@ -43,6 +43,7 @@ const SupportModal = ({ isOpen, onClose }) => {
                     {/* <a
                         href="https://buymeacoffee.com/avid0"
                         target="_blank"
+                        rel="noopener noreferrer"
                         className="group flex justify-between items-center bg-white/5 hover:bg-white/10 p-5 border border-white/5 hover:border-accent/30 rounded-2xl transition-all"
                     >
                         <div className="flex items-center gap-4">
@@ -55,6 +56,7 @@ const SupportModal = ({ isOpen, onClose }) => {
                     <a
                         href="https://github.com/VaCris"
                         target="_blank"
+                        rel="noopener noreferrer"
                         className="group flex justify-between items-center bg-black/40 hover:bg-white/5 p-5 border border-white/5 rounded-2xl transition-all"
                     >
                         <div className="flex items-center gap-4 text-white/60">
