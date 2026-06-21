@@ -1,14 +1,14 @@
 {
-  "version": "2.0.0-f9314bb",
+  "version": "2.0.0-08037e0",
   "appVersion": "2.0.0",
-  "build": "f9314bb",
-  "date": "2026-06-17T01:31:30.631Z",
+  "build": "08037e0",
+  "date": "2026-06-21T21:16:16.307Z",
   "changelog": [
-    "refactor(index.html, main.jsx): format meta tags for consistency and remove unused service worker registration",
-    "feat(tasks): enhance task fetching logic with user authentication and local storage fallback",
-    "Enhance TaskManager to support dynamic tag creation and updates; integrate TagInput for manual tag entry when no tag is selected",
-    "Implement offline session management for Pomodoro timer; add tag management features and refactor related components",
-    "Add confirmation modal for mode changes in Pomodoro timer"
+    "fix(dependencies): update axios version to ^1.18.0",
+    "refactor(TagInput): remove commented code for clarity",
+    "feat(tags): implement color picker for tag selection and close on outside click",
+    "Refactor Sidebar component for improved readability and performance; remove unused auth and gamification features; enhance DashboardView with new props; add estimated Pomodoros feature in TaskManager; clean up tasksSaga logging; update CSS for better responsiveness; introduce Loader component with motivational quotes; modify SupportModal for better user experience; improve version guard error handling; update Vite config to exclude unused assets.",
+    "feat(tasks): add logging for task fetch success and error handling"
   ],
   "targetUrl": "/"
 }

@@ -7,7 +7,7 @@ import { useInstallPrompt } from '@/shared/hooks/useInstallPrompt';
 
 const AuthModal = React.lazy(() => import('@/features/auth/components/AuthModal'));
 
-const Header = ({ is24Hour = false, accentColor = '#e11d48', onOpenSidebar = () => { }, }) => {
+const Header = ({ is24Hour = false, accentColor = '#14b8a6', onOpenSidebar = () => { }, }) => {
   const dispatch = useDispatch();
   const { permission, requestPermission } = useNotifications();
   const { isInstallable, handleInstallClick } = useInstallPrompt();

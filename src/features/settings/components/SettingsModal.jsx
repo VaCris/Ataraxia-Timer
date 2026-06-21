@@ -122,7 +122,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
   } = apiSettings;
 
   const {
-    accentColor = '#e11d48',
+    accentColor = '#14b8a6',
     bgImage = '',
     blurIntensity = 0,
     volume = 50,

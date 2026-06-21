@@ -71,7 +71,7 @@ export const useUISettings = () => {
 
       accentColor: readStoredValue(
         'accentColor',
-        uiSettingsState.accentColor || '#e11d48'
+        uiSettingsState.accentColor || '#14b8a6'
       ),
 
       bgImage: readStoredValue(

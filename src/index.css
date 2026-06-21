@@ -1,10 +1,24 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #050505;
-  --color-surface: #121212;
-  --color-accent: #e11d48;
-  --color-cream: #f8f8f8;
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: #f5f0e6;
+  --color-surface: #fffcf4;
+  --color-accent: #14b8a6;
+  --color-cream: #111111;
+
+  --color-primary: #111111;
+  --color-secondary: #14b8a6;
+  --color-accent2: #f59e0b;
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-muted: #64748b;
+  --color-muted-foreground: #64748b;
+  --color-sborder: rgba(17, 17, 17, 0.08);
+  --color-hover: #fffcf4;
+
   --breakpoint-xs: 480px;
   --breakpoint-2xl: 1536px;
   --breakpoint-3xl: 1920px;
@@ -332,10 +346,228 @@ iframe {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(17, 17, 17, 0.15);
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.25);
+  background-color: rgba(17, 17, 17, 0.3);
+}
+
+/* ========================================================= */
+/* PREMIUM REDESIGN: APUTRAK ESTHETIC FOR ATARAXIA */
+/* ========================================================= */
+
+* {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .app-header-title, .timer-digits {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Dashboard root background override */
+.dashboard-root {
+  background-color: var(--color-background) !important;
+  color: var(--color-cream) !important;
+}
+
+/* Override background colors of the dark theme to soft/light theme */
+.bg-\[\#030303\], .bg-\[\#050505\] {
+  background-color: var(--color-background) !important;
+}
+
+/* Override task panel shell, widgets, etc. */
+.task-panel-shell, 
+.bg-\[\#0a0a0a\]\/80, 
+.glass, 
+.bg-surface\/30 {
+  background-color: var(--color-surface) !important;
+  border: 1px solid var(--color-sborder) !important;
+  box-shadow: 0 10px 30px -10px rgba(17, 17, 17, 0.06), 0 1px 3px rgba(17, 17, 17, 0.01) !important;
+  backdrop-filter: none !important;
+  border-radius: 20px !important;
+}
+
+/* Sidebar and Header overrides */
+aside {
+  background-color: var(--color-surface) !important;
+  border-right: 1px solid var(--color-sborder) !important;
+}
+
+aside nav button,
+aside button {
+  border-radius: 12px !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+aside nav button:hover:not(.bg-accent),
+aside button:hover:not(.bg-accent) {
+  transform: translateX(3px) !important;
+  background-color: rgba(17, 17, 17, 0.04) !important;
+}
+
+header {
+  border-bottom: 1px solid var(--color-sborder) !important;
+}
+
+/* Translucent bg overrides */
+.bg-white\/5, .bg-white\/10, .bg-black\/40, .bg-black\/20, .bg-black\/45 {
+  background-color: rgba(17, 17, 17, 0.04) !important;
+  border-color: var(--color-sborder) !important;
+}
+
+.border-white\/5, .border-white\/10, .border-white\/20, .border-white\/30 {
+  border-color: var(--color-sborder) !important;
+}
+
+/* Text overrides */
+.text-white {
+  color: var(--color-cream) !important;
+}
+.text-white\/90, .text-white\/80, .text-white\/70, .text-white\/75 {
+  color: rgba(17, 17, 17, 0.8) !important;
+}
+.text-white\/60, .text-white\/50, .text-white\/40 {
+  color: rgba(17, 17, 17, 0.6) !important;
+}
+.text-white\/30, .text-white\/20, .text-white\/15, .text-white\/10 {
+  color: rgba(17, 17, 17, 0.3) !important;
+}
+
+/* Exception: text inside accent or black buttons should remain white/cream */
+.bg-accent,
+.bg-accent *,
+.timer-primary-action,
+.mode-tab.bg-accent,
+.app-header-clock-text,
+.bg-black,
+.bg-black * {
+  color: #fffcf4 !important;
+}
+
+/* Exception: specific elements with dynamic text colors */
+.bg-accent\/10 {
+  background-color: rgba(20, 184, 166, 0.1) !important;
+}
+
+/* Mode tabs redesign */
+.mode-tabs {
+  background-color: rgba(17, 17, 17, 0.04) !important;
+  border: 1px solid var(--color-sborder) !important;
+  border-radius: 9999px !important;
+}
+.mode-tab {
+  border-radius: 9999px !important;
+}
+.mode-tab.bg-accent {
+  background-color: var(--color-accent) !important;
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.25) !important;
+}
+.mode-tab.text-white\/30 {
+  color: rgba(17, 17, 17, 0.4) !important;
+}
+.mode-tab.text-white\/30:hover {
+  color: var(--color-cream) !important;
+  background-color: rgba(17, 17, 17, 0.04) !important;
+}
+
+/* Timer actions buttons design */
+.timer-actions {
+  background-color: var(--color-surface) !important;
+  border: 1px solid var(--color-sborder) !important;
+  box-shadow: 0 10px 30px -10px rgba(17, 17, 17, 0.06), 0 1px 3px rgba(17, 17, 17, 0.01) !important;
+}
+.timer-icon-action {
+  border-radius: 9999px !important;
+  color: rgba(17, 17, 17, 0.4) !important;
+  transition: all 0.2s ease !important;
+}
+.timer-icon-action:hover {
+  color: var(--color-cream) !important;
+  background-color: rgba(17, 17, 17, 0.04) !important;
+}
+.timer-primary-action {
+  background-color: var(--color-accent) !important;
+  box-shadow: 0 8px 20px rgba(20, 184, 166, 0.25) !important;
+  border-radius: 9999px !important;
+}
+
+/* Timer Dial styling to match Aputrak clean design */
+.timer-dial svg circle {
+  filter: none !important;
+}
+.timer-dial > div[class*="blur-"] {
+  display: none !important;
+}
+
+/* Forms & inputs inside widgets */
+form input,
+input[type="text"] {
+  background-color: var(--color-surface) !important;
+  border: 1px solid var(--color-sborder) !important;
+  color: var(--color-cream) !important;
+  border-radius: 12px !important;
+  transition: all 0.25s ease !important;
+}
+form input:focus,
+input[type="text"]:focus {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.15) !important;
+}
+
+/* Task list items */
+.group.flex.items-center.justify-between.border {
+  border-radius: 12px !important;
+  background-color: var(--color-surface) !important;
+  border: 1px solid var(--color-sborder) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.group.flex.items-center.justify-between.border:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Buttons style */
+button.bg-white {
+  background-color: var(--color-cream) !important;
+  color: var(--color-surface) !important;
+  border-radius: 12px !important;
+}
+button.bg-white:hover {
+  background-color: var(--color-accent) !important;
+  color: #fffcf4 !important;
+}
+
+/* Scrollbar styles matching aputrak */
+::-webkit-scrollbar-thumb {
+  background: rgba(17, 17, 17, 0.15) !important;
+  border-radius: 10px !important;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 17, 17, 0.3) !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(17, 17, 17, 0.15) !important;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(17, 17, 17, 0.3) !important;
+}
+
+/* Background gradient overlay fix for light mode */
+.dashboard-root > .z-0.fixed.inset-0.bg-black\/70 {
+  background-color: rgba(245, 240, 230, 0.3) !important;
+}
+
+/* Status colors and active badges */
+.bg-\[\#00ffd5\] {
+  background-color: var(--color-accent) !important;
+  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.25) !important;
+}
+.text-\[\#00ffd5\] {
+  color: var(--color-accent) !important;
+}
+.border-\[\#00ffd5\] {
+  border-color: var(--color-accent) !important;
 }

@@ -12,7 +12,7 @@ export interface SettingsState {
 
 const initialUISettings: UISettings = {
     theme: 'system',
-    accentColor: '#e11d48',
+    accentColor: '#14b8a6',
     bgImage: null,
     blurIntensity: 0,
     volume: 50,
