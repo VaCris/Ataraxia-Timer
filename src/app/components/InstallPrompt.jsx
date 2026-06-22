@@ -14,14 +14,14 @@ const InstallPrompt = () => {
 
     useEffect(() => {
         if (!isInstallable) {
-            setIsVisible(false);
+            Promise.resolve().then(() => setIsVisible(false));
             return;
         }
 
         const dismissed = localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY) === 'true';
 
         if (dismissed) {
-            setIsVisible(false);
+            Promise.resolve().then(() => setIsVisible(false));
             return;
         }
 
