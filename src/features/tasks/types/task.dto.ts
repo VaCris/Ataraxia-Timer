@@ -1,15 +1,11 @@
-export interface CreateTaskDto {
-    title: string;
-    tag?: string;
-}
+import { TaskRequestDto, TaskResponseDto } from '@/infrastructure/api/generated';
 
-export interface UpdateTaskDto extends Partial<CreateTaskDto> {
-    completed?: boolean;
-}
+export type CreateTaskDto = TaskRequestDto;
 
-export interface TaskResponse extends CreateTaskDto {
+export type UpdateTaskDto = Partial<CreateTaskDto>;
+
+export interface TaskResponse extends Omit<TaskResponseDto, 'id' | 'title' | 'status'> {
     id: string;
-    userId: string;
-    completed: boolean;
-    createdAt: string;
-}
+    title: string;
+    status: 'TODO' | 'IN_PROGRESS' | 'DONE';
+}

@@ -25,13 +25,13 @@ export const useTasks = () => {
   const updateTask = (id: string, data: UpdateTaskDto) =>
     dispatch(actions.updateTaskRequest({ id, data }))
 
-  const toggleTask = (task: UpdateTaskDto & { id: string }) => {
+  const toggleTask = (task: any) => {
     dispatch(actions.updateTaskRequest({
       id: task.id,
       data: {
         title: task.title,
-        tag: task.tag,
-        completed: !task.completed
+        tagIds: task.tags?.map((t: any) => t.id),
+        status: task.status === 'DONE' ? 'TODO' : 'DONE'
       }
     }));
   };

@@ -116,39 +116,90 @@ const applySyncedEntity = async (item: SyncQueueItem, responseData: any) => {
   })
 }
 
+let lastSyncTime = 0
+const SYNC_COOLDOWN_MS = 5000 // 5 seconds cooldown
+
 export const processSyncQueue = async () => {
   if (syncing || !navigator.onLine) return
+  
+  const now = Date.now()
+  if (now - lastSyncTime < SYNC_COOLDOWN_MS) return
+  
   syncing = true
+  lastSyncTime = now
 
   try {
     const queue = await getQueue()
 
-    for (const item of queue) {
-      try {
-        const response = await api.request({
-          method: item.method,
-          url: item.url,
-          data: item.data,
-          headers: {
-            'x-ataraxia-sync': 'true',
-          },
-        })
+    if (queue.length > 0) {
+      const mutations = queue.map(item => {
+        let operation = 'UPDATE'
+        if (item.method === 'POST') operation = 'CREATE'
+        else if (item.method === 'DELETE') operation = 'DELETE'
+        else if (item.method === 'PATCH' || item.method === 'PUT') operation = 'UPDATE'
 
-        await applySyncedEntity(item, response.data)
-        await db.syncQueue.delete(item.id)
-      } catch (error: any) {
-        if (isTransientError(error) && item.retries < MAX_RETRIES) {
-          await db.syncQueue.update(item.id, {
-            retries: item.retries + 1,
-            ts: Date.now(),
-          })
-
-          break
+        return {
+          clientMutationId: item.id,
+          entityType: item.entity || 'unknown',
+          entityId: item.entityId || '',
+          operation,
+          payload: item.data as any
         }
+      })
 
-        await db.syncQueue.delete(item.id)
+      try {
+        const { SyncControllerService } = await import('@/infrastructure/api/generated')
+        await SyncControllerService.push({ mutations })
+
+        for (const item of queue) {
+          await db.syncQueue.delete(item.id)
+        }
+      } catch (error: any) {
+        console.error('Error pushing mutations:', error)
       }
     }
+
+    // Now pull updates
+    try {
+      const { SyncControllerService } = await import('@/infrastructure/api/generated')
+      const lastSync = localStorage.getItem('ataraxia_lastSyncCursor') || undefined
+      const response = await SyncControllerService.pull(
+        lastSync,
+        100,
+        undefined,
+        ['tasks', 'settings', 'tags']
+      )
+
+      if (response.changes && response.changes.length > 0) {
+        for (const change of response.changes) {
+          if (!change.entityId || !change.entityType) continue
+
+          const storeName = change.entityType as keyof AppDB
+
+          if (!db[storeName]) continue
+          
+          const table = db[storeName] as any
+
+          if (change.operation === 'DELETE') {
+            await table.delete(change.entityId)
+          } else if (change.payload) {
+            await table.put({
+              ...change.payload,
+              syncStatus: 'synced',
+              updatedAt: Date.now(),
+              deletedAt: null
+            })
+          }
+        }
+      }
+
+      if (response.nextCursor) {
+        localStorage.setItem('ataraxia_lastSyncCursor', response.nextCursor)
+      }
+    } catch (error) {
+      console.error('Error pulling updates:', error)
+    }
+
   } finally {
     syncing = false
   }

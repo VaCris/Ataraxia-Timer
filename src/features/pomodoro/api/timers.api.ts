@@ -7,7 +7,9 @@ import type {
 
 const ENDPOINTS = {
     BASE: '/timers',
+    HISTORY: '/timers/history',
     BY_ID: (id: string) => `/timers/${id}`,
+    COMPLETE: (id: string) => `/timers/${id}/complete`,
 };
 
 export const timersService = {
@@ -16,8 +18,8 @@ export const timersService = {
         return data;
     },
 
-    getAll: async (): Promise<TimerResponse[]> => {
-        const { data } = await api.get<TimerResponse[]>(ENDPOINTS.BASE);
+    getHistory: async (): Promise<TimerResponse[]> => {
+        const { data } = await api.get<TimerResponse[]>(ENDPOINTS.HISTORY);
         return data;
     },
 
@@ -35,6 +37,11 @@ export const timersService = {
             payload
         );
 
+        return data;
+    },
+    
+    complete: async (id: string): Promise<any> => {
+        const { data } = await api.patch<any>(ENDPOINTS.COMPLETE(id));
         return data;
     },
 

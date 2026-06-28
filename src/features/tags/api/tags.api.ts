@@ -30,7 +30,7 @@ export const tagsService = {
         id: string,
         payload: UpdateTagDto
     ): Promise<TagResponse> => {
-        const { data } = await api.patch<TagResponse>(
+        const { data } = await api.put<TagResponse>(
             ENDPOINTS.BY_ID(id),
             payload
         );

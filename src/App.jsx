@@ -15,6 +15,8 @@ import { Loader } from './shared/ui/feedback/Loader';
 
 const Dashboard = lazy(() => import('./app/layout/Dashboard'));
 const ResetPassword = lazy(() => import('./features/auth/components/ResetPassword'));
+const Privacy = lazy(() => import('./app/pages/Privacy'));
+const Terms = lazy(() => import('./app/pages/Terms'));
 
 function App() {
   const dispatch = useDispatch();
@@ -104,6 +106,8 @@ function App() {
           <Routes>
             <Route path="/" element={renderHomeContent()} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Suspense>

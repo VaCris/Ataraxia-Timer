@@ -59,7 +59,7 @@ const TaskManager = () => {
 
     await addTask({
       title: name.trim(),
-      tag: finalTagName,
+      tagIds: selectedTagId ? [selectedTagId] : [],
     });
 
     setName('');
@@ -163,9 +163,9 @@ const TaskManager = () => {
         {tasks.length === 0 && !loading ? (
           <EmptyTasks />
         ) : (
-          tasks.map((task) => {
+          tasks.map((task: any) => {
             const tagData = tags.find(
-              (tag) => tag.name.toLowerCase() === (task.tag || '').toLowerCase()
+              (tag) => task.tags?.some((t: any) => tag.id === t.id)
             );
 
             const displayColor = tagData?.color || '#5fbfff';
@@ -174,7 +174,7 @@ const TaskManager = () => {
             return (
               <div
                 key={task.id}
-                className={`group flex items-center justify-between gap-2 px-3 py-3 2xl:px-4 2xl:py-3.5 border rounded-2xl transition-all ${task.completed
+                className={`group flex items-center justify-between gap-2 px-3 py-3 2xl:px-4 2xl:py-3.5 border rounded-2xl transition-all ${task.status === 'DONE'
                   ? 'bg-black/20 border-white/5 opacity-40'
                   : 'bg-surface/40 border-white/5 hover:border-white/10'
                   }`}
@@ -185,7 +185,7 @@ const TaskManager = () => {
                     onClick={() => toggleTask(task)}
                     className="shrink-0"
                   >
-                    {task.completed ? (
+                    {task.status === 'DONE' ? (
                       <CheckCircle2 className="text-[#00ffd5]" size={20} />
                     ) : (
                       <Circle className="text-white/20" size={20} />
@@ -226,7 +226,7 @@ const TaskManager = () => {
                       </div>
                     ) : (
                       <p
-                        className={`font-bold text-[13px] 2xl:text-sm truncate cursor-text ${task.completed
+                        className={`font-bold text-[13px] 2xl:text-sm truncate cursor-text ${task.status === 'DONE'
                           ? 'line-through text-white/20'
                           : 'text-white/80'
                           }`}
@@ -236,7 +236,7 @@ const TaskManager = () => {
                       </p>
                     )}
 
-                    {task.tag && (
+                    {task.tags && task.tags.length > 0 && (
                       <div className="flex items-center gap-1.5 mt-1 min-w-0">
                         <TagIcon size={10} style={{ color: displayColor }} className="shrink-0" />
 
@@ -247,7 +247,7 @@ const TaskManager = () => {
                             opacity: 0.55,
                           }}
                         >
-                          {task.tag}
+                          {task.tags[0].name}
                         </span>
                       </div>
                     )}

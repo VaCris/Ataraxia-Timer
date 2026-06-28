@@ -1,14 +1,14 @@
 {
-  "version": "2.0.0-0cb9e22",
+  "version": "2.0.0-fd97975",
   "appVersion": "2.0.0",
-  "build": "0cb9e22",
-  "date": "2026-06-22T02:51:09.927Z",
+  "build": "fd97975",
+  "date": "2026-06-28T21:28:08.348Z",
   "changelog": [
+    "fix(pwa): restore service worker registration and version guard",
     "style(pages): redesign informational views to minimalist split layouts",
     "feat(tags): implement remote sync and inline editing/deletion in categories",
     "fix(theme): blur background image directly and update PiP portal",
-    "style: apply Aputrak design system and visual style to Ataraxia timer",
-    "fix(dependencies): update axios version to ^1.18.0"
+    "style: apply Aputrak design system and visual style to Ataraxia timer"
   ],
   "targetUrl": "/"
 }
