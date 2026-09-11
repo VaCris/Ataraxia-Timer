@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink, Play, Pause, RotateCcw } from 'lucide-react';
 import { useDispatch } from 'react-redux';
@@ -17,6 +17,7 @@ import TimerDial from '@/features/pomodoro/components/TimerDial';
 import TaskManager from '@/features/tasks/components/TaskManager';
 import PipPortal from '@/features/pomodoro/components/PipPortal';
 import PaintTransitionOverlay from '@/app/components/PaintTransitionOverlay';
+import ThemeChangeIndicator from '@/app/components/ThemeChangeIndicator';
 
 const SettingsModal = React.lazy(() => import('@/features/settings/components/SettingsModal'));
 const SupportModal = React.lazy(() => import('@/shared/ui/modals/SupportModal'));
@@ -24,6 +25,8 @@ const MusicWidget = React.lazy(() => import('@/features/pomodoro/components/Musi
 const ProfileModal = React.lazy(() => import('@/features/profile/components/ProfileModal'));
 const StatsModal = React.lazy(() => import('@/features/stats/components/StatsModal'));
 const GamificationModal = React.lazy(() => import('@/features/gamification/components/GamificationModal'));
+
+const THEME_INDICATOR_DURATION_MS = 1600;
 
 const Dashboard = ({ onOpenGames }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -33,6 +36,7 @@ const Dashboard = ({ onOpenGames }) => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isStatsOpen, setIsStatsOpen] = useState(false);
     const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
+    const [themeIndicator, setThemeIndicator] = useState({ visible: false, theme: 'dark' });
 
     const uiSettings = useUISettings();
     const pomodoro = usePomodoroController();
@@ -40,6 +44,7 @@ const Dashboard = ({ onOpenGames }) => {
 
     const dispatch = useDispatch();
     const triggerPaintRef = useRef(null);
+    const themeIndicatorTimerRef = useRef(null);
 
     const toggleMusic = () => {
         setIsMusicOpen((prev) => !prev);
@@ -55,15 +60,35 @@ const Dashboard = ({ onOpenGames }) => {
         dispatch(updateSettingsRequest({ theme: newTheme }));
     }, [dispatch]);
 
+    const showThemeIndicator = useCallback((theme) => {
+        if (themeIndicatorTimerRef.current) {
+            window.clearTimeout(themeIndicatorTimerRef.current);
+        }
+
+        setThemeIndicator({ visible: true, theme });
+        themeIndicatorTimerRef.current = window.setTimeout(() => {
+            setThemeIndicator((current) => ({ ...current, visible: false }));
+            themeIndicatorTimerRef.current = null;
+        }, THEME_INDICATOR_DURATION_MS);
+    }, []);
+
+    useEffect(() => () => {
+        if (themeIndicatorTimerRef.current) {
+            window.clearTimeout(themeIndicatorTimerRef.current);
+        }
+    }, []);
+
     const toggleTheme = useCallback(() => {
         const currentTheme = uiSettings.theme || 'dark';
         const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
+
         if (triggerPaintRef.current) {
             triggerPaintRef.current(nextTheme);
         }
+
         applyThemeChange(nextTheme);
-    }, [uiSettings.theme, applyThemeChange]);
+        showThemeIndicator(nextTheme);
+    }, [uiSettings.theme, applyThemeChange, showThemeIndicator]);
 
     useThemeEffect(
         uiSettings.accentColor,
@@ -220,6 +245,12 @@ const Dashboard = ({ onOpenGames }) => {
                     blurIntensity={uiSettings.blurIntensity}
                 />
             )}
+
+            <ThemeChangeIndicator
+                theme={themeIndicator.theme}
+                visible={themeIndicator.visible}
+                accentColor={uiSettings.accentColor}
+            />
 
             <AnimatePresence>
                 {isSettingsOpen && (
