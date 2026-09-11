@@ -1,5 +1,4 @@
 import { call, put, takeLatest, all } from 'redux-saga/effects';
-import { tasksService } from '@/features/tasks/api/tasks.api';
 import { tasksLocalRepository } from '@/features/tasks/repositories/tasks.local.repository';
 import { addToSyncQueue, processSyncQueue } from '@/infrastructure/sync/syncManager';
 import {
@@ -9,11 +8,6 @@ import {
   deleteTaskRequest, deleteTaskSuccess, deleteTaskFailure
 } from './tasksSlice';
 import { TaskResponse } from '@/features/tasks/types/task.dto';
-
-const isNetworkError = (error: any) =>
-  error.message === 'Network Error' || error.code === 'ERR_NETWORK' || !navigator.onLine;
-
-
 
 function* handleFetchTasks() {
   try {
