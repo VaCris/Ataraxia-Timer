@@ -18,6 +18,9 @@ import { useTimer } from './useTimer'
 import { TimerControllerService } from '@/infrastructure/api/generated/services/TimerControllerService'
 import { TimerRequestDto } from '@/infrastructure/api/generated/models/TimerRequestDto'
 
+const canUseRemoteServices = () =>
+    navigator.onLine && Boolean(localStorage.getItem('token'))
+
 export const usePomodoroController = () => {
     const dispatch = useDispatch()
 
@@ -135,19 +138,21 @@ export const usePomodoroController = () => {
 
     const handleStartTimer = useCallback(async (mode: Mode, duration: number) => {
         dispatch(startTimer());
-        
+
+        if (!canUseRemoteServices()) return;
+
         try {
             const modeMap: Record<Mode, TimerRequestDto.mode> = {
                 'FOCUS': TimerRequestDto.mode.POMODORO,
                 'SHORT_BREAK': TimerRequestDto.mode.SHORT_BREAK,
                 'LONG_BREAK': TimerRequestDto.mode.LONG_BREAK
             };
-            
+
             const res = await TimerControllerService.createTimer({
                 duration: duration,
                 mode: modeMap[mode]
             });
-            
+
             if (res.id) {
                 dispatch(setServerId(res.id));
             }
@@ -157,7 +162,7 @@ export const usePomodoroController = () => {
     }, [dispatch]);
 
     const handleTimerComplete = useCallback(async () => {
-        if (timerState.serverId) {
+        if (timerState.serverId && canUseRemoteServices()) {
             try {
                 await TimerControllerService.completeTimer(timerState.serverId);
             } catch (error) {
@@ -169,7 +174,9 @@ export const usePomodoroController = () => {
         let shouldAutoStart = false
 
         if (timerState.mode === 'FOCUS') {
-            gamificationService.checkAchievements().catch(console.error);
+            if (canUseRemoteServices()) {
+                gamificationService.checkAchievements().catch(console.error);
+            }
 
             if (currentRound >= settings.longBreakInterval) {
                 nextMode = 'LONG_BREAK'
