@@ -1,6 +1,5 @@
 const ALLOWED_URL_SCHEMES = ['https:', 'http:']
 const ALLOWED_IMAGE_SCHEMES = ['https:', 'data:']
-const BLOCKED_DATA_URL_TYPES = /javascript:|vbscript:|data:(?!image\/)/i
 
 export function sanitizeUrl(url: string, allowedSchemes: string[] = ALLOWED_URL_SCHEMES): string {
   const trimmed = url.trim()
@@ -18,7 +17,14 @@ export function sanitizeUrl(url: string, allowedSchemes: string[] = ALLOWED_URL_
 }
 
 export function sanitizeImageUrl(url: string): string {
-  return sanitizeUrl(url, ALLOWED_IMAGE_SCHEMES)
+  const sanitized = sanitizeUrl(url, ALLOWED_IMAGE_SCHEMES)
+  if (!sanitized) return ''
+
+  if (sanitized.startsWith('data:') && !/^data:image\/[a-z0-9.+-]+;base64,/i.test(sanitized)) {
+    return ''
+  }
+
+  return sanitized
 }
 
 export function sanitizeForCss(value: string): string {
@@ -26,7 +32,7 @@ export function sanitizeForCss(value: string): string {
     .replace(/\\/g, '')
     .replace(/"/g, '')
     .replace(/'/g, '')
-    .replace(/[();]/g, '')
+    .replace(/[()]/g, '')
 }
 
 export function sanitizeInput(value: string): string {
