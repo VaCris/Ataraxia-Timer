@@ -8,6 +8,9 @@
     "prebuild": "node scripts/generate-version.cjs",
     "build": "vite build",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
     "version:update": "node scripts/generate-version.cjs",
     "preview": "vite preview"
   },
