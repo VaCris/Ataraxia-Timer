@@ -76,7 +76,7 @@ export const useUISettings = () => {
 
       bgImage: readStoredValue(
         'bgImage',
-        uiSettingsState.bgImage || 'https://i.ibb.co/ynRCysgx/default-image.png'
+        uiSettingsState.bgImage || null
       ),
 
       blurIntensity: readStoredNumber(
