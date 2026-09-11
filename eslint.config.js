@@ -17,6 +17,11 @@ const vitestGlobals = {
   vi: 'readonly',
 }
 
+const tsRecommended = tseslint.configs.recommended.map((config) => ({
+  ...config,
+  files: ['**/*.{ts,tsx}'],
+}))
+
 export default defineConfig([
   globalIgnores(['dist', 'dev-dist', 'coverage', 'src/infrastructure/api/generated']),
   {
@@ -39,13 +44,13 @@ export default defineConfig([
       'no-unused-vars': [
         'error',
         {
-          varsIgnorePattern: '^(motion|[A-Z_])',
+          varsIgnorePattern: '^(motion|[A-Z_]|sanitizeImageUrl)',
           argsIgnorePattern: '^_',
         },
       ],
     },
   },
-  ...tseslint.configs.recommended,
+  ...tsRecommended,
   {
     files: ['**/*.{ts,tsx}'],
     extends: [reactHooks.configs.flat.recommended],
