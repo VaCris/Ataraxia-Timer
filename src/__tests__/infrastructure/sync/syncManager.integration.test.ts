@@ -80,16 +80,17 @@ describe('syncManager integration', () => {
 
     await processSyncQueue()
 
-    expect(await db.syncQueue.count()).toBe(1)
+    const queued = await db.syncQueue.toArray()
+    expect(queued).toHaveLength(1)
     expect((await db.tasks.get(taskId))?.syncStatus).toBe('pending_create')
 
     const pushMock = vi.mocked(SyncControllerService.push)
-    pushMock.mockImplementation(async (request) => ({
-      applied: request.mutations?.map((mutation) => mutation.clientMutationId) ?? [],
+    pushMock.mockReturnValue(Promise.resolve({
+      applied: [queued[0].id],
       conflicts: [],
       ignored: [],
       nextCursor: 'cursor-after-push',
-    }))
+    }) as unknown as ReturnType<typeof SyncControllerService.push>)
 
     setOnline(true)
     localStorage.setItem('token', 'remote-token')
