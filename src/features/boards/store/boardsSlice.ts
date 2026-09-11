@@ -32,7 +32,7 @@ export const boardsSlice = createSlice({
             state.isLoading = false;
             state.error = action.payload;
         },
-        createBoardRequest: (state, action: PayloadAction<BoardRequestDto>) => {
+        createBoardRequest: (state, _action: PayloadAction<BoardRequestDto>) => {
             state.isLoading = true;
             state.error = null;
         },
