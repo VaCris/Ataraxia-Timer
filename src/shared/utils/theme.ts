@@ -1,3 +1,5 @@
+import { sanitizeForCss } from '@/shared/utils/sanitize'
+
 export const applyAccentColor = (color: string) => {
     document.documentElement.style.setProperty('--color-accent', color)
     const rgb = color.match(/\w\w/g)?.map(x => parseInt(x, 16)).join(',') || '225,29,72'
@@ -6,8 +8,7 @@ export const applyAccentColor = (color: string) => {
 
 export const applyBgImage = (url: string) => {
     if (url) {
-        const safe = url.replace(/\\/g, '').replace(/"/g, '').replace(/'/g, '').replace(/[();]/g, '')
-        document.documentElement.style.setProperty('--bg-image', `url("${safe}")`)
+        document.documentElement.style.setProperty('--bg-image', `url("${sanitizeForCss(url)}")`)
     } else {
         document.documentElement.style.removeProperty('--bg-image')
     }
