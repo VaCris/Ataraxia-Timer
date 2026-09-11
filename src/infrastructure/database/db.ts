@@ -9,6 +9,7 @@ export type SyncQueueStatus = 'pending' | 'retrying' | 'blocked_auth' | 'conflic
 
 export type LocalTaskModel = TaskResponse & {
     userId?: string
+    createdAt?: string
     syncStatus: SyncStatus
     updatedAt: number
     deletedAt?: number | null
