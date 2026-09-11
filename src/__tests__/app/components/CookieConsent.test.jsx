@@ -15,9 +15,8 @@ describe('CookieConsent', () => {
     });
 
     it('does not show immediately', () => {
-        let component;
         act(() => {
-            component = render(<CookieConsent />);
+            render(<CookieConsent />);
         });
         expect(screen.queryByText(/Privacy notice/i)).not.toBeInTheDocument();
     });
@@ -54,7 +53,7 @@ describe('CookieConsent', () => {
         
         act(() => {
             fireEvent.click(button);
-            vi.advanceTimersByTime(300); // Wait for exit animation
+            vi.advanceTimersByTime(300);
         });
 
         expect(localStorage.getItem('ataraxia_cookie_consent')).toBe('accepted');
