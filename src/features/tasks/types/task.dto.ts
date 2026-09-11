@@ -8,4 +8,6 @@ export interface TaskResponse extends Omit<TaskResponseDto, 'id' | 'title' | 'st
     id: string;
     title: string;
     status: 'TODO' | 'IN_PROGRESS' | 'DONE';
-}
+    /** Local-first relation used while mutations are pending synchronization. */
+    tagIds?: string[];
+}
