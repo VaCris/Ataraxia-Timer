@@ -17,24 +17,33 @@ const api = rateLimit(axios.create({
 
 let refreshPromise = null;
 
+function clearRemoteTokens() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+}
+
 async function tryRefresh() {
     if (refreshPromise) return refreshPromise;
+    if (!navigator.onLine) return false;
+
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) return false;
 
     refreshPromise = (async () => {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) return false;
-
         try {
             const { data } = await axios.post(
                 `${api.defaults.baseURL}/auth/refresh`,
-                { refreshToken }
+                { refreshToken },
+                { withCredentials: true }
             );
+
+            if (!data?.access_token) return false;
+
             localStorage.setItem('token', data.access_token);
             if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token);
             return true;
         } catch {
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
+            clearRemoteTokens();
             return false;
         } finally {
             refreshPromise = null;
@@ -48,7 +57,12 @@ api.interceptors.request.use(
     async (config) => {
         let token = localStorage.getItem('token');
 
-        if (token && isTokenExpiringSoon(token) && !config.url?.includes('/auth/refresh')) {
+        if (
+            navigator.onLine &&
+            token &&
+            isTokenExpiringSoon(token) &&
+            !config.url?.includes('/auth/refresh')
+        ) {
             await tryRefresh();
             token = localStorage.getItem('token');
         }
@@ -66,15 +80,13 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
-
-        if (!originalRequest) {
-            return Promise.reject(error);
-        }
+        if (!originalRequest) return Promise.reject(error);
 
         const status = error.response?.status;
 
         if (
-            (status === 401 || status === 500) &&
+            status === 401 &&
+            navigator.onLine &&
             !originalRequest._retry &&
             !originalRequest.url?.includes('/auth/refresh')
         ) {
@@ -83,13 +95,11 @@ api.interceptors.response.use(
             const refreshed = await tryRefresh();
             if (refreshed) {
                 const newToken = localStorage.getItem('token');
-                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                if (newToken) originalRequest.headers.Authorization = `Bearer ${newToken}`;
                 return api(originalRequest);
             }
 
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            window.location.reload();
+            window.dispatchEvent(new CustomEvent('ataraxia:remote-session-expired'));
         }
 
         return Promise.reject(error);
@@ -117,7 +127,7 @@ const REFRESH_COOLDOWN_MS = 60 * 60 * 1000;
 
 if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState !== 'visible') return;
+        if (document.visibilityState !== 'visible' || !navigator.onLine) return;
 
         const token = localStorage.getItem('token');
         if (!token) return;
@@ -136,4 +146,5 @@ if (typeof document !== 'undefined') {
     });
 }
 
+export { tryRefresh };
 export default api;
