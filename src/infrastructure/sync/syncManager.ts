@@ -1,5 +1,5 @@
 import api from '@api/client'
-import { db, AppDB, SyncQueueItem } from '@/infrastructure/database/db'
+import { db, AppDB, SyncQueueItem, SyncQueueStatus } from '@/infrastructure/database/db'
 
 type SyncMethod = 'POST' | 'PATCH' | 'PUT' | 'DELETE'
 
@@ -11,16 +11,9 @@ export type AddSyncQueueItem = {
   entityId?: string
 }
 
-const MAX_RETRIES = 5
 let syncing = false
-
-const isTransientError = (error: any) => {
-  if (error.code === 'ERR_NETWORK') return true
-  if (error.message === 'Network Error') return true
-
-  const status = error.response?.status
-  return status >= 500 || status === 408 || status === 429
-}
+const BASE_RETRY_MS = 2_000
+const MAX_RETRY_MS = 5 * 60_000
 
 const mergeData = (a: unknown, b: unknown) => ({
   ...(typeof a === 'object' && a ? a : {}),
@@ -43,25 +36,27 @@ const compactQueue = async (item: AddSyncQueueItem): Promise<boolean> => {
   }
 
   const pendingCreate = existing.find((entry) => entry.method === 'POST')
-
   if (pendingCreate && item.method === 'PATCH') {
     await db.syncQueue.update(pendingCreate.id, {
       data: mergeData(pendingCreate.data, item.data),
       ts: Date.now(),
+      status: 'pending',
+      lastError: undefined,
+      nextRetryAt: undefined,
     })
-
     return true
   }
 
   if (item.method === 'PATCH') {
     const pendingUpdate = existing.find((entry) => entry.method === 'PATCH')
-
     if (pendingUpdate) {
       await db.syncQueue.update(pendingUpdate.id, {
         data: mergeData(pendingUpdate.data, item.data),
         ts: Date.now(),
+        status: 'pending',
+        lastError: undefined,
+        nextRetryAt: undefined,
       })
-
       return true
     }
   }
@@ -79,7 +74,9 @@ export const addToSyncQueue = async (req: AddSyncQueueItem) => {
       .equals([req.entity, req.entityId])
       .toArray()
 
-    if (existing.some((item) => item.method === req.method)) return
+    if (existing.some((item) => item.method === req.method && item.status !== 'failed_permanent')) {
+      return
+    }
   }
 
   const item: SyncQueueItem = {
@@ -87,128 +84,152 @@ export const addToSyncQueue = async (req: AddSyncQueueItem) => {
     id: crypto.randomUUID(),
     retries: 0,
     ts: Date.now(),
+    status: 'pending',
   }
 
   await db.syncQueue.put(item)
 }
 
-const getQueue = () => db.syncQueue.orderBy('ts').toArray()
+const getReadyQueue = async () => {
+  const now = Date.now()
+  const queue = await db.syncQueue.orderBy('ts').toArray()
 
-const applySyncedEntity = async (item: SyncQueueItem, responseData: any) => {
-  if (item.method === 'DELETE' && item.entityId) {
-    if (item.entity === 'tasks') await db.tasks.delete(item.entityId)
-    else if (item.entity === 'tags') await db.tags.delete(item.entityId)
-    return
+  return queue.filter((item) => {
+    if (item.status === 'failed_permanent' || item.status === 'conflict') return false
+    if (item.status === 'blocked_auth') return true
+    return !item.nextRetryAt || item.nextRetryAt <= now
+  })
+}
+
+const getBackoffMs = (retries: number) => {
+  const exponential = Math.min(MAX_RETRY_MS, BASE_RETRY_MS * 2 ** Math.max(0, retries - 1))
+  const jitter = Math.floor(Math.random() * Math.min(1_000, exponential * 0.2))
+  return exponential + jitter
+}
+
+const errorMessage = (error: any) =>
+  error?.response?.data?.message || error?.message || 'Unknown synchronization error'
+
+const classifyError = (error: any): SyncQueueStatus => {
+  const status = error?.status || error?.response?.status
+
+  if (status === 401 || status === 403) return 'blocked_auth'
+  if (status === 409) return 'conflict'
+  if (status === 408 || status === 429 || status >= 500 || error?.code === 'ERR_NETWORK' || error?.message === 'Network Error') {
+    return 'retrying'
   }
 
-  if (!responseData?.id) return
+  return 'failed_permanent'
+}
 
-  if (item.entity === 'tasks') {
-    if (item.method === 'POST' && item.entityId && item.entityId !== responseData.id) {
-      await db.tasks.delete(item.entityId)
+const markQueueFailure = async (queue: SyncQueueItem[], error: any) => {
+  const status = classifyError(error)
+  const message = errorMessage(error)
+
+  for (const item of queue) {
+    if (status === 'blocked_auth') {
+      await db.syncQueue.update(item.id, {
+        status,
+        lastError: message,
+        nextRetryAt: undefined,
+      })
+      continue
     }
-    await db.tasks.put({
-      ...responseData,
-      syncStatus: 'synced',
-      updatedAt: Date.now(),
-      deletedAt: null,
+
+    if (status === 'conflict' || status === 'failed_permanent') {
+      await db.syncQueue.update(item.id, {
+        status,
+        lastError: message,
+        nextRetryAt: undefined,
+      })
+      continue
+    }
+
+    const retries = (item.retries || 0) + 1
+    await db.syncQueue.update(item.id, {
+      status: 'retrying',
+      retries,
+      lastError: message,
+      nextRetryAt: Date.now() + getBackoffMs(retries),
     })
-  } else if (item.entity === 'tags') {
-    await db.tags.put({
-      ...responseData,
-      id: responseData.id,
-      syncStatus: 'synced',
-      updatedAt: Date.now(),
-      deletedAt: null,
+  }
+}
+
+const unblockAuthenticatedItems = async () => {
+  const blocked = await db.syncQueue.where('status').equals('blocked_auth').toArray()
+  if (!blocked.length) return
+
+  for (const item of blocked) {
+    await db.syncQueue.update(item.id, {
+      status: 'pending',
+      lastError: undefined,
+      nextRetryAt: undefined,
     })
   }
 }
 
 let lastSyncTime = 0
 let lastPullTime = 0
-const SYNC_COOLDOWN_MS = 5000 // 5 seconds cooldown
-const PULL_THROTTLE_MS = 15000 // 15 seconds pull throttle when queue is empty
+const SYNC_COOLDOWN_MS = 5_000
+const PULL_THROTTLE_MS = 15_000
 
 export const processSyncQueue = async () => {
   if (syncing || !navigator.onLine) return
 
-  const token = localStorage.getItem('token');
-  if (!token) return;
-  
+  const token = localStorage.getItem('token')
+  if (!token) return
+
   const now = Date.now()
   if (now - lastSyncTime < SYNC_COOLDOWN_MS) return
-  
+
   syncing = true
   lastSyncTime = now
 
   try {
-    const queue = await getQueue()
+    await unblockAuthenticatedItems()
+    const queue = await getReadyQueue()
 
     if (queue.length > 0) {
-      const mutations = queue.map(item => {
+      const mutations = queue.map((item) => {
         let operation = 'UPDATE'
         if (item.method === 'POST') operation = 'CREATE'
         else if (item.method === 'DELETE') operation = 'DELETE'
-        else if (item.method === 'PATCH' || item.method === 'PUT') operation = 'UPDATE'
 
         return {
           clientMutationId: item.id,
           entityType: item.entity || 'unknown',
           entityId: item.entityId || '',
           operation,
-          payload: item.data as any
+          payload: item.data as any,
         }
       })
 
       try {
         const { SyncControllerService } = await import('@/infrastructure/api/generated')
-
         await SyncControllerService.push({ mutations })
 
-        for (const item of queue) {
-          await db.syncQueue.delete(item.id)
-        }
+        await db.syncQueue.bulkDelete(queue.map((item) => item.id))
       } catch (error: any) {
-        const status = error?.status || error?.response?.status
-        if (status === 401 || status === 500) {
-          console.warn('Sync push auth error. Token may need refresh. Will retry next cycle.')
-          for (const item of queue) {
-            const newRetries = (item.retries || 0) + 1
-            if (newRetries >= MAX_RETRIES) {
-              console.warn(`Dropping sync item ${item.id} after ${MAX_RETRIES} retries`)
-              await db.syncQueue.delete(item.id)
-            } else {
-              await db.syncQueue.update(item.id, { retries: newRetries })
-            }
-          }
-        } else {
-          console.error('Error pushing mutations:', error)
-          for (const item of queue) {
-            const newRetries = (item.retries || 0) + 1
-            if (newRetries >= MAX_RETRIES) {
-              await db.syncQueue.delete(item.id)
-            } else {
-              await db.syncQueue.update(item.id, { retries: newRetries })
-            }
-          }
-        }
+        await markQueueFailure(queue, error)
       }
     }
 
-    // Now pull updates (throttled if no local mutations occurred)
-    const shouldPull = queue.length > 0 || (now - lastPullTime >= PULL_THROTTLE_MS)
-    if (shouldPull) {
-      lastPullTime = now
-      try {
-        const lastSync = localStorage.getItem('ataraxia_lastSyncCursor') || undefined
-        const params = new URLSearchParams()
-        if (lastSync) params.set('cursor', lastSync)
-        params.set('limit', '100')
-        params.set('entityTypes', 'tasks,settings,tags')
+    const shouldPull = queue.length > 0 || now - lastPullTime >= PULL_THROTTLE_MS
+    if (!shouldPull) return
 
-        const { data: response } = await api.get(`/sync/pull?${params.toString()}`)
+    lastPullTime = now
 
-      if (response.changes && response.changes.length > 0) {
+    try {
+      const lastSync = localStorage.getItem('ataraxia_lastSyncCursor') || undefined
+      const params = new URLSearchParams()
+      if (lastSync) params.set('cursor', lastSync)
+      params.set('limit', '100')
+      params.set('entityTypes', 'tasks,settings,tags')
+
+      const { data: response } = await api.get(`/sync/pull?${params.toString()}`)
+      let applyFailed = false
+
+      if (response.changes?.length) {
         const entityToTable: Record<string, keyof AppDB> = {
           tasks: 'tasks',
           settings: 'settings',
@@ -227,6 +248,11 @@ export const processSyncQueue = async () => {
             if (change.operation === 'DELETE') {
               await table.delete(change.entityId)
             } else if (change.payload) {
+              const existingPending = await table.get(change.entityId)
+              if (existingPending?.syncStatus && existingPending.syncStatus !== 'synced') {
+                continue
+              }
+
               const base = tableName === 'settings'
                 ? { syncStatus: 'synced', updatedAt: Date.now() }
                 : { syncStatus: 'synced', updatedAt: Date.now(), deletedAt: null }
@@ -237,27 +263,25 @@ export const processSyncQueue = async () => {
                 id: change.entityId,
               })
             }
-          } catch (err) {
-            console.error(`Error applying change for ${change.entityType}/${change.entityId}:`, err)
+          } catch (error) {
+            applyFailed = true
+            console.error(`Error applying change for ${change.entityType}/${change.entityId}:`, error)
           }
         }
       }
 
-      if (response.nextCursor) {
+      if (!applyFailed && response.nextCursor) {
         localStorage.setItem('ataraxia_lastSyncCursor', response.nextCursor)
       }
     } catch (error: any) {
-      if (error?.status === 401 || error?.response?.status === 401) {
-        console.warn('Sync pull unauthorized (token may be expired). Will retry next cycle.')
-      } else if (error?.status === 500 || error?.response?.status === 500) {
-        console.error('Server error on pull, clearing cursor to unstuck...', error)
-        localStorage.removeItem('ataraxia_lastSyncCursor')
+      const status = error?.status || error?.response?.status
+
+      if (status === 401 || status === 403) {
+        console.warn('Sync pull is waiting for a valid remote session.')
       } else {
         console.error('Error pulling updates:', error)
       }
     }
-  }
-
   } finally {
     syncing = false
   }
@@ -267,8 +291,22 @@ export const clearSyncQueue = async () => {
   await db.syncQueue.clear()
 }
 
-export const getSyncQueueSize = async (): Promise<number> => {
-  return db.syncQueue.count()
+export const getSyncQueueSize = async (): Promise<number> => db.syncQueue.count()
+
+export const getSyncQueueFailures = async (): Promise<SyncQueueItem[]> =>
+  db.syncQueue
+    .filter((item) => item.status === 'conflict' || item.status === 'failed_permanent')
+    .toArray()
+
+export const retrySyncItem = async (id: string): Promise<void> => {
+  await db.syncQueue.update(id, {
+    status: 'pending',
+    retries: 0,
+    lastError: undefined,
+    nextRetryAt: undefined,
+  })
+
+  if (navigator.onLine) await processSyncQueue()
 }
 
 export const initSyncListener = () => {
