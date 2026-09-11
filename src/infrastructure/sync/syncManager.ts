@@ -170,6 +170,88 @@ const markEntityConflict = async (entity: string, entityId: string) => {
   }
 }
 
+const markLocalMutationSynced = async (item: SyncQueueItem) => {
+  if (!item.entity || !item.entityId) return
+
+  if (item.entity === 'tasks') {
+    if (item.method === 'DELETE') {
+      await db.tasks.delete(item.entityId)
+      return
+    }
+
+    const task = await db.tasks.get(item.entityId)
+    if (task) {
+      await db.tasks.put({
+        ...task,
+        syncStatus: 'synced',
+        updatedAt: Date.now(),
+        deletedAt: null,
+      })
+    }
+    return
+  }
+
+  if (item.entity === 'tags') {
+    if (item.method === 'DELETE') {
+      await db.tags.delete(item.entityId)
+      return
+    }
+
+    const tag = await db.tags.get(item.entityId)
+    if (tag) {
+      await db.tags.put({
+        ...tag,
+        syncStatus: 'synced',
+        updatedAt: Date.now(),
+        deletedAt: null,
+      })
+    }
+    return
+  }
+
+  if (item.entity === 'settings') {
+    const settings = await db.settings.get(item.entityId)
+    if (settings) {
+      await db.settings.put({
+        ...settings,
+        syncStatus: 'synced',
+        updatedAt: Date.now(),
+      })
+    }
+  }
+}
+
+const reconcilePushResult = async (
+  queue: SyncQueueItem[],
+  result: { applied?: string[]; ignored?: string[]; conflicts?: string[]; nextCursor?: string }
+) => {
+  const applied = new Set(result.applied || [])
+  const ignored = new Set(result.ignored || [])
+  const conflicts = new Set(result.conflicts || [])
+  const hasDetailedResult = applied.size > 0 || ignored.size > 0 || conflicts.size > 0
+
+  for (const item of queue) {
+    if (conflicts.has(item.id)) {
+      await db.syncQueue.update(item.id, {
+        status: 'conflict',
+        lastError: 'Server reported a synchronization conflict.',
+        nextRetryAt: undefined,
+      })
+      continue
+    }
+
+    const wasAccepted = !hasDetailedResult || applied.has(item.id) || ignored.has(item.id)
+    if (!wasAccepted) continue
+
+    await markLocalMutationSynced(item)
+    await db.syncQueue.delete(item.id)
+  }
+
+  if (conflicts.size === 0 && result.nextCursor) {
+    localStorage.setItem('ataraxia_lastSyncCursor', result.nextCursor)
+  }
+}
+
 const unblockAuthenticatedItems = async () => {
   const blocked = await db.syncQueue.where('status').equals('blocked_auth').toArray()
   if (!blocked.length) return
@@ -221,9 +303,8 @@ export const processSyncQueue = async () => {
 
       try {
         const { SyncControllerService } = await import('@/infrastructure/api/generated')
-        await SyncControllerService.push({ mutations })
-
-        await db.syncQueue.bulkDelete(queue.map((item) => item.id))
+        const result = await SyncControllerService.push({ mutations })
+        await reconcilePushResult(queue, result)
       } catch (error: any) {
         await markQueueFailure(queue, error)
       }
