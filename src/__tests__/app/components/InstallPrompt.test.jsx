@@ -35,7 +35,7 @@ describe('InstallPrompt', () => {
         act(() => {
             render(<InstallPrompt />);
         });
-        
+
         expect(screen.queryByText(/Install Ataraxia/i)).not.toBeInTheDocument();
     });
 
@@ -46,7 +46,7 @@ describe('InstallPrompt', () => {
         });
 
         render(<InstallPrompt />);
-        
+
         act(() => {
             vi.advanceTimersByTime(2500);
         });
@@ -62,7 +62,7 @@ describe('InstallPrompt', () => {
         });
 
         render(<InstallPrompt />);
-        
+
         act(() => {
             vi.advanceTimersByTime(2500);
         });
@@ -70,27 +70,46 @@ describe('InstallPrompt', () => {
         expect(screen.queryByText(/Install Ataraxia/i)).not.toBeInTheDocument();
     });
 
-    it('calls handleInstallClick on install', async () => {
-        const handleInstallClickMock = vi.fn();
+    it('persists dismissal after an accepted install', async () => {
+        const handleInstallClickMock = vi.fn().mockResolvedValue('accepted');
         useInstallPromptModule.useInstallPrompt.mockReturnValue({
             isInstallable: true,
             handleInstallClick: handleInstallClickMock,
         });
 
         render(<InstallPrompt />);
-        
+
         act(() => {
             vi.advanceTimersByTime(2500);
         });
 
-        const installButton = screen.getByText('Install');
-        
         await act(async () => {
-            fireEvent.click(installButton);
-            vi.advanceTimersByTime(300);
+            fireEvent.click(screen.getByText('Install'));
         });
 
         expect(handleInstallClickMock).toHaveBeenCalled();
         expect(localStorage.getItem('ataraxia_install_prompt_dismissed')).toBe('true');
+    });
+
+    it('does not persist dismissal when the native install prompt is dismissed', async () => {
+        const handleInstallClickMock = vi.fn().mockResolvedValue('dismissed');
+        useInstallPromptModule.useInstallPrompt.mockReturnValue({
+            isInstallable: true,
+            handleInstallClick: handleInstallClickMock,
+        });
+
+        render(<InstallPrompt />);
+
+        act(() => {
+            vi.advanceTimersByTime(2500);
+        });
+
+        await act(async () => {
+            fireEvent.click(screen.getByText('Install'));
+        });
+
+        expect(handleInstallClickMock).toHaveBeenCalled();
+        expect(localStorage.getItem('ataraxia_install_prompt_dismissed')).toBeNull();
+        expect(screen.queryByText(/Install Ataraxia/i)).not.toBeInTheDocument();
     });
 });
