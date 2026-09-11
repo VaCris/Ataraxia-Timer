@@ -6,11 +6,12 @@ import configureStore, { MockStoreEnhanced } from 'redux-mock-store';
 import { TimerDial } from '@/features/pomodoro/components/TimerDial';
 
 const mockStore = configureStore([]);
+type TimerDialController = React.ComponentProps<typeof TimerDial>['controller'];
 
 describe('TimerDial', () => {
     let store: MockStoreEnhanced<unknown, {}>;
-    const defaultController = {
-        mode: 'FOCUS' as const,
+    const defaultController: TimerDialController = {
+        mode: 'FOCUS',
         isActive: false,
         timeLeft: 1500,
         initialTime: 1500,
@@ -37,7 +38,7 @@ describe('TimerDial', () => {
         });
     });
 
-    const renderComponent = (controller = defaultController) => render(
+    const renderComponent = (controller: TimerDialController = defaultController) => render(
         <Provider store={store}>
             <TimerDial controller={controller} />
         </Provider>
@@ -75,7 +76,7 @@ describe('TimerDial', () => {
 
         renderComponent({
             ...defaultController,
-            mode: 'SHORT_BREAK' as const,
+            mode: 'SHORT_BREAK',
             timeLeft: 65,
         });
 
