@@ -104,8 +104,8 @@ const TaskManager = () => {
       </form>
 
       <div className="flex-1 space-y-2 px-1 overflow-y-auto custom-scrollbar min-h-0">
-        {tasks.length === 0 && !loading ? <EmptyTasks /> : tasks.map((task: TaskResponse & { tags?: Array<{ id: string }> }) => {
-          const tagData = tags.find((tag) => task.tags?.some((t) => tag.id === t.id) || task.tagIds?.includes(tag.id));
+        {tasks.length === 0 && !loading ? <EmptyTasks /> : tasks.map((task: TaskResponse) => {
+          const tagData = tags.find((tag) => task.tags?.some((t) => t.id === tag.id) || task.tagIds?.includes(tag.id));
           const displayColor = tagData?.color || '#5fbfff';
           const isEditing = editingId === task.id;
           const isConfirmingDelete = confirmDeleteTaskId === task.id;
