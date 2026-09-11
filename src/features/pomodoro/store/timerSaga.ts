@@ -14,9 +14,9 @@ type CreateTimerPayload = {
 
 function* createTimerSaga(
     action: PayloadAction<CreateTimerPayload>
-): Generator<any, void, any> {
+): Generator {
     try {
-        const res = yield call(timersService.create, action.payload)
+        const res = yield call([timersService, timersService.create], action.payload)
         yield put(createTimerSuccess(res))
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error'
