@@ -25,7 +25,7 @@ const ProfileModal = React.lazy(() => import('@/features/profile/components/Prof
 const StatsModal = React.lazy(() => import('@/features/stats/components/StatsModal'));
 const GamificationModal = React.lazy(() => import('@/features/gamification/components/GamificationModal'));
 
-const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
+const Dashboard = ({ onOpenGames }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isSupportOpen, setIsSupportOpen] = useState(false);
     const [isMusicOpen, setIsMusicOpen] = useState(false);
