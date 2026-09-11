@@ -42,7 +42,6 @@ const Sidebar = ({ onOpenSettings, onOpenSupport, onOpenMusic, onOpenGames, onOp
     }, [isMobileOpen, closeMobile]);
 
     const buttonStyle = 'p-2.5 2xl:p-3 text-white/50 lg:text-white/30 hover:text-accent transition-colors rounded-xl';
-    const disabledButtonStyle = 'p-2.5 2xl:p-3 rounded-xl text-white/20 lg:text-white/5 cursor-not-allowed grayscale transition-all';
     const helpText = `${shortcuts.music.toUpperCase()}: Music | ${shortcuts.settings.toUpperCase()}: Settings`.trim();
 
     return (
