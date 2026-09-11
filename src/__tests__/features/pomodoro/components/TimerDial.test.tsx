@@ -2,17 +2,17 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 import { Provider } from 'react-redux';
-import configureStore from 'redux-mock-store';
+import configureStore, { MockStoreEnhanced } from 'redux-mock-store';
 import { TimerDial } from '@/features/pomodoro/components/TimerDial';
 
 const mockStore = configureStore([]);
 
 describe('TimerDial', () => {
-    let store;
+    let store: MockStoreEnhanced<unknown, {}>;
     const defaultController = {
-        mode: 'pomodoro',
+        mode: 'FOCUS' as const,
         isActive: false,
-        timeLeft: 1500, // 25 minutes
+        timeLeft: 1500,
         initialTime: 1500,
         currentRound: 1,
         handleTimerComplete: vi.fn(),
@@ -27,7 +27,7 @@ describe('TimerDial', () => {
                 timeLeft: 1500,
                 initialTime: 1500,
                 isActive: false,
-                mode: 'pomodoro',
+                mode: 'FOCUS',
             },
             settings: {
                 api: {
@@ -37,13 +37,11 @@ describe('TimerDial', () => {
         });
     });
 
-    const renderComponent = (controller = defaultController) => {
-        return render(
-            <Provider store={store}>
-                <TimerDial controller={controller} />
-            </Provider>
-        );
-    };
+    const renderComponent = (controller = defaultController) => render(
+        <Provider store={store}>
+            <TimerDial controller={controller} />
+        </Provider>
+    );
 
     it('renders the correct time formatted as MM:SS', () => {
         renderComponent();
@@ -52,8 +50,7 @@ describe('TimerDial', () => {
 
     it('renders the current mode correctly formatted', () => {
         renderComponent();
-        // The mode should be rendered uppercase and replacing _ with space
-        expect(screen.getByText('pomodoro')).toBeInTheDocument();
+        expect(screen.getByText('FOCUS')).toBeInTheDocument();
     });
 
     it('renders the current round information', () => {
@@ -64,10 +61,10 @@ describe('TimerDial', () => {
     it('updates time format correctly for single digit minutes and seconds', () => {
         store = mockStore({
             timer: {
-                timeLeft: 65, // 01:05
+                timeLeft: 65,
                 initialTime: 1500,
                 isActive: true,
-                mode: 'short_break',
+                mode: 'SHORT_BREAK',
             },
             settings: {
                 api: {
@@ -78,11 +75,11 @@ describe('TimerDial', () => {
 
         renderComponent({
             ...defaultController,
-            mode: 'short_break',
+            mode: 'SHORT_BREAK' as const,
             timeLeft: 65,
         });
 
         expect(document.querySelector('.timer-digits')).toHaveTextContent('01:05');
-        expect(screen.getByText('short break')).toBeInTheDocument();
+        expect(screen.getByText('SHORT BREAK')).toBeInTheDocument();
     });
 });
