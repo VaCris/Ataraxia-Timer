@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Loader2, Music } from 'lucide-react';
 
@@ -6,7 +6,7 @@ const MusicWidget = ({ isOpen, onClose }) => {
     const [hasBeenOpened, setHasBeenOpened] = useState(isOpen);
     const [isIframeLoading, setIsIframeLoading] = useState(true);
     const [iframeError, setIframeError] = useState(false);
-    const iframeRef = useRef(null);
+    const [iframeKey, setIframeKey] = useState(0);
 
     if (isOpen && !hasBeenOpened) {
         setHasBeenOpened(true);
@@ -15,6 +15,12 @@ const MusicWidget = ({ isOpen, onClose }) => {
     }
 
     if (!hasBeenOpened) return null;
+
+    const retryIframe = () => {
+        setIframeError(false);
+        setIsIframeLoading(true);
+        setIframeKey((key) => key + 1);
+    };
 
     return (
         <motion.div
@@ -59,13 +65,7 @@ const MusicWidget = ({ isOpen, onClose }) => {
                                     </p>
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            setIframeError(false);
-                                            setIsIframeLoading(true);
-                                            if (iframeRef.current) {
-                                                iframeRef.current.src = iframeRef.current.src;
-                                            }
-                                        }}
+                                        onClick={retryIframe}
                                         className="px-4 py-2 text-[10px] uppercase tracking-widest text-white/60 hover:text-white border border-white/10 rounded-xl transition-colors"
                                     >
                                         Retry
@@ -83,7 +83,7 @@ const MusicWidget = ({ isOpen, onClose }) => {
                     )}
 
                     <iframe
-                        ref={iframeRef}
+                        key={iframeKey}
                         src="https://www.lofi.cafe/"
                         loading="lazy"
                         className="border-none w-full h-full"
