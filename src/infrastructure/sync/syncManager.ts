@@ -1,7 +1,31 @@
+import type { Table } from 'dexie'
 import api from '@api/client'
-import { db, AppDB, SyncQueueItem, SyncQueueStatus } from '@/infrastructure/database/db'
+import { db, SyncQueueItem, SyncQueueStatus } from '@/infrastructure/database/db'
+import type { SyncMutationRequestDto } from '@/infrastructure/api/generated/models/SyncMutationRequestDto'
+import type { SyncPullResponseDto } from '@/infrastructure/api/generated/models/SyncPullResponseDto'
+import type { SyncPushResponseDto } from '@/infrastructure/api/generated/models/SyncPushResponseDto'
 
 type SyncMethod = 'POST' | 'PATCH' | 'PUT' | 'DELETE'
+
+type ErrorLike = {
+  status?: number
+  code?: string
+  message?: string
+  response?: {
+    status?: number
+    data?: {
+      message?: string
+    }
+  }
+}
+
+type SyncRecord = {
+  id?: string
+  syncStatus?: string
+  updatedAt?: number
+  deletedAt?: number | null
+  [key: string]: unknown
+}
 
 export type AddSyncQueueItem = {
   method: SyncMethod
@@ -14,6 +38,9 @@ export type AddSyncQueueItem = {
 let syncing = false
 const BASE_RETRY_MS = 2_000
 const MAX_RETRY_MS = 5 * 60_000
+
+const toErrorLike = (error: unknown): ErrorLike =>
+  typeof error === 'object' && error !== null ? error as ErrorLike : {}
 
 const mergeData = (a: unknown, b: unknown) => ({
   ...(typeof a === 'object' && a ? a : {}),
@@ -107,22 +134,25 @@ export const getSyncBackoffMs = (retries: number) => {
   return exponential + jitter
 }
 
-const errorMessage = (error: any) =>
-  error?.response?.data?.message || error?.message || 'Unknown synchronization error'
+const errorMessage = (error: unknown) => {
+  const candidate = toErrorLike(error)
+  return candidate.response?.data?.message || candidate.message || 'Unknown synchronization error'
+}
 
-export const classifySyncError = (error: any): SyncQueueStatus => {
-  const status = error?.status || error?.response?.status
+export const classifySyncError = (error: unknown): SyncQueueStatus => {
+  const candidate = toErrorLike(error)
+  const status = candidate.status || candidate.response?.status
 
   if (status === 401 || status === 403) return 'blocked_auth'
   if (status === 409) return 'conflict'
-  if (status === 408 || status === 429 || status >= 500 || error?.code === 'ERR_NETWORK' || error?.message === 'Network Error') {
+  if (status === 408 || status === 429 || (typeof status === 'number' && status >= 500) || candidate.code === 'ERR_NETWORK' || candidate.message === 'Network Error') {
     return 'retrying'
   }
 
   return 'failed_permanent'
 }
 
-const markQueueFailure = async (queue: SyncQueueItem[], error: any) => {
+const markQueueFailure = async (queue: SyncQueueItem[], error: unknown) => {
   const status = classifySyncError(error)
   const message = errorMessage(error)
 
@@ -223,7 +253,7 @@ const markLocalMutationSynced = async (item: SyncQueueItem) => {
 
 const reconcilePushResult = async (
   queue: SyncQueueItem[],
-  result: { applied?: string[]; ignored?: string[]; conflicts?: string[]; nextCursor?: string }
+  result: SyncPushResponseDto
 ) => {
   const applied = new Set(result.applied || [])
   const ignored = new Set(result.ignored || [])
@@ -265,6 +295,13 @@ const unblockAuthenticatedItems = async () => {
   }
 }
 
+const getSyncTable = (entityType: string): Table<SyncRecord, string> | null => {
+  if (entityType === 'tasks') return db.tasks as unknown as Table<SyncRecord, string>
+  if (entityType === 'settings') return db.settings as unknown as Table<SyncRecord, string>
+  if (entityType === 'tags') return db.tags as unknown as Table<SyncRecord, string>
+  return null
+}
+
 let lastSyncTime = 0
 let lastPullTime = 0
 const SYNC_COOLDOWN_MS = 5_000
@@ -287,7 +324,7 @@ export const processSyncQueue = async () => {
     const queue = await getReadyQueue()
 
     if (queue.length > 0) {
-      const mutations = queue.map((item) => {
+      const mutations: SyncMutationRequestDto[] = queue.map((item) => {
         let operation = 'UPDATE'
         if (item.method === 'POST') operation = 'CREATE'
         else if (item.method === 'DELETE') operation = 'DELETE'
@@ -297,7 +334,7 @@ export const processSyncQueue = async () => {
           entityType: item.entity || 'unknown',
           entityId: item.entityId || '',
           operation,
-          payload: item.data as any,
+          payload: item.data as SyncMutationRequestDto['payload'],
         }
       })
 
@@ -305,7 +342,7 @@ export const processSyncQueue = async () => {
         const { SyncControllerService } = await import('@/infrastructure/api/generated')
         const result = await SyncControllerService.push({ mutations })
         await reconcilePushResult(queue, result)
-      } catch (error: any) {
+      } catch (error: unknown) {
         await markQueueFailure(queue, error)
       }
     }
@@ -322,24 +359,16 @@ export const processSyncQueue = async () => {
       params.set('limit', '100')
       params.set('entityTypes', 'tasks,settings,tags')
 
-      const { data: response } = await api.get(`/sync/pull?${params.toString()}`)
+      const { data: response } = await api.get<SyncPullResponseDto>(`/sync/pull?${params.toString()}`)
       let applyFailed = false
       let conflictDetected = false
 
       if (response.changes?.length) {
-        const entityToTable: Record<string, keyof AppDB> = {
-          tasks: 'tasks',
-          settings: 'settings',
-          tags: 'tags',
-        }
-
         for (const change of response.changes) {
           if (!change.entityId || !change.entityType) continue
 
-          const tableName = entityToTable[change.entityType]
-          if (!tableName || !db[tableName]) continue
-
-          const table = db[tableName] as any
+          const table = getSyncTable(change.entityType)
+          if (!table) continue
 
           try {
             if (change.operation === 'DELETE') {
@@ -362,17 +391,17 @@ export const processSyncQueue = async () => {
                 continue
               }
 
-              const base = tableName === 'settings'
+              const base = change.entityType === 'settings'
                 ? { syncStatus: 'synced', updatedAt: Date.now() }
                 : { syncStatus: 'synced', updatedAt: Date.now(), deletedAt: null }
 
               await table.put({
-                ...(change.payload as any),
+                ...(change.payload as Record<string, unknown>),
                 ...base,
                 id: change.entityId,
               })
             }
-          } catch (error) {
+          } catch (error: unknown) {
             applyFailed = true
             console.error(`Error applying change for ${change.entityType}/${change.entityId}:`, error)
           }
@@ -382,8 +411,9 @@ export const processSyncQueue = async () => {
       if (!applyFailed && !conflictDetected && response.nextCursor) {
         localStorage.setItem('ataraxia_lastSyncCursor', response.nextCursor)
       }
-    } catch (error: any) {
-      const status = error?.status || error?.response?.status
+    } catch (error: unknown) {
+      const candidate = toErrorLike(error)
+      const status = candidate.status || candidate.response?.status
 
       if (status === 401 || status === 403) {
         console.warn('Sync pull is waiting for a valid remote session.')
