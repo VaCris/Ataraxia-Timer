@@ -11,20 +11,19 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "baseUrl": "./src",
     "paths": {
-      "@/*": ["*"],
-      "@app/*": ["app/*"],
-      "@components/*": ["app/components/*"],
-      "@pages/*": ["app/pages/*"],
-      "@features/*": ["features/*"],
-      "@shared/*": ["shared/*"],
-      "@infrastructure/*": ["infrastructure/*"],
-      "@api/*": ["infrastructure/api/*"],
-      "@sync/*": ["infrastructure/sync/*"],
-      "@store/*": ["store/*"],
-      "@assets/*": ["assets/*"],
-      "@utils/*": ["shared/utils/*"]
+      "@/*": ["./src/*"],
+      "@app/*": ["./src/app/*"],
+      "@components/*": ["./src/app/components/*"],
+      "@pages/*": ["./src/app/pages/*"],
+      "@features/*": ["./src/features/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@infrastructure/*": ["./src/infrastructure/*"],
+      "@api/*": ["./src/infrastructure/api/*"],
+      "@sync/*": ["./src/infrastructure/sync/*"],
+      "@store/*": ["./src/store/*"],
+      "@assets/*": ["./src/assets/*"],
+      "@utils/*": ["./src/shared/utils/*"]
     }
   },
   "include": ["src", "types"]
