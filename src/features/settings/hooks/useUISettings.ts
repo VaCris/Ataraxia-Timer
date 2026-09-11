@@ -12,6 +12,27 @@ const readStoredValue = <T,>(key: string, fallback: T): T => {
   return value as T
 }
 
+const readStoredBackground = (fallback: string | null): string => {
+  const key = 'ataraxia_bgImage'
+  const value = localStorage.getItem(key)
+
+  if (value !== null) {
+    return value
+  }
+
+  const offlineSafeFallback = fallback || ''
+
+  // Persist the empty/local fallback once so SettingsModal cannot reintroduce
+  // its historical remote default when no custom background has been chosen.
+  try {
+    localStorage.setItem(key, offlineSafeFallback)
+  } catch {
+    // Reading UI settings must never block app startup if storage is unavailable.
+  }
+
+  return offlineSafeFallback
+}
+
 const readStoredNumber = (key: string, fallback: number): number => {
   const value = localStorage.getItem(`ataraxia_${key}`)
 
@@ -74,10 +95,7 @@ export const useUISettings = () => {
         uiSettingsState.accentColor || '#14b8a6'
       ),
 
-      bgImage: readStoredValue(
-        'bgImage',
-        uiSettingsState.bgImage || null
-      ),
+      bgImage: readStoredBackground(uiSettingsState.bgImage || ''),
 
       blurIntensity: readStoredNumber(
         'blurIntensity',
