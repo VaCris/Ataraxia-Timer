@@ -1,5 +1,4 @@
 import { call, put, takeLatest } from 'redux-saga/effects'
-import { PayloadAction } from '@reduxjs/toolkit'
 import { timersService } from '@/features/pomodoro/api/timers.api'
 import type { TimerResponse } from '@/features/pomodoro/types/timer.dto'
 import {
@@ -8,13 +7,8 @@ import {
     createTimerFailure
 } from '@/features/pomodoro/store/timersSlice'
 
-type CreateTimerPayload = {
-    duration: number
-    taskId?: string
-}
-
 function* createTimerSaga(
-    action: PayloadAction<CreateTimerPayload>
+    action: ReturnType<typeof createTimerRequest>
 ): Generator {
     try {
         const res = (yield call(() => timersService.create(action.payload))) as TimerResponse
