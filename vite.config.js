@@ -11,10 +11,10 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       injectRegister: null,
       devOptions: {
-        enabled: true,
+        enabled: false,
         type: 'module',
         navigateFallback: 'index.html'
       },
@@ -76,9 +76,10 @@ export default defineConfig({
         ]
       },
       workbox: {
-        skipWaiting: true,
+        skipWaiting: false,
         clientsClaim: true,
-        globPatterns: ['**/*.{js,css,html,png,svg,mp3,xml,txt,webmanifest}'],
+        navigateFallback: 'index.html',
+        globPatterns: ['**/*.{js,css,html,png,svg,mp3,xml,txt,webmanifest,json}'],
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
@@ -129,19 +130,15 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-
       '@app': path.resolve(__dirname, './src/app'),
       '@components': path.resolve(__dirname, './src/app/components'),
       '@pages': path.resolve(__dirname, './src/app/pages'),
-
       '@features': path.resolve(__dirname, './src/features'),
       '@shared': path.resolve(__dirname, './src/shared'),
       '@infrastructure': path.resolve(__dirname, './src/infrastructure'),
-
       '@api': path.resolve(__dirname, './src/infrastructure/api'),
       '@sync': path.resolve(__dirname, './src/infrastructure/sync'),
       '@store': path.resolve(__dirname, './src/store'),
-
       '@assets': path.resolve(__dirname, './src/assets'),
       '@utils': path.resolve(__dirname, './src/shared/utils')
     }
