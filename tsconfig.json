@@ -2,7 +2,7 @@
   "compilerOptions": {
     "ignoreDeprecations": "6.0",
     "target": "ES2020",
-    "lib": ["ES2020","DOM"],
+    "lib": ["ES2020", "DOM"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
@@ -14,18 +14,17 @@
     "baseUrl": "./src",
     "paths": {
       "@/*": ["*"],
-      "@components/*": ["components/*"],
-      "@context/*": ["context/*"],
-      "@hooks/*": ["hooks/*"],
-      "@utils/*": ["utils/*"],
-      "@assets/*": ["assets/*"],
-      "@styles/*": ["styles/*"],
+      "@app/*": ["app/*"],
+      "@components/*": ["app/components/*"],
+      "@pages/*": ["app/pages/*"],
+      "@features/*": ["features/*"],
+      "@shared/*": ["shared/*"],
+      "@infrastructure/*": ["infrastructure/*"],
       "@api/*": ["infrastructure/api/*"],
+      "@sync/*": ["infrastructure/sync/*"],
       "@store/*": ["store/*"],
-      "@pages/*": ["pages/*"],
-      "@db/*": ["db/*"],
-      "@core": ["core/*"],
-      "@types/*": ["types/*"]
+      "@assets/*": ["assets/*"],
+      "@utils/*": ["shared/utils/*"]
     }
   },
   "include": ["src", "types"]
