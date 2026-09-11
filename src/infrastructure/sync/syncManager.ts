@@ -101,7 +101,7 @@ const getReadyQueue = async () => {
   })
 }
 
-const getBackoffMs = (retries: number) => {
+export const getSyncBackoffMs = (retries: number) => {
   const exponential = Math.min(MAX_RETRY_MS, BASE_RETRY_MS * 2 ** Math.max(0, retries - 1))
   const jitter = Math.floor(Math.random() * Math.min(1_000, exponential * 0.2))
   return exponential + jitter
@@ -110,7 +110,7 @@ const getBackoffMs = (retries: number) => {
 const errorMessage = (error: any) =>
   error?.response?.data?.message || error?.message || 'Unknown synchronization error'
 
-const classifyError = (error: any): SyncQueueStatus => {
+export const classifySyncError = (error: any): SyncQueueStatus => {
   const status = error?.status || error?.response?.status
 
   if (status === 401 || status === 403) return 'blocked_auth'
@@ -123,7 +123,7 @@ const classifyError = (error: any): SyncQueueStatus => {
 }
 
 const markQueueFailure = async (queue: SyncQueueItem[], error: any) => {
-  const status = classifyError(error)
+  const status = classifySyncError(error)
   const message = errorMessage(error)
 
   for (const item of queue) {
@@ -150,7 +150,22 @@ const markQueueFailure = async (queue: SyncQueueItem[], error: any) => {
       status: 'retrying',
       retries,
       lastError: message,
-      nextRetryAt: Date.now() + getBackoffMs(retries),
+      nextRetryAt: Date.now() + getSyncBackoffMs(retries),
+    })
+  }
+}
+
+const markEntityConflict = async (entity: string, entityId: string) => {
+  const pending = await db.syncQueue
+    .where('[entity+entityId]')
+    .equals([entity, entityId])
+    .toArray()
+
+  for (const item of pending) {
+    await db.syncQueue.update(item.id, {
+      status: 'conflict',
+      lastError: 'Remote change conflicts with an unsynced local change.',
+      nextRetryAt: undefined,
     })
   }
 }
@@ -228,6 +243,7 @@ export const processSyncQueue = async () => {
 
       const { data: response } = await api.get(`/sync/pull?${params.toString()}`)
       let applyFailed = false
+      let conflictDetected = false
 
       if (response.changes?.length) {
         const entityToTable: Record<string, keyof AppDB> = {
@@ -246,10 +262,22 @@ export const processSyncQueue = async () => {
 
           try {
             if (change.operation === 'DELETE') {
-              await table.delete(change.entityId)
-            } else if (change.payload) {
               const existingPending = await table.get(change.entityId)
               if (existingPending?.syncStatus && existingPending.syncStatus !== 'synced') {
+                conflictDetected = true
+                await markEntityConflict(change.entityType, change.entityId)
+                continue
+              }
+
+              await table.delete(change.entityId)
+              continue
+            }
+
+            if (change.payload) {
+              const existingPending = await table.get(change.entityId)
+              if (existingPending?.syncStatus && existingPending.syncStatus !== 'synced') {
+                conflictDetected = true
+                await markEntityConflict(change.entityType, change.entityId)
                 continue
               }
 
@@ -270,7 +298,7 @@ export const processSyncQueue = async () => {
         }
       }
 
-      if (!applyFailed && response.nextCursor) {
+      if (!applyFailed && !conflictDetected && response.nextCursor) {
         localStorage.setItem('ataraxia_lastSyncCursor', response.nextCursor)
       }
     } catch (error: any) {
