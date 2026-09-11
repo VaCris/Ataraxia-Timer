@@ -1,6 +1,3 @@
-import { settingsLocalRepository } from "@/features/settings/repositories/settings.local.repository"
-import { settingsRemoteRepository } from "@/features/settings/repositories/settings.remote.repository"
-
 class SyncEngine {
     private isRunning = false
 
