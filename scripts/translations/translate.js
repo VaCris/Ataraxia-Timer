@@ -1,4 +1,4 @@
-const fs = require('fs');
+import fs from 'node:fs';
 
 const es = JSON.parse(fs.readFileSync('src/locales/es/translation.json', 'utf8'));
 const en = JSON.parse(fs.readFileSync('src/locales/en/translation.json', 'utf8'));
