@@ -9,14 +9,16 @@ type AuthState = {
   refreshToken: string | null
   status: AuthStatus
   error: string | null
+  isRemoteSessionAvailable: boolean
 }
 
 const initialState: AuthState = {
   user: null,
   accessToken: localStorage.getItem('token'),
   refreshToken: localStorage.getItem('refreshToken'),
-  status: localStorage.getItem('token') ? 'loading' : 'idle',
+  status: 'idle',
   error: null,
+  isRemoteSessionAvailable: Boolean(localStorage.getItem('token')),
 }
 
 const slice = createSlice({
@@ -40,14 +42,17 @@ const slice = createSlice({
       state,
       action: PayloadAction<{
         user: AuthUser
-        accessToken: string
+        accessToken?: string | null
         refreshToken?: string | null
+        isRemoteSessionAvailable?: boolean
       }>
     ) => {
       state.status = 'authenticated'
       state.user = action.payload.user
-      state.accessToken = action.payload.accessToken
+      state.accessToken = action.payload.accessToken || null
       state.refreshToken = action.payload.refreshToken || null
+      state.isRemoteSessionAvailable = action.payload.isRemoteSessionAvailable
+        ?? Boolean(action.payload.accessToken)
       state.error = null
     },
 
@@ -56,6 +61,7 @@ const slice = createSlice({
       state.user = null
       state.accessToken = null
       state.refreshToken = null
+      state.isRemoteSessionAvailable = false
       state.error = action.payload
     },
 
@@ -76,14 +82,15 @@ const slice = createSlice({
       state,
       action: PayloadAction<{
         user: AuthUser
-        accessToken: string
+        accessToken?: string | null
         refreshToken?: string | null
       }>
     ) => {
       state.user = action.payload.user
-      state.accessToken = action.payload.accessToken
+      state.accessToken = action.payload.accessToken || null
       state.refreshToken = action.payload.refreshToken || null
       state.status = 'authenticated'
+      state.isRemoteSessionAvailable = Boolean(action.payload.accessToken)
       state.error = null
     },
 
@@ -111,6 +118,7 @@ const slice = createSlice({
       state.user = action.payload.user
       state.accessToken = action.payload.accessToken || null
       state.refreshToken = null
+      state.isRemoteSessionAvailable = Boolean(action.payload.accessToken)
       state.error = null
     },
 
@@ -164,6 +172,7 @@ const slice = createSlice({
       state.accessToken = null
       state.refreshToken = null
       state.status = 'idle'
+      state.isRemoteSessionAvailable = false
       state.error = null
     },
 
@@ -172,12 +181,13 @@ const slice = createSlice({
       state.accessToken = null
       state.refreshToken = null
       state.status = 'idle'
+      state.isRemoteSessionAvailable = false
       state.error = action.payload
     },
 
     updateUser: (state, action: PayloadAction<AuthUser>) => {
       state.user = { ...state.user, ...action.payload }
-    }
+    },
   },
 })
 
