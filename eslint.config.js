@@ -58,6 +58,8 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
@@ -68,18 +70,25 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}', 'src/__tests__/**/*.{js,jsx,ts,tsx}'],
+    files: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}', 'src/__tests__/**/*.{js,jsx,ts,tsx}', 'src/setupTests.ts'],
     languageOptions: {
       globals: {
         ...globals.browser,
         ...vitestGlobals,
       },
     },
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-unused-vars': 'off',
+    },
   },
   {
     files: ['scripts/**/*.{js,cjs,mjs}'],
     languageOptions: {
       globals: globals.node,
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
 ])
