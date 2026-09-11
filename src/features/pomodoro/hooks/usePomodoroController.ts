@@ -87,6 +87,7 @@ export const usePomodoroController = () => {
     }, [
         timerState.mode,
         timerState.timeLeft,
+        timerState.initialTime,
         timerState.isActive,
         timerState.isPaused,
         currentRound,
@@ -230,13 +231,13 @@ export const usePomodoroController = () => {
             const duration = getDurationForMode(pendingMode);
             dispatch(updateDurations({ mode: pendingMode, duration }));
         }
-        setShowModeModal(false);
-        setPendingMode(null);
+        setShowModeModal(false)
+        setPendingMode(null)
     }, [dispatch, getDurationForMode, pendingMode])
 
     const cancelModeChange = useCallback(() => {
-        setShowModeModal(false);
-        setPendingMode(null);
+        setShowModeModal(false)
+        setPendingMode(null)
     }, [])
 
     const toggleSession = useCallback(() => {
