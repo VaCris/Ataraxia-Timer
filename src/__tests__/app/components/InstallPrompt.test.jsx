@@ -32,9 +32,8 @@ describe('InstallPrompt', () => {
             handleInstallClick: vi.fn(),
         });
 
-        let component;
         act(() => {
-            component = render(<InstallPrompt />);
+            render(<InstallPrompt />);
         });
         
         expect(screen.queryByText(/Install Ataraxia/i)).not.toBeInTheDocument();
