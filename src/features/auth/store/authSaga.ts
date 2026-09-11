@@ -1,8 +1,8 @@
 import { call, put, takeLatest, all } from 'redux-saga/effects';
 import { toast } from 'react-hot-toast';
-import axios from 'axios';
 
 import { authService } from '@/features/auth/api/auth.api';
+import { authLocalRepository } from '@/features/auth/repositories/auth.local.repository';
 import {
   checkAuthRequest,
   loginRequest,
@@ -22,68 +22,63 @@ import {
   resetPasswordFailure,
   logoutRequest,
   logoutSuccess,
-  logoutFailure,
 } from './authSlice';
 import { fetchTagsRequest } from '@/features/tags/store/tagsSlice';
 import { fetchTasksRequest } from '@/features/tasks/store/tasksSlice';
 import { fetchSettingsRequest } from '@/features/settings/store/settingsSlice';
 import { clearTasks } from '@/features/tasks/store/tasksSlice';
 import { clearTags } from '@/features/tags/store/tagsSlice';
-import {
+import type {
   LoginDto,
   RegisterDto,
   GuestLoginDto,
   AuthResponse,
+  AuthUser,
 } from '@/features/auth/types/auth.dto';
 
 const TOAST_ID = 'auth-status';
+
+const persistRemoteTokens = (accessToken?: string | null, refreshToken?: string | null) => {
+  if (accessToken) localStorage.setItem('token', accessToken);
+  else localStorage.removeItem('token');
+
+  if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+  else localStorage.removeItem('refreshToken');
+};
+
+function* hydrateCoreData(): Generator<any, void, any> {
+  yield put(fetchTagsRequest());
+  yield put(fetchTasksRequest());
+  yield put(fetchSettingsRequest());
+}
 
 function* handleLogin(
   action: ReturnType<typeof loginRequest>
 ): Generator<any, void, any> {
   try {
-    const res: any = yield call(authService.login, action.payload as LoginDto);
+    const res: AuthResponse = yield call(authService.login, action.payload as LoginDto);
+    const user = res.user;
+    const token = res.access_token;
+    const refresh = res.refresh_token;
 
-    const fallbackUser = res.user || res.data?.user;
-    const token = res.access_token || res.accessToken || res.token;
-    const refresh = res.refresh_token || res.refreshToken;
-
-    if (!fallbackUser || !token) {
+    if (!user || !token) {
       throw new Error('The server response does not have the expected format.');
     }
 
-    localStorage.setItem('token', token);
+    persistRemoteTokens(token, refresh);
+    authLocalRepository.saveProfile(user);
 
-    if (refresh) {
-      localStorage.setItem('refreshToken', refresh);
-    }
+    yield put(loginSuccess({
+      user,
+      accessToken: token,
+      refreshToken: refresh,
+      isRemoteSessionAvailable: true,
+    }));
 
-    const profileRes: any = yield call(authService.getProfile);
-
-    const profileUser =
-      profileRes.user ||
-      profileRes.data?.user ||
-      profileRes ||
-      fallbackUser;
-
-    yield put(
-      loginSuccess({
-        user: profileUser,
-        accessToken: token,
-        refreshToken: refresh,
-      })
-    );
-
-    yield put(fetchTagsRequest());
-    yield put(fetchTagsRequest());
-    yield put(fetchTasksRequest());
-    yield put(fetchSettingsRequest());
-
+    yield call(hydrateCoreData);
     toast.success('Welcome back to Ataraxia', { id: TOAST_ID });
   } catch (error: any) {
-    const message =
-      error.response?.data?.message || error.message || 'Login failed';
-
+    const message = error.response?.data?.message || error.message || 'Login failed';
     yield put(loginFailure(message));
     toast.error(message, { id: TOAST_ID });
   }
@@ -98,30 +93,19 @@ function* handleRegister(
       action.payload as RegisterDto
     );
 
-    const token = res.access_token;
-    const refresh = res.refresh_token;
+    persistRemoteTokens(res.access_token, res.refresh_token);
+    authLocalRepository.saveProfile(res.user);
 
-    if (token) {
-      localStorage.setItem('token', token);
-    }
+    yield put(registerSuccess({
+      user: res.user,
+      accessToken: res.access_token,
+      refreshToken: res.refresh_token,
+    }));
 
-    if (refresh) {
-      localStorage.setItem('refreshToken', refresh);
-    }
-
-    yield put(
-      registerSuccess({
-        user: res.user,
-        accessToken: token,
-        refreshToken: refresh,
-      })
-    );
-
+    yield call(hydrateCoreData);
     toast.success('Your journey begins here', { id: TOAST_ID });
   } catch (error: any) {
-    const message =
-      error.response?.data?.message || error.message || 'Register failed';
-
+    const message = error.response?.data?.message || error.message || 'Register failed';
     yield put(registerFailure(message));
     toast.error(message, { id: TOAST_ID });
   }
@@ -136,93 +120,77 @@ function* handleGuestLogin(
       action.payload as GuestLoginDto
     );
 
-    if (res.user?.deviceId) {
-      localStorage.setItem('deviceId', res.user.deviceId);
-    }
+    if (res.user?.deviceId) localStorage.setItem('deviceId', res.user.deviceId);
+    persistRemoteTokens(res.access_token, res.refresh_token);
+    authLocalRepository.saveProfile(res.user);
 
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
+    yield put(guestLoginSuccess({
+      user: res.user,
+      accessToken: res.access_token,
+    }));
 
-    yield put(
-      guestLoginSuccess({
-        user: res.user,
-        accessToken: res.access_token,
-      })
-    );
+    yield call(hydrateCoreData);
   } catch (error: any) {
-    const message =
-      error.response?.data?.message || error.message || 'Guest access failed';
-
+    const message = error.response?.data?.message || error.message || 'Guest access failed';
     yield put(guestLoginFailure(message));
   }
 }
 
-function* handleCheckAuth(): Generator<any, void, any> {
-  try {
-    const token = localStorage.getItem('token');
+function* restoreLocalSession(user: AuthUser): Generator<any, void, any> {
+  yield put(loginSuccess({
+    user,
+    accessToken: null,
+    refreshToken: null,
+    isRemoteSessionAvailable: false,
+  }));
+  yield call(hydrateCoreData);
+}
 
-    if (!token) {
+function* handleCheckAuth(): Generator<any, void, any> {
+  const localUser = authLocalRepository.getProfile();
+  const token = localStorage.getItem('token');
+
+  if (!navigator.onLine) {
+    if (localUser) {
+      yield call(restoreLocalSession, localUser);
+    } else {
       yield put(logoutSuccess());
+    }
+    return;
+  }
+
+  if (!token) {
+    if (localUser) {
+      yield call(restoreLocalSession, localUser);
+    } else {
+      yield put(logoutSuccess());
+    }
+    return;
+  }
+
+  try {
+    const res: any = yield call(authService.getProfile);
+    const user: AuthUser = res.user || res.data?.user || res;
+
+    if (!user?.id) throw new Error('Unrecognized user format in server response.');
+
+    authLocalRepository.saveProfile(user);
+
+    yield put(loginSuccess({
+      user,
+      accessToken: localStorage.getItem('token'),
+      refreshToken: localStorage.getItem('refreshToken'),
+      isRemoteSessionAvailable: true,
+    }));
+    yield call(hydrateCoreData);
+  } catch (error: any) {
+    if (localUser) {
+      yield call(restoreLocalSession, localUser);
       return;
     }
 
-    let res: any;
-    try {
-      res = yield call(authService.getProfile);
-    } catch (profileError: any) {
-      const status = profileError?.response?.status || profileError?.status;
-      if (status === 401 || status === 500) {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (refreshToken) {
-          try {
-            const { data } = yield call(
-              [axios, axios.post],
-              `${import.meta.env.VITE_API_URL}/auth/refresh`,
-              { refreshToken }
-            );
-            localStorage.setItem('token', data.access_token);
-            if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token);
-            res = yield call(authService.getProfile);
-          } catch {
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            yield put(loginFailure('Session expired'));
-            return;
-          }
-        } else {
-          localStorage.removeItem('token');
-          localStorage.removeItem('refreshToken');
-          yield put(loginFailure('Session expired'));
-          return;
-        }
-      } else {
-        throw profileError;
-      }
-    }
-
-    const user = res.user || res.data?.user || res;
-    const accessToken = res.access_token || res.accessToken || token;
-    const refreshToken =
-      res.refresh_token ||
-      res.refreshToken ||
-      localStorage.getItem('refreshToken');
-
-    if (!user || (!user.id && !user._id)) {
-      throw new Error('Unrecognized user format in server response.');
-    }
-
-    yield put(
-      loginSuccess({
-        user,
-        accessToken,
-        refreshToken,
-      })
-    );
-  } catch (error: any) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-
-    yield put(loginFailure(error.message || 'Session expired'));
+    const message = error.response?.data?.message || error.message || 'Session expired';
+    yield put(loginFailure(message));
   }
 }
 
@@ -230,16 +198,15 @@ function* handleForgotPassword(
   action: ReturnType<typeof forgotPasswordRequest>
 ): Generator<any, void, any> {
   try {
+    if (!navigator.onLine) throw new Error('Internet connection is required to recover your password.');
+
     yield call(authService.forgotPassword, {
       email: action.payload.email.trim().toLowerCase(),
     });
-
     yield put(forgotPasswordSuccess());
-
     toast.success('Password reset link sent to your email', { id: TOAST_ID });
   } catch (error: any) {
     const backendMessage = error.response?.data?.message;
-
     const message =
       backendMessage === 'Error técnico enviando el correo.' || backendMessage === 'Technical error sending email.'
         ? 'Could not send recovery email. Try again later.'
@@ -254,17 +221,13 @@ function* handleResetPassword(
   action: ReturnType<typeof resetPasswordRequest>
 ): Generator<any, void, any> {
   try {
+    if (!navigator.onLine) throw new Error('Internet connection is required to reset your password.');
+
     yield call(authService.resetPassword, action.payload);
-
     yield put(resetPasswordSuccess());
-
     toast.success('Password updated successfully', { id: TOAST_ID });
   } catch (error: any) {
-    const message =
-      error.response?.data?.message ||
-      error.message ||
-      'Could not reset password';
-
+    const message = error.response?.data?.message || error.message || 'Could not reset password';
     yield put(resetPasswordFailure(message));
     toast.error(message, { id: TOAST_ID });
   }
@@ -272,15 +235,15 @@ function* handleResetPassword(
 
 function* handleLogout(): Generator<any, void, any> {
   try {
-    yield call(authService.logout);
-
-    toast.success('Session closed', { id: TOAST_ID });
+    if (navigator.onLine && localStorage.getItem('token')) {
+      yield call(authService.logout);
+    }
   } catch (error) {
-    console.error('Logout failed:', error);
+    console.error('Remote logout failed:', error);
   } finally {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
+    persistRemoteTokens(null, null);
     localStorage.removeItem('deviceId');
+    authLocalRepository.clearProfile();
 
     yield put(clearTasks());
     yield put(clearTags());
