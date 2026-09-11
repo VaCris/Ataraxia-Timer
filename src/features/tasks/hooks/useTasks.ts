@@ -25,12 +25,14 @@ export const useTasks = () => {
   const updateTask = (id: string, data: UpdateTaskDto) =>
     dispatch(actions.updateTaskRequest({ id, data }))
 
-  const toggleTask = (task: TaskResponse & { tags?: Array<{ id: string }> }) => {
+  const toggleTask = (task: TaskResponse) => {
+    const remoteTagIds = task.tags?.flatMap((tag) => tag.id ? [tag.id] : [])
+
     dispatch(actions.updateTaskRequest({
       id: task.id,
       data: {
         title: task.title,
-        tagIds: task.tags?.map((tag) => tag.id) ?? task.tagIds,
+        tagIds: remoteTagIds?.length ? remoteTagIds : task.tagIds,
         status: task.status === 'DONE'
           ? TaskRequestDto.status.TODO
           : TaskRequestDto.status.DONE,
