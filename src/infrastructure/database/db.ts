@@ -46,6 +46,12 @@ export interface LocalTimerSession {
     lastUpdatedAt: number
 }
 
+/**
+ * IndexedDB migration policy:
+ * - Every schema change must create a new Dexie version.
+ * - Data/store renames must be migrated in an upgrade callback before the old store is removed.
+ * - Destructive store/index changes must be covered by a migration regression test.
+ */
 export class AppDB extends Dexie {
     settings!: Table<SettingModel, string>
     tasks!: Table<LocalTaskModel, string>
@@ -53,8 +59,8 @@ export class AppDB extends Dexie {
     timerSessions!: Table<LocalTimerSession, string>
     tags!: Table<LocalTagModel, string>
 
-    constructor() {
-        super("AtaraxiaDB")
+    constructor(dbName = "AtaraxiaDB") {
+        super(dbName)
 
         this.version(1).stores({
             settings: "id, userId, syncStatus, updatedAt"
@@ -79,21 +85,19 @@ export class AppDB extends Dexie {
             timerSession: "id"
         })
 
+        // v5 is intentionally a bridge version: keep the legacy store long enough
+        // to copy its data into the pluralized store before removing it in v6.
         this.version(5).stores({
             settings: "id, userId, syncStatus, updatedAt",
             tasks: "id, userId, syncStatus, updatedAt, createdAt, deletedAt",
             syncQueue: "id, [entity+entityId], entity, entityId, method, url, retries, ts",
-            timerSession: null,
+            timerSession: "id",
             timerSessions: "id",
             tags: "id, syncStatus, updatedAt, deletedAt"
         }).upgrade(async (tx) => {
-            try {
-                const legacySessions = await tx.table('timerSession').toArray()
-                if (legacySessions.length) {
-                    await tx.table('timerSessions').bulkPut(legacySessions)
-                }
-            } catch {
-                // Fresh installs and already-migrated databases have no legacy store.
+            const legacySessions = await tx.table<LocalTimerSession, string>('timerSession').toArray()
+            if (legacySessions.length) {
+                await tx.table<LocalTimerSession, string>('timerSessions').bulkPut(legacySessions)
             }
         })
 
@@ -101,6 +105,7 @@ export class AppDB extends Dexie {
             settings: "id, userId, syncStatus, updatedAt",
             tasks: "id, userId, syncStatus, updatedAt, createdAt, deletedAt",
             syncQueue: "id, [entity+entityId], entity, entityId, method, status, nextRetryAt, retries, ts",
+            timerSession: null,
             timerSessions: "id",
             tags: "id, syncStatus, updatedAt, deletedAt"
         }).upgrade(async (tx) => {
