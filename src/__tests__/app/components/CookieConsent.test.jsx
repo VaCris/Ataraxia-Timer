@@ -10,20 +10,20 @@ describe('CookieConsent', () => {
     });
 
     afterEach(() => {
-        vi.runOnlyPendingTimers();
+        act(() => {
+            vi.runOnlyPendingTimers();
+        });
         vi.useRealTimers();
     });
 
     it('does not show immediately', () => {
-        act(() => {
-            render(<CookieConsent />);
-        });
+        render(<CookieConsent />);
         expect(screen.queryByText(/Privacy notice/i)).not.toBeInTheDocument();
     });
 
     it('shows after delay if no consent is saved', () => {
         render(<CookieConsent />);
-        
+
         act(() => {
             vi.advanceTimersByTime(1200);
         });
@@ -34,7 +34,7 @@ describe('CookieConsent', () => {
     it('does not show if consent is already saved', () => {
         localStorage.setItem('ataraxia_cookie_consent', 'accepted');
         render(<CookieConsent />);
-        
+
         act(() => {
             vi.advanceTimersByTime(1200);
         });
@@ -44,13 +44,13 @@ describe('CookieConsent', () => {
 
     it('saves consent and hides when "Got it" is clicked', () => {
         render(<CookieConsent />);
-        
+
         act(() => {
             vi.advanceTimersByTime(1200);
         });
 
         const button = screen.getByText(/Got it/i);
-        
+
         act(() => {
             fireEvent.click(button);
             vi.advanceTimersByTime(300);
