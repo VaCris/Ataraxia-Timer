@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Ataraxia ambient background</title>
+  <desc id="desc">Abstract tranquil landscape with layered hills, a soft horizon glow and subtle teal accents.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#18201f"/>
+      <stop offset="0.45" stop-color="#302f2a"/>
+      <stop offset="1" stop-color="#57402e"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="72%" cy="44%" r="46%">
+      <stop offset="0" stop-color="#f5c67e" stop-opacity="0.78"/>
+      <stop offset="0.34" stop-color="#b77c4c" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#1b2221" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ridgeBack" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#25423f"/>
+      <stop offset="1" stop-color="#172523"/>
+    </linearGradient>
+    <linearGradient id="ridgeFront" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f302e"/>
+      <stop offset="1" stop-color="#0c1514"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="24"/>
+    </filter>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="7" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.045"/>
+      </feComponentTransfer>
+    </filter>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#sky)"/>
+  <rect width="1600" height="1000" fill="url(#glow)"/>
+  <circle cx="1150" cy="390" r="92" fill="#f3d2a0" opacity="0.22" filter="url(#soft)"/>
+  <path d="M0 660 C180 595 300 620 430 570 C560 520 690 590 820 548 C980 496 1110 515 1260 470 C1380 434 1490 450 1600 420 L1600 1000 L0 1000 Z" fill="url(#ridgeBack)" opacity="0.9"/>
+  <path d="M0 760 C170 690 315 715 455 665 C620 605 735 690 900 635 C1080 575 1220 635 1385 585 C1460 562 1535 548 1600 540 L1600 1000 L0 1000 Z" fill="url(#ridgeFront)"/>
+  <path d="M0 820 C245 775 410 815 610 780 C825 742 970 790 1180 752 C1370 718 1500 735 1600 720 L1600 1000 L0 1000 Z" fill="#08100f" opacity="0.72"/>
+  <ellipse cx="1160" cy="540" rx="290" ry="68" fill="#14b8a6" opacity="0.05" filter="url(#soft)"/>
+  <rect width="1600" height="1000" filter="url(#grain)" opacity="0.45"/>
+</svg>
