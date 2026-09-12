@@ -2,7 +2,7 @@ import type { Table } from 'dexie'
 import api from '@api/client'
 import { db, SyncQueueItem, SyncQueueStatus } from '@/infrastructure/database/db'
 import { ensureCurrentOwnerData } from '@/infrastructure/database/ownerMigration'
-import { getSyncCursorStorageKey } from '@/infrastructure/database/localOwner'
+import { getSettingsStorageId, getSyncCursorStorageKey } from '@/infrastructure/database/localOwner'
 import type { SyncMutationRequestDto } from '@/infrastructure/api/generated/models/SyncMutationRequestDto'
 import type { SyncPullResponseDto } from '@/infrastructure/api/generated/models/SyncPullResponseDto'
 import type { SyncPushResponseDto } from '@/infrastructure/api/generated/models/SyncPushResponseDto'
@@ -251,8 +251,9 @@ const markLocalMutationSynced = async (item: SyncQueueItem) => {
   }
 
   if (item.entity === 'settings') {
-    const settings = await db.settings.get(item.entityId)
-    if (settings) {
+    const storageId = getSettingsStorageId(item.entityId, item.ownerId)
+    const settings = await db.settings.get(storageId)
+    if (settings?.ownerId === item.ownerId) {
       await db.settings.put({
         ...settings,
         syncStatus: 'synced',
@@ -313,7 +314,6 @@ const unblockAuthenticatedItems = async (ownerId: string) => {
 
 const getSyncTable = (entityType: string): Table<SyncRecord, string> | null => {
   if (entityType === 'tasks') return db.tasks as unknown as Table<SyncRecord, string>
-  if (entityType === 'settings') return db.settings as unknown as Table<SyncRecord, string>
   if (entityType === 'tags') return db.tags as unknown as Table<SyncRecord, string>
   return null
 }
@@ -385,10 +385,37 @@ export const processSyncQueue = async () => {
         for (const change of response.changes) {
           if (!change.entityId || !change.entityType) continue
 
-          const table = getSyncTable(change.entityType)
-          if (!table) continue
-
           try {
+            if (change.entityType === 'settings') {
+              const storageId = getSettingsStorageId(change.entityId, ownerId)
+              const existingPending = await db.settings.get(storageId)
+
+              if (existingPending?.syncStatus && existingPending.syncStatus !== 'synced') {
+                conflictDetected = true
+                await markEntityConflict(change.entityType, change.entityId, ownerId)
+                continue
+              }
+
+              if (change.operation === 'DELETE') {
+                await db.settings.delete(storageId)
+                continue
+              }
+
+              if (change.payload) {
+                await db.settings.put({
+                  ...(change.payload as Record<string, unknown>),
+                  id: storageId,
+                  ownerId,
+                  remoteId: change.entityId,
+                  syncStatus: 'synced',
+                  updatedAt: Date.now(),
+                } as never)
+              }
+              continue
+            }
+
+            const table = getSyncTable(change.entityType)
+            if (!table) continue
             const isOwnedEntity = change.entityType === 'tasks' || change.entityType === 'tags'
 
             if (change.operation === 'DELETE') {
@@ -419,13 +446,12 @@ export const processSyncQueue = async () => {
                 continue
               }
 
-              const base = change.entityType === 'settings'
-                ? { syncStatus: 'synced', updatedAt: Date.now() }
-                : { ownerId, syncStatus: 'synced', updatedAt: Date.now(), deletedAt: null }
-
               await table.put({
                 ...(change.payload as Record<string, unknown>),
-                ...base,
+                ownerId,
+                syncStatus: 'synced',
+                updatedAt: Date.now(),
+                deletedAt: null,
                 id: change.entityId,
               })
             }
