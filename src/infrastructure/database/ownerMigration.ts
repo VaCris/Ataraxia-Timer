@@ -8,7 +8,8 @@ import {
   getTimerSessionStorageId,
 } from '@/infrastructure/database/localOwner'
 
-const MIGRATION_MARKER_PREFIX = 'ataraxia_owner_data_migrated:'
+// Versioned marker: v2 includes the settings namespace migration introduced with DB v8.
+const MIGRATION_MARKER_PREFIX = 'ataraxia_owner_data_migrated:v2:'
 
 const isClaimableOwner = (ownerId?: string) =>
   !ownerId || ownerId === LEGACY_OWNER_ID || ownerId === ANONYMOUS_OWNER_ID
