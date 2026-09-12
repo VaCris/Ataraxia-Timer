@@ -29,6 +29,28 @@ html.theme-light .timer-round-badge {
   border-color: rgba(var(--color-accent-rgb), 0.42) !important;
 }
 
+/* Local product fallback should remain visible enough for theme transitions to read clearly. */
+.dashboard-background-image--default {
+  filter: blur(min(var(--bg-blur, 0px), 2px)) saturate(1.08) brightness(1.08) !important;
+  transform: scale(1.035) !important;
+}
+
+.dashboard-glass-overlay--default {
+  background-color: rgba(3, 8, 8, 0.26) !important;
+}
+
+html.theme-light .dashboard-glass-overlay--default {
+  background-color: rgba(245, 240, 230, 0.18) !important;
+}
+
+html.theme-dark .dashboard-background-image--default {
+  filter: blur(min(var(--bg-blur, 0px), 2px)) saturate(1.08) brightness(0.92) !important;
+}
+
+html.theme-light .dashboard-background-image--default {
+  filter: blur(min(var(--bg-blur, 0px), 2px)) saturate(0.9) brightness(1.18) contrast(0.95) !important;
+}
+
 /* Keyboard focus must remain visible in both themes and over photographic backgrounds. */
 :where(button, input, select, textarea, [role='button'], a[href]):focus-visible {
   outline: 2px solid var(--color-accent) !important;
@@ -99,59 +121,43 @@ html.theme-light .timer-round-badge {
   height: 56px;
 }
 
-/* Soft immersion: while a focus session is actively running, reduce peripheral noise
-   without hiding any critical control. Hover/focus restores secondary regions. */
+/* Soft focus immersion: visually reduce peripheral UI while a focus session is running. */
 html.focus-immersive .dashboard-background-image {
-  transform: scale(1.12) !important;
-  filter: blur(calc(var(--bg-blur, 0px) + 2px)) saturate(0.9) !important;
+  filter: blur(calc(var(--bg-blur, 0px) + 1px)) saturate(0.82) brightness(0.78) !important;
+  transition: filter 700ms cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 html.focus-immersive .dashboard-glass-overlay {
-  opacity: 0.82;
+  background-color: rgba(0, 0, 0, 0.52) !important;
+  transition: background-color 700ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+html.focus-immersive .app-header,
+html.focus-immersive aside.app-sidebar,
+html.focus-immersive .task-panel-zone {
+  opacity: 0.46;
+  filter: saturate(0.72);
+  transition: opacity 450ms ease, filter 450ms ease !important;
+}
+
+html.focus-immersive .app-header:hover,
+html.focus-immersive .app-header:focus-within,
+html.focus-immersive aside.app-sidebar:hover,
+html.focus-immersive aside.app-sidebar:focus-within,
+html.focus-immersive .task-panel-zone:hover,
+html.focus-immersive .task-panel-zone:focus-within {
+  opacity: 1;
+  filter: none;
 }
 
 html.focus-immersive .timer-dial {
   transform: scale(1.035);
-  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 650ms cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 html.focus-immersive .timer-actions,
 html.focus-immersive .mode-tabs {
-  transition: opacity 400ms ease, transform 400ms ease;
-}
-
-@media (min-width: 1024px) {
-  html.focus-immersive .app-header,
-  html.focus-immersive .app-sidebar,
-  html.focus-immersive .task-panel-zone {
-    opacity: 0.36;
-    filter: saturate(0.72);
-    transition: opacity 450ms ease, filter 450ms ease, transform 450ms ease;
-  }
-
-  html.focus-immersive .app-header:hover,
-  html.focus-immersive .app-header:focus-within,
-  html.focus-immersive .app-sidebar:hover,
-  html.focus-immersive .app-sidebar:focus-within,
-  html.focus-immersive .task-panel-zone:hover,
-  html.focus-immersive .task-panel-zone:focus-within {
-    opacity: 1;
-    filter: none;
-  }
-
-  html.focus-immersive .task-panel-zone {
-    transform: scale(0.985);
-  }
-
-  html.focus-immersive .task-panel-zone:hover,
-  html.focus-immersive .task-panel-zone:focus-within {
-    transform: scale(1);
-  }
-
-  html.focus-immersive .dashboard-timer-zone {
-    transform: translateX(1.5%);
-    transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
+  opacity: 0.92;
 }
 
 /* Mobile/tablet: stack the core flow and avoid a timer that dominates the viewport. */
@@ -173,11 +179,6 @@ html.focus-immersive .mode-tabs {
 
   .task-panel-shell {
     width: min(100%, 40rem);
-  }
-
-  html.focus-immersive .app-header {
-    opacity: 0.72;
-    transition: opacity 350ms ease;
   }
 }
 
@@ -264,6 +265,17 @@ html.focus-immersive .mode-tabs {
   .task-manager-card form > div:has(.task-submit-button) {
     grid-template-columns: minmax(0, 1fr) 56px;
   }
+
+  html.focus-immersive .app-header,
+  html.focus-immersive aside.app-sidebar,
+  html.focus-immersive .task-panel-zone {
+    opacity: 0.8;
+    filter: saturate(0.88);
+  }
+
+  html.focus-immersive .timer-dial {
+    transform: scale(1.015);
+  }
 }
 
 /* Very narrow screens need a little extra room inside the ring and action labels. */
@@ -340,8 +352,7 @@ html.focus-immersive .mode-tabs {
   html.theme-transitioning,
   html.theme-transitioning *,
   html.focus-immersive *,
-  html.focus-immersive .timer-dial,
-  html.focus-immersive .dashboard-timer-zone {
+  html.focus-immersive {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
