@@ -37,7 +37,7 @@ function* pollServerTags(): Generator<any, void, any> {
                             syncStatus: 'synced',
                             updatedAt: Date.now(),
                             deletedAt: null,
-                        } as LocalTagModel);
+                        });
                     }
                 }
 
@@ -80,7 +80,7 @@ function* handleAddTag(action: any): Generator<any, void, any> {
             ...newTag,
             syncStatus: 'pending_create',
             updatedAt: Date.now()
-        } as LocalTagModel);
+        });
 
         yield put(addTagSuccess(newTag));
         toast.success('Category ready');
