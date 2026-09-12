@@ -99,13 +99,13 @@ const Dashboard = ({ onOpenGames }) => {
 
     return (
         <motion.div
-            className="dashboard-root"
+            className={`dashboard-root ${uiSettings.isDefaultBackground ? 'dashboard-default-background' : ''}`}
             style={{
                 '--color-accent': uiSettings.accentColor,
             }}
         >
             <div
-                className="z-0 fixed inset-0 transition-opacity duration-500 pointer-events-none dashboard-background-image"
+                className={`z-0 fixed inset-0 transition-opacity duration-500 pointer-events-none dashboard-background-image ${uiSettings.isDefaultBackground ? 'dashboard-background-image--default' : ''}`}
                 style={{
                     backgroundImage: uiSettings.bgImage ? `url(${sanitizeForCss(uiSettings.bgImage)})` : 'none',
                     backgroundSize: 'cover',
@@ -114,7 +114,7 @@ const Dashboard = ({ onOpenGames }) => {
                 }}
             />
 
-            <div className="z-0 fixed inset-0 bg-black/70 pointer-events-none dashboard-glass-overlay" />
+            <div className={`z-0 fixed inset-0 bg-black/70 pointer-events-none dashboard-glass-overlay ${uiSettings.isDefaultBackground ? 'dashboard-glass-overlay--default' : ''}`} />
 
             <Sidebar
                 isMobileOpen={isSidebarOpen}
