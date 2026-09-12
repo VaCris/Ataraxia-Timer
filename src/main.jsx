@@ -10,6 +10,7 @@ import App from '@/App'
 import { startVersionGuard } from '@/shared/version/startVersionGuard'
 import './index.css'
 import './styles/ux-hardening.css'
+import './styles/settings-light.css'
 
 registerSW({
   immediate: true,
