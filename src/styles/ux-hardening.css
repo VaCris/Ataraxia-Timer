@@ -99,6 +99,61 @@ html.theme-light .timer-round-badge {
   height: 56px;
 }
 
+/* Soft immersion: while a focus session is actively running, reduce peripheral noise
+   without hiding any critical control. Hover/focus restores secondary regions. */
+html.focus-immersive .dashboard-background-image {
+  transform: scale(1.12) !important;
+  filter: blur(calc(var(--bg-blur, 0px) + 2px)) saturate(0.9) !important;
+}
+
+html.focus-immersive .dashboard-glass-overlay {
+  opacity: 0.82;
+}
+
+html.focus-immersive .timer-dial {
+  transform: scale(1.035);
+  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.focus-immersive .timer-actions,
+html.focus-immersive .mode-tabs {
+  transition: opacity 400ms ease, transform 400ms ease;
+}
+
+@media (min-width: 1024px) {
+  html.focus-immersive .app-header,
+  html.focus-immersive .app-sidebar,
+  html.focus-immersive .task-panel-zone {
+    opacity: 0.36;
+    filter: saturate(0.72);
+    transition: opacity 450ms ease, filter 450ms ease, transform 450ms ease;
+  }
+
+  html.focus-immersive .app-header:hover,
+  html.focus-immersive .app-header:focus-within,
+  html.focus-immersive .app-sidebar:hover,
+  html.focus-immersive .app-sidebar:focus-within,
+  html.focus-immersive .task-panel-zone:hover,
+  html.focus-immersive .task-panel-zone:focus-within {
+    opacity: 1;
+    filter: none;
+  }
+
+  html.focus-immersive .task-panel-zone {
+    transform: scale(0.985);
+  }
+
+  html.focus-immersive .task-panel-zone:hover,
+  html.focus-immersive .task-panel-zone:focus-within {
+    transform: scale(1);
+  }
+
+  html.focus-immersive .dashboard-timer-zone {
+    transform: translateX(1.5%);
+    transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
 /* Mobile/tablet: stack the core flow and avoid a timer that dominates the viewport. */
 @media (max-width: 1023px) {
   .dashboard-root {
@@ -118,6 +173,11 @@ html.theme-light .timer-round-badge {
 
   .task-panel-shell {
     width: min(100%, 40rem);
+  }
+
+  html.focus-immersive .app-header {
+    opacity: 0.72;
+    transition: opacity 350ms ease;
   }
 }
 
@@ -278,7 +338,10 @@ html.theme-light .timer-round-badge {
 
 @media (prefers-reduced-motion: reduce) {
   html.theme-transitioning,
-  html.theme-transitioning * {
+  html.theme-transitioning *,
+  html.focus-immersive *,
+  html.focus-immersive .timer-dial,
+  html.focus-immersive .dashboard-timer-zone {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
