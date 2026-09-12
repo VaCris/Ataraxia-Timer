@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/store'
+import defaultBackground from '@/assets/ataraxia-default-bg.svg'
 
 const readStoredValue = <T,>(key: string, fallback: T): T => {
   const value = localStorage.getItem(`ataraxia_${key}`)
@@ -13,24 +14,15 @@ const readStoredValue = <T,>(key: string, fallback: T): T => {
 }
 
 const readStoredBackground = (fallback: string | null): string => {
-  const key = 'ataraxia_bgImage'
-  const value = localStorage.getItem(key)
+  const value = localStorage.getItem('ataraxia_bgImage')
 
-  if (value !== null) {
-    return value
+  // Empty/missing means “use the product fallback”, not “render no background”.
+  // Keep the fallback out of localStorage so asset hashing/version changes stay safe.
+  if (!value) {
+    return fallback || defaultBackground
   }
 
-  const offlineSafeFallback = fallback || ''
-
-  // Persist the empty/local fallback once so SettingsModal cannot reintroduce
-  // its historical remote default when no custom background has been chosen.
-  try {
-    localStorage.setItem(key, offlineSafeFallback)
-  } catch {
-    // Reading UI settings must never block app startup if storage is unavailable.
-  }
-
-  return offlineSafeFallback
+  return value
 }
 
 const readStoredNumber = (key: string, fallback: number): number => {
@@ -95,7 +87,7 @@ export const useUISettings = () => {
         uiSettingsState.accentColor || '#14b8a6'
       ),
 
-      bgImage: readStoredBackground(uiSettingsState.bgImage || ''),
+      bgImage: readStoredBackground(uiSettingsState.bgImage || defaultBackground),
 
       blurIntensity: readStoredNumber(
         'blurIntensity',
