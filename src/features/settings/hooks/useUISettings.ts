@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/store'
-import defaultBackground from '@/assets/ataraxia-default-bg.svg'
+
+const DEFAULT_BACKGROUND = '/assets/default-image.png'
 
 const readStoredValue = <T,>(key: string, fallback: T): T => {
   const value = localStorage.getItem(`ataraxia_${key}`)
@@ -17,7 +18,7 @@ const readStoredBackground = (fallback: string | null): { value: string; isDefau
   const storedValue = localStorage.getItem('ataraxia_bgImage')
 
   if (!storedValue) {
-    return { value: fallback || defaultBackground, isDefault: true }
+    return { value: fallback || DEFAULT_BACKGROUND, isDefault: true }
   }
 
   return { value: storedValue, isDefault: false }
@@ -77,7 +78,7 @@ export const useUISettings = () => {
       apiSettings?.longBreakInterval ?? 4
     )
 
-    const background = readStoredBackground(uiSettingsState.bgImage || defaultBackground)
+    const background = readStoredBackground(uiSettingsState.bgImage || DEFAULT_BACKGROUND)
 
     return {
       ...uiSettingsState,
