@@ -1,0 +1,220 @@
+/* UX hardening layer: responsive layout, accessibility and optical theme compensation. */
+
+/* Keep the timer content comfortably inside the progress ring. */
+.timer-content {
+  width: 78%;
+  height: 78%;
+  margin: auto;
+}
+
+.timer-digits {
+  max-width: 100%;
+  justify-content: center;
+  white-space: nowrap;
+  transform-origin: center;
+}
+
+/* Dark glyphs carry more visual weight on the light canvas, so compensate optically. */
+html.theme-light .timer-digits {
+  transform: scale(0.93);
+  letter-spacing: -0.045em;
+}
+
+html.theme-light .timer-mode-label {
+  color: rgba(17, 17, 17, 0.62) !important;
+}
+
+html.theme-light .timer-round-badge {
+  background-color: rgba(var(--color-accent-rgb), 0.13) !important;
+  border-color: rgba(var(--color-accent-rgb), 0.42) !important;
+}
+
+/* Keyboard focus must remain visible in both themes and over photographic backgrounds. */
+:where(button, input, select, textarea, [role='button'], a[href]):focus-visible {
+  outline: 2px solid var(--color-accent) !important;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(var(--color-accent-rgb), 0.18) !important;
+}
+
+/* Text-entry controls should remain comfortable on touch devices. */
+:where(
+  input[type='text'],
+  input[type='email'],
+  input[type='password'],
+  input[type='search'],
+  input[type='tel'],
+  input[type='number'],
+  textarea,
+  select
+) {
+  min-height: 48px;
+}
+
+/* Core icon actions: minimum practical pointer target without visually enlarging the glyph. */
+.timer-icon-action,
+.app-header-icon-button,
+.app-header-install,
+.sidebar-touch-target,
+.task-icon-action,
+.task-stepper-button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Mission Log input/actions remain usable with keyboard and touch. */
+.task-name-input {
+  min-height: 48px;
+}
+
+.task-submit-button {
+  min-width: 48px;
+  min-height: 48px;
+}
+
+.task-stepper-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.65rem;
+}
+
+/* Mobile/tablet: stack the core flow and avoid a timer that dominates the viewport. */
+@media (max-width: 1023px) {
+  .dashboard-root {
+    --layout-gap: clamp(1.25rem, 4vw, 2rem);
+    --panel-min-height: 24rem;
+  }
+
+  .dashboard-timer-zone {
+    min-height: auto;
+    padding-block: clamp(0.75rem, 2.5dvh, 1.5rem);
+  }
+
+  .timer-stack {
+    height: auto;
+    gap: clamp(0.9rem, 2.2dvh, 1.5rem);
+  }
+
+  .task-panel-shell {
+    width: min(100%, 40rem);
+  }
+}
+
+@media (max-width: 639px) {
+  .dashboard-root {
+    --shell-x: clamp(0.75rem, 4vw, 1rem);
+    --shell-bottom: max(2rem, env(safe-area-inset-bottom));
+    --dial-size: min(86vw, 18rem);
+    --digit-size: clamp(3rem, 15.5vw, 4.25rem);
+    --panel-min-height: 22rem;
+  }
+
+  .app-header {
+    align-items: flex-start;
+  }
+
+  .app-header-actions {
+    gap: 0.4rem;
+  }
+
+  .timer-content {
+    width: 80%;
+    height: 80%;
+  }
+
+  html.theme-light .timer-digits {
+    transform: scale(0.95);
+  }
+
+  .timer-meta {
+    margin-top: 0.7rem !important;
+  }
+
+  .mode-tabs {
+    width: min(100%, 22rem);
+    padding: 0.35rem;
+    gap: 0.2rem;
+  }
+
+  .mode-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.8rem 0.6rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+  }
+
+  .timer-actions {
+    width: min(100%, 24rem);
+    flex-wrap: nowrap;
+    border-radius: 1.5rem !important;
+  }
+
+  .timer-primary-action {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 3.5rem;
+    padding-inline: 1rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.11em;
+  }
+
+  .timer-icon-action {
+    width: 44px;
+    height: 44px;
+  }
+
+  .task-panel-shell {
+    width: 100%;
+    min-height: 22rem;
+  }
+}
+
+/* Very narrow screens need a little extra room inside the ring and action labels. */
+@media (max-width: 380px) {
+  .dashboard-root {
+    --dial-size: min(88vw, 15.5rem);
+    --digit-size: clamp(2.7rem, 14.5vw, 3.4rem);
+  }
+
+  .timer-content {
+    width: 82%;
+    height: 82%;
+  }
+
+  .timer-primary-action {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+  }
+}
+
+/* Short landscape viewports: keep the task panel reachable instead of clipping the app. */
+@media (max-height: 600px) and (orientation: landscape) {
+  .dashboard-root {
+    overflow-y: auto !important;
+    height: auto !important;
+    min-height: 100dvh;
+  }
+
+  .dashboard-main {
+    height: auto !important;
+    min-height: 100dvh;
+  }
+
+  .dashboard-grid {
+    align-items: start;
+  }
+
+  .task-panel-shell {
+    min-height: 18rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-transitioning,
+  html.theme-transitioning * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
