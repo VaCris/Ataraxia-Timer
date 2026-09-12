@@ -1,6 +1,8 @@
 import type { Table } from 'dexie'
 import api from '@api/client'
 import { db, SyncQueueItem, SyncQueueStatus } from '@/infrastructure/database/db'
+import { ensureCurrentOwnerData } from '@/infrastructure/database/ownerMigration'
+import { getSyncCursorStorageKey } from '@/infrastructure/database/localOwner'
 import type { SyncMutationRequestDto } from '@/infrastructure/api/generated/models/SyncMutationRequestDto'
 import type { SyncPullResponseDto } from '@/infrastructure/api/generated/models/SyncPullResponseDto'
 import type { SyncPushResponseDto } from '@/infrastructure/api/generated/models/SyncPushResponseDto'
@@ -21,6 +23,7 @@ type ErrorLike = {
 
 type SyncRecord = {
   id?: string
+  ownerId?: string
   syncStatus?: string
   updatedAt?: number
   deletedAt?: number | null
@@ -47,12 +50,13 @@ const mergeData = (a: unknown, b: unknown) => ({
   ...(typeof b === 'object' && b ? b : {}),
 })
 
-const compactQueue = async (item: AddSyncQueueItem): Promise<boolean> => {
+const compactQueue = async (item: AddSyncQueueItem, ownerId: string): Promise<boolean> => {
   if (!item.entity || !item.entityId) return false
 
   const existing = await db.syncQueue
     .where('[entity+entityId]')
     .equals([item.entity, item.entityId])
+    .filter((entry) => entry.ownerId === ownerId)
     .toArray()
 
   if (!existing.length) return false
@@ -92,13 +96,15 @@ const compactQueue = async (item: AddSyncQueueItem): Promise<boolean> => {
 }
 
 export const addToSyncQueue = async (req: AddSyncQueueItem) => {
-  const absorbed = await compactQueue(req)
+  const ownerId = await ensureCurrentOwnerData()
+  const absorbed = await compactQueue(req, ownerId)
   if (absorbed) return
 
   if (req.entity && req.entityId) {
     const existing = await db.syncQueue
       .where('[entity+entityId]')
       .equals([req.entity, req.entityId])
+      .filter((item) => item.ownerId === ownerId)
       .toArray()
 
     if (existing.some((item) => item.method === req.method && item.status !== 'failed_permanent')) {
@@ -109,6 +115,7 @@ export const addToSyncQueue = async (req: AddSyncQueueItem) => {
   const item: SyncQueueItem = {
     ...req,
     id: crypto.randomUUID(),
+    ownerId,
     retries: 0,
     ts: Date.now(),
     status: 'pending',
@@ -117,9 +124,12 @@ export const addToSyncQueue = async (req: AddSyncQueueItem) => {
   await db.syncQueue.put(item)
 }
 
-const getReadyQueue = async () => {
+const getReadyQueue = async (ownerId: string) => {
   const now = Date.now()
-  const queue = await db.syncQueue.orderBy('ts').toArray()
+  const queue = await db.syncQueue
+    .where('ownerId')
+    .equals(ownerId)
+    .sortBy('ts')
 
   return queue.filter((item) => {
     if (item.status === 'failed_permanent' || item.status === 'conflict') return false
@@ -185,10 +195,11 @@ const markQueueFailure = async (queue: SyncQueueItem[], error: unknown) => {
   }
 }
 
-const markEntityConflict = async (entity: string, entityId: string) => {
+const markEntityConflict = async (entity: string, entityId: string, ownerId: string) => {
   const pending = await db.syncQueue
     .where('[entity+entityId]')
     .equals([entity, entityId])
+    .filter((item) => item.ownerId === ownerId)
     .toArray()
 
   for (const item of pending) {
@@ -204,38 +215,38 @@ const markLocalMutationSynced = async (item: SyncQueueItem) => {
   if (!item.entity || !item.entityId) return
 
   if (item.entity === 'tasks') {
+    const task = await db.tasks.get(item.entityId)
+    if (!task || task.ownerId !== item.ownerId) return
+
     if (item.method === 'DELETE') {
       await db.tasks.delete(item.entityId)
       return
     }
 
-    const task = await db.tasks.get(item.entityId)
-    if (task) {
-      await db.tasks.put({
-        ...task,
-        syncStatus: 'synced',
-        updatedAt: Date.now(),
-        deletedAt: null,
-      })
-    }
+    await db.tasks.put({
+      ...task,
+      syncStatus: 'synced',
+      updatedAt: Date.now(),
+      deletedAt: null,
+    })
     return
   }
 
   if (item.entity === 'tags') {
+    const tag = await db.tags.get(item.entityId)
+    if (!tag || tag.ownerId !== item.ownerId) return
+
     if (item.method === 'DELETE') {
       await db.tags.delete(item.entityId)
       return
     }
 
-    const tag = await db.tags.get(item.entityId)
-    if (tag) {
-      await db.tags.put({
-        ...tag,
-        syncStatus: 'synced',
-        updatedAt: Date.now(),
-        deletedAt: null,
-      })
-    }
+    await db.tags.put({
+      ...tag,
+      syncStatus: 'synced',
+      updatedAt: Date.now(),
+      deletedAt: null,
+    })
     return
   }
 
@@ -253,7 +264,8 @@ const markLocalMutationSynced = async (item: SyncQueueItem) => {
 
 const reconcilePushResult = async (
   queue: SyncQueueItem[],
-  result: SyncPushResponseDto
+  result: SyncPushResponseDto,
+  ownerId: string
 ) => {
   const applied = new Set(result.applied || [])
   const ignored = new Set(result.ignored || [])
@@ -278,12 +290,16 @@ const reconcilePushResult = async (
   }
 
   if (conflicts.size === 0 && result.nextCursor) {
-    localStorage.setItem('ataraxia_lastSyncCursor', result.nextCursor)
+    localStorage.setItem(getSyncCursorStorageKey(ownerId), result.nextCursor)
   }
 }
 
-const unblockAuthenticatedItems = async () => {
-  const blocked = await db.syncQueue.where('status').equals('blocked_auth').toArray()
+const unblockAuthenticatedItems = async (ownerId: string) => {
+  const blocked = await db.syncQueue
+    .where('ownerId')
+    .equals(ownerId)
+    .filter((item) => item.status === 'blocked_auth')
+    .toArray()
   if (!blocked.length) return
 
   for (const item of blocked) {
@@ -320,8 +336,9 @@ export const processSyncQueue = async () => {
   lastSyncTime = now
 
   try {
-    await unblockAuthenticatedItems()
-    const queue = await getReadyQueue()
+    const ownerId = await ensureCurrentOwnerData()
+    await unblockAuthenticatedItems(ownerId)
+    const queue = await getReadyQueue(ownerId)
 
     if (queue.length > 0) {
       const mutations: SyncMutationRequestDto[] = queue.map((item) => {
@@ -341,7 +358,7 @@ export const processSyncQueue = async () => {
       try {
         const { SyncControllerService } = await import('@/infrastructure/api/generated')
         const result = await SyncControllerService.push({ mutations })
-        await reconcilePushResult(queue, result)
+        await reconcilePushResult(queue, result, ownerId)
       } catch (error: unknown) {
         await markQueueFailure(queue, error)
       }
@@ -353,7 +370,8 @@ export const processSyncQueue = async () => {
     lastPullTime = now
 
     try {
-      const lastSync = localStorage.getItem('ataraxia_lastSyncCursor') || undefined
+      const cursorKey = getSyncCursorStorageKey(ownerId)
+      const lastSync = localStorage.getItem(cursorKey) || undefined
       const params = new URLSearchParams()
       if (lastSync) params.set('cursor', lastSync)
       params.set('limit', '100')
@@ -371,11 +389,16 @@ export const processSyncQueue = async () => {
           if (!table) continue
 
           try {
+            const isOwnedEntity = change.entityType === 'tasks' || change.entityType === 'tags'
+
             if (change.operation === 'DELETE') {
               const existingPending = await table.get(change.entityId)
+              if (isOwnedEntity && existingPending?.ownerId && existingPending.ownerId !== ownerId) {
+                continue
+              }
               if (existingPending?.syncStatus && existingPending.syncStatus !== 'synced') {
                 conflictDetected = true
-                await markEntityConflict(change.entityType, change.entityId)
+                await markEntityConflict(change.entityType, change.entityId, ownerId)
                 continue
               }
 
@@ -385,15 +408,20 @@ export const processSyncQueue = async () => {
 
             if (change.payload) {
               const existingPending = await table.get(change.entityId)
+              if (isOwnedEntity && existingPending?.ownerId && existingPending.ownerId !== ownerId) {
+                applyFailed = true
+                console.warn(`Skipped cross-owner storage collision for ${change.entityType}/${change.entityId}.`)
+                continue
+              }
               if (existingPending?.syncStatus && existingPending.syncStatus !== 'synced') {
                 conflictDetected = true
-                await markEntityConflict(change.entityType, change.entityId)
+                await markEntityConflict(change.entityType, change.entityId, ownerId)
                 continue
               }
 
               const base = change.entityType === 'settings'
                 ? { syncStatus: 'synced', updatedAt: Date.now() }
-                : { syncStatus: 'synced', updatedAt: Date.now(), deletedAt: null }
+                : { ownerId, syncStatus: 'synced', updatedAt: Date.now(), deletedAt: null }
 
               await table.put({
                 ...(change.payload as Record<string, unknown>),
@@ -409,7 +437,7 @@ export const processSyncQueue = async () => {
       }
 
       if (!applyFailed && !conflictDetected && response.nextCursor) {
-        localStorage.setItem('ataraxia_lastSyncCursor', response.nextCursor)
+        localStorage.setItem(cursorKey, response.nextCursor)
       }
     } catch (error: unknown) {
       const candidate = toErrorLike(error)
@@ -427,17 +455,29 @@ export const processSyncQueue = async () => {
 }
 
 export const clearSyncQueue = async () => {
-  await db.syncQueue.clear()
+  const ownerId = await ensureCurrentOwnerData()
+  await db.syncQueue.where('ownerId').equals(ownerId).delete()
 }
 
-export const getSyncQueueSize = async (): Promise<number> => db.syncQueue.count()
+export const getSyncQueueSize = async (): Promise<number> => {
+  const ownerId = await ensureCurrentOwnerData()
+  return db.syncQueue.where('ownerId').equals(ownerId).count()
+}
 
-export const getSyncQueueFailures = async (): Promise<SyncQueueItem[]> =>
-  db.syncQueue
+export const getSyncQueueFailures = async (): Promise<SyncQueueItem[]> => {
+  const ownerId = await ensureCurrentOwnerData()
+  return db.syncQueue
+    .where('ownerId')
+    .equals(ownerId)
     .filter((item) => item.status === 'conflict' || item.status === 'failed_permanent')
     .toArray()
+}
 
 export const retrySyncItem = async (id: string): Promise<void> => {
+  const ownerId = await ensureCurrentOwnerData()
+  const item = await db.syncQueue.get(id)
+  if (!item || item.ownerId !== ownerId) return
+
   await db.syncQueue.update(id, {
     status: 'pending',
     retries: 0,
