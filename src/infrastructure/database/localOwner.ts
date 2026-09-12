@@ -32,3 +32,8 @@ export const getCurrentRoundStorageKey = (ownerId = getLocalOwnerId()): string =
 
 export const getSyncCursorStorageKey = (ownerId = getLocalOwnerId()): string =>
   `ataraxia_lastSyncCursor:${ownerId}`
+
+export const getSettingsStorageId = (
+  remoteId = 'me',
+  ownerId = getLocalOwnerId()
+): string => `${ownerId}:${remoteId}`
