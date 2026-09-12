@@ -13,16 +13,14 @@ const readStoredValue = <T,>(key: string, fallback: T): T => {
   return value as T
 }
 
-const readStoredBackground = (fallback: string | null): string => {
-  const value = localStorage.getItem('ataraxia_bgImage')
+const readStoredBackground = (fallback: string | null): { value: string; isDefault: boolean } => {
+  const storedValue = localStorage.getItem('ataraxia_bgImage')
 
-  // Empty/missing means “use the product fallback”, not “render no background”.
-  // Keep the fallback out of localStorage so asset hashing/version changes stay safe.
-  if (!value) {
-    return fallback || defaultBackground
+  if (!storedValue) {
+    return { value: fallback || defaultBackground, isDefault: true }
   }
 
-  return value
+  return { value: storedValue, isDefault: false }
 }
 
 const readStoredNumber = (key: string, fallback: number): number => {
@@ -79,6 +77,8 @@ export const useUISettings = () => {
       apiSettings?.longBreakInterval ?? 4
     )
 
+    const background = readStoredBackground(uiSettingsState.bgImage || defaultBackground)
+
     return {
       ...uiSettingsState,
 
@@ -87,7 +87,8 @@ export const useUISettings = () => {
         uiSettingsState.accentColor || '#14b8a6'
       ),
 
-      bgImage: readStoredBackground(uiSettingsState.bgImage || defaultBackground),
+      bgImage: background.value,
+      isDefaultBackground: background.isDefault,
 
       blurIntensity: readStoredNumber(
         'blurIntensity',
