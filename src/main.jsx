@@ -9,6 +9,7 @@ import { store } from '@store/index'
 import App from '@/App'
 import { startVersionGuard } from '@/shared/version/startVersionGuard'
 import './index.css'
+import './styles/ux-hardening.css'
 
 registerSW({
   immediate: true,
