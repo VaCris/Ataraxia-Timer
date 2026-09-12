@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from 'react';
+import React, { useEffect, useMemo, memo } from 'react';
 import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
@@ -28,6 +28,16 @@ export const TimerDial: React.FC<TimerDialProps> = memo(({ controller }) => {
     const apiSettings = useSelector((state: RootState) => state.settings.api);
 
     const longBreakInterval = apiSettings?.longBreakInterval ?? 4;
+    const isImmersiveFocus = timerState.isActive && timerState.mode === 'FOCUS';
+
+    useEffect(() => {
+        const root = document.documentElement;
+        root.classList.toggle('focus-immersive', isImmersiveFocus);
+
+        return () => {
+            root.classList.remove('focus-immersive');
+        };
+    }, [isImmersiveFocus]);
 
     const { minutes, seconds, progress } = useMemo(() => {
         const m = String(Math.floor(timerState.timeLeft / 60)).padStart(2, '0');
