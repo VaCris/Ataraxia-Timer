@@ -4,6 +4,7 @@ import {
   LEGACY_OWNER_ID,
   getCurrentRoundStorageKey,
   getLocalOwnerId,
+  getSettingsStorageId,
   getTimerSessionStorageId,
 } from '@/infrastructure/database/localOwner'
 
@@ -24,7 +25,7 @@ export const ensureCurrentOwnerData = async (): Promise<string> => {
   const markerKey = `${MIGRATION_MARKER_PREFIX}${ownerId}`
   if (localStorage.getItem(markerKey) === '1') return ownerId
 
-  await db.transaction('rw', db.tasks, db.tags, db.syncQueue, db.timerSessions, async () => {
+  await db.transaction('rw', db.settings, db.tasks, db.tags, db.syncQueue, db.timerSessions, async () => {
     await db.tasks
       .filter((item) => isClaimableOwner(item.ownerId))
       .modify({ ownerId })
@@ -36,6 +37,27 @@ export const ensureCurrentOwnerData = async (): Promise<string> => {
     await db.syncQueue
       .filter((item) => isClaimableOwner(item.ownerId))
       .modify({ ownerId })
+
+    const legacySettings = await db.settings
+      .filter((item) => isClaimableOwner(item.ownerId))
+      .toArray()
+
+    for (const setting of legacySettings) {
+      const remoteId = setting.remoteId || setting.id.split(':').at(-1) || 'me'
+      const targetId = getSettingsStorageId(remoteId, ownerId)
+      const existingTarget = await db.settings.get(targetId)
+
+      if (!existingTarget) {
+        await db.settings.put({
+          ...setting,
+          id: targetId,
+          ownerId,
+          remoteId,
+        })
+      }
+
+      if (setting.id !== targetId) await db.settings.delete(setting.id)
+    }
 
     const legacySessions = await db.timerSessions
       .filter((item) => isClaimableOwner(item.ownerId))
