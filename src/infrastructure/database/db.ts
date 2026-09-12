@@ -3,7 +3,7 @@ import { SettingModel } from "@/features/settings/types/setting.model"
 import { TaskResponse } from "@/features/tasks/types/task.dto"
 import { Mode } from "@/features/pomodoro/store/timerSlice"
 import { TagResponse } from "@/features/tags/types/tag.dto"
-import { LEGACY_OWNER_ID } from "@/infrastructure/database/localOwner"
+import { LEGACY_OWNER_ID, getSettingsStorageId } from "@/infrastructure/database/localOwner"
 
 export type SyncStatus = 'synced' | 'pending_create' | 'pending_update' | 'pending_delete'
 export type SyncQueueStatus = 'pending' | 'retrying' | 'blocked_auth' | 'conflict' | 'failed_permanent'
@@ -142,6 +142,34 @@ export class AppDB extends Dexie {
             await tx.table('timerSessions').toCollection().modify((item: LocalTimerSession) => {
                 item.ownerId = item.ownerId || LEGACY_OWNER_ID
             })
+        })
+
+        // v8 namespaces settings records while preserving the remote identifier
+        // (`me`) separately from the IndexedDB primary key.
+        this.version(8).stores({
+            settings: "id, ownerId, [ownerId+remoteId], remoteId, syncStatus, updatedAt",
+            tasks: "id, ownerId, [ownerId+syncStatus], userId, syncStatus, updatedAt, createdAt, deletedAt",
+            syncQueue: "id, ownerId, [entity+entityId], entity, entityId, method, status, nextRetryAt, retries, ts",
+            timerSessions: "id, ownerId",
+            tags: "id, ownerId, [ownerId+syncStatus], syncStatus, updatedAt, deletedAt"
+        }).upgrade(async (tx) => {
+            const settingsTable = tx.table<SettingModel, string>('settings')
+            const existing = await settingsTable.toArray()
+
+            for (const setting of existing) {
+                const ownerId = setting.ownerId || LEGACY_OWNER_ID
+                const remoteId = setting.remoteId || setting.id || 'me'
+                const storageId = getSettingsStorageId(remoteId, ownerId)
+                const migrated: SettingModel = {
+                    ...setting,
+                    id: storageId,
+                    ownerId,
+                    remoteId,
+                }
+
+                await settingsTable.put(migrated)
+                if (setting.id !== storageId) await settingsTable.delete(setting.id)
+            }
         })
     }
 }
