@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import api from '@api/client'
 import { db } from '@/infrastructure/database/db'
+import { getLocalOwnerId, getSyncCursorStorageKey } from '@/infrastructure/database/localOwner'
 import { addToSyncQueue, processSyncQueue } from '@/infrastructure/sync/syncManager'
 import { SyncControllerService } from '@/infrastructure/api/generated'
 
@@ -32,6 +33,10 @@ const setOnline = (online: boolean) => {
 describe('syncManager integration', () => {
   beforeEach(async () => {
     localStorage.clear()
+    localStorage.setItem('ataraxia_local_profile', JSON.stringify({
+      id: 'sync-test-user',
+      name: 'Sync Test User',
+    }))
     setOnline(true)
     await db.open()
     await Promise.all([
@@ -57,11 +62,14 @@ describe('syncManager integration', () => {
     ])
   })
 
-  it('keeps a local mutation queued offline and reconciles it after reconnecting', async () => {
+  it('keeps a local mutation queued offline and reconciles only the active owner after reconnecting', async () => {
     const taskId = 'task-offline-1'
+    const ownerId = getLocalOwnerId()
 
     await db.tasks.put({
       id: taskId,
+      ownerId,
+      userId: 'sync-test-user',
       title: 'Offline task',
       status: 'TODO',
       syncStatus: 'pending_create',
@@ -82,6 +90,7 @@ describe('syncManager integration', () => {
 
     const queued = await db.syncQueue.toArray()
     expect(queued).toHaveLength(1)
+    expect(queued[0].ownerId).toBe(ownerId)
     expect((await db.tasks.get(taskId))?.syncStatus).toBe('pending_create')
 
     const pushMock = vi.mocked(SyncControllerService.push)
@@ -100,6 +109,7 @@ describe('syncManager integration', () => {
     expect(pushMock).toHaveBeenCalledTimes(1)
     expect(await db.syncQueue.count()).toBe(0)
     expect((await db.tasks.get(taskId))?.syncStatus).toBe('synced')
-    expect(localStorage.getItem('ataraxia_lastSyncCursor')).toBe('cursor-after-push')
+    expect(localStorage.getItem(getSyncCursorStorageKey(ownerId))).toBe('cursor-after-push')
+    expect(localStorage.getItem('ataraxia_lastSyncCursor')).toBeNull()
   })
 })
