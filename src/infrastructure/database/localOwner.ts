@@ -29,3 +29,6 @@ export const getTimerSessionStorageId = (ownerId = getLocalOwnerId()): string =>
 
 export const getCurrentRoundStorageKey = (ownerId = getLocalOwnerId()): string =>
   `ataraxia_currentRound:${ownerId}`
+
+export const getSyncCursorStorageKey = (ownerId = getLocalOwnerId()): string =>
+  `ataraxia_lastSyncCursor:${ownerId}`
