@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import { gamificationService } from '../../gamification/api/gamification.api'
 import type { RootState } from '@/store'
 import { db } from '@/infrastructure/database/db'
+import { ensureCurrentOwnerData } from '@/infrastructure/database/ownerMigration'
+import { getCurrentRoundStorageKey, getTimerSessionStorageId } from '@/infrastructure/database/localOwner'
 import { mapSettings } from '../mappers/mapSettings'
 import {
     Mode,
@@ -38,8 +40,9 @@ export const usePomodoroController = () => {
     useEffect(() => {
         const loadSession = async () => {
             try {
-                const savedSession = await db.timerSessions.get('current_session')
-                if (savedSession) {
+                const ownerId = await ensureCurrentOwnerData()
+                const savedSession = await db.timerSessions.get(getTimerSessionStorageId(ownerId))
+                if (savedSession && savedSession.ownerId === ownerId) {
                     setCurrentRound(savedSession.currentRound)
                     dispatch(restoreSession({
                         mode: savedSession.mode,
@@ -49,7 +52,7 @@ export const usePomodoroController = () => {
                         isPaused: savedSession.isPaused
                     }))
                 } else {
-                    const savedRound = localStorage.getItem('ataraxia_currentRound')
+                    const savedRound = localStorage.getItem(getCurrentRoundStorageKey(ownerId))
                     if (savedRound) setCurrentRound(Number(savedRound))
                 }
             } catch (error) {
@@ -64,26 +67,44 @@ export const usePomodoroController = () => {
     useEffect(() => {
         if (!isSessionLoaded) return;
 
-        localStorage.setItem('ataraxia_currentRound', currentRound.toString())
+        let cancelled = false
+        let saveTimer: ReturnType<typeof setTimeout> | null = null
 
-        const saveTimer = setTimeout(async () => {
+        const persistSession = async () => {
             try {
-                await db.timerSessions.put({
-                    id: 'current_session',
-                    mode: timerState.mode,
-                    timeLeft: timerState.timeLeft,
-                    initialTime: timerState.initialTime,
-                    isActive: timerState.isActive,
-                    isPaused: timerState.isPaused,
-                    currentRound: currentRound,
-                    lastUpdatedAt: Date.now()
-                })
-            } catch (error) {
-                console.error("Error saving offline session:", error)
-            }
-        }, 1000)
+                const ownerId = await ensureCurrentOwnerData()
+                if (cancelled) return
 
-        return () => clearTimeout(saveTimer)
+                localStorage.setItem(getCurrentRoundStorageKey(ownerId), currentRound.toString())
+
+                saveTimer = setTimeout(async () => {
+                    try {
+                        await db.timerSessions.put({
+                            id: getTimerSessionStorageId(ownerId),
+                            ownerId,
+                            mode: timerState.mode,
+                            timeLeft: timerState.timeLeft,
+                            initialTime: timerState.initialTime,
+                            isActive: timerState.isActive,
+                            isPaused: timerState.isPaused,
+                            currentRound: currentRound,
+                            lastUpdatedAt: Date.now()
+                        })
+                    } catch (error) {
+                        console.error("Error saving offline session:", error)
+                    }
+                }, 1000)
+            } catch (error) {
+                console.error("Error preparing offline session persistence:", error)
+            }
+        }
+
+        persistSession()
+
+        return () => {
+            cancelled = true
+            if (saveTimer) clearTimeout(saveTimer)
+        }
     }, [
         timerState.mode,
         timerState.timeLeft,
