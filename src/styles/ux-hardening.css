@@ -67,15 +67,36 @@ html.theme-light .timer-round-badge {
 }
 
 .task-submit-button {
-  min-width: 48px;
-  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  min-width: 56px;
+  min-height: 56px;
 }
 
 .task-stepper-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   border-radius: 0.65rem;
+}
+
+/* Keep the estimate control and submit button locked to one baseline/height. */
+.task-manager-card form > div:has(.task-submit-button) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 56px;
+  align-items: stretch !important;
+  gap: 0.5rem;
+}
+
+.task-manager-card form > div:has(.task-submit-button) > :first-child {
+  min-height: 56px;
+  height: 56px;
 }
 
 /* Mobile/tablet: stack the core flow and avoid a timer that dominates the viewport. */
@@ -144,29 +165,44 @@ html.theme-light .timer-round-badge {
     letter-spacing: 0.08em;
   }
 
+  /* Fixed three-column action bar prevents reset from wrapping below the CTA. */
   .timer-actions {
+    display: grid !important;
+    grid-template-columns: 48px minmax(0, 1fr) 48px;
+    align-items: center;
     width: min(100%, 24rem);
-    flex-wrap: nowrap;
+    max-width: 100%;
+    gap: 0.75rem;
+    padding: 0.75rem !important;
+    flex-wrap: nowrap !important;
     border-radius: 1.5rem !important;
   }
 
   .timer-primary-action {
-    flex: 1 1 auto;
-    min-width: 0;
-    height: 3.5rem;
-    padding-inline: 1rem;
-    font-size: 0.78rem;
-    letter-spacing: 0.11em;
+    width: 100%;
+    min-width: 0 !important;
+    height: 52px;
+    padding-inline: 0.75rem;
+    font-size: 0.76rem;
+    letter-spacing: 0.09em;
+    white-space: nowrap;
   }
 
   .timer-icon-action {
-    width: 44px;
-    height: 44px;
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px;
+    min-height: 48px;
+    justify-self: center;
   }
 
   .task-panel-shell {
     width: 100%;
     min-height: 22rem;
+  }
+
+  .task-manager-card form > div:has(.task-submit-button) {
+    grid-template-columns: minmax(0, 1fr) 56px;
   }
 }
 
@@ -182,9 +218,39 @@ html.theme-light .timer-round-badge {
     height: 82%;
   }
 
+  .timer-actions {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 0.5rem;
+    padding: 0.6rem !important;
+  }
+
+  .timer-icon-action {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   .timer-primary-action {
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
+    height: 50px;
+    font-size: 0.69rem;
+    letter-spacing: 0.065em;
+    padding-inline: 0.55rem;
+  }
+
+  .task-submit-button {
+    width: 52px;
+    min-width: 52px;
+  }
+
+  .task-manager-card form > div:has(.task-submit-button) {
+    grid-template-columns: minmax(0, 1fr) 52px;
+  }
+
+  .task-stepper-button {
+    width: 36px;
+    height: 40px;
+    min-width: 36px;
   }
 }
 
