@@ -52,11 +52,8 @@ const Header = ({ is24Hour = false, accentColor = '#14b8a6', onOpenSidebar = () 
         </button>
 
         <div className="flex flex-col min-w-0">
-          <div className="flex items-baseline gap-2 sm:gap-4 min-w-0">
+          <div className="flex items-baseline min-w-0">
             <h1 className="app-header-title">ATARAXIA</h1>
-            <div className="app-header-badge">
-              <span className="app-header-badge-text" style={{ color: 'rgb(179 201 215)' }}>BETA V2</span>
-            </div>
           </div>
         </div>
 
