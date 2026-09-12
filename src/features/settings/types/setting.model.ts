@@ -3,7 +3,10 @@ import type { SettingTheme, SettingTimeFormat, SettingWeekStart } from './settin
 export type SettingSyncStatus = 'synced' | 'pending_update'
 
 export interface SettingModel {
+  /** Local IndexedDB primary key. Repositories expose remoteId as id to callers. */
   id: string
+  ownerId?: string
+  remoteId?: string
 
   pomodoroLength: number
   shortBreakLength: number
