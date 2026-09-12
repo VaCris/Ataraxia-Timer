@@ -15,18 +15,73 @@
 }
 
 /* Dark glyphs carry more visual weight on the light canvas, so compensate optically. */
+html.theme-light {
+  --light-ink: #24211d;
+  --light-ink-soft: #3b3630;
+  --light-ink-muted: rgba(36, 33, 29, 0.62);
+  --light-ink-subtle: rgba(36, 33, 29, 0.42);
+  --light-ink-strong: rgba(36, 33, 29, 0.92);
+}
+
 html.theme-light .timer-digits {
   transform: scale(0.93);
   letter-spacing: -0.045em;
+  color: var(--light-ink) !important;
 }
 
 html.theme-light .timer-mode-label {
-  color: rgba(17, 17, 17, 0.62) !important;
+  color: var(--light-ink-muted) !important;
 }
 
 html.theme-light .timer-round-badge {
   background-color: rgba(var(--color-accent-rgb), 0.13) !important;
   border-color: rgba(var(--color-accent-rgb), 0.42) !important;
+}
+
+/* Light theme ink system: avoid pure black against the soft photographic/cream palette. */
+html.theme-light .app-header-title,
+html.theme-light .task-manager-card h1,
+html.theme-light .task-manager-card h2,
+html.theme-light .task-manager-card h3,
+html.theme-light .task-manager-card h4,
+html.theme-light .task-manager-card [class*='font-black'],
+html.theme-light .task-manager-card [class*='font-bold'] {
+  color: var(--light-ink) !important;
+}
+
+html.theme-light .app-header-clock-text,
+html.theme-light .task-manager-card p,
+html.theme-light .task-manager-card label,
+html.theme-light .task-manager-card [class*='text-white/40'],
+html.theme-light .task-manager-card [class*='text-white/50'],
+html.theme-light .task-manager-card [class*='text-white/60'] {
+  color: var(--light-ink-muted) !important;
+}
+
+html.theme-light .task-manager-card [class*='text-white/20'],
+html.theme-light .task-manager-card [class*='text-white/30'] {
+  color: var(--light-ink-subtle) !important;
+}
+
+html.theme-light .task-submit-button {
+  background-color: var(--light-ink-strong) !important;
+  color: #fffaf2 !important;
+  border-color: rgba(36, 33, 29, 0.14) !important;
+  box-shadow: 0 8px 20px -12px rgba(36, 33, 29, 0.5);
+}
+
+html.theme-light .task-submit-button:hover {
+  background-color: var(--light-ink) !important;
+}
+
+html.theme-light .timer-icon-action,
+html.theme-light .app-header-icon-button {
+  color: var(--light-ink-muted) !important;
+}
+
+html.theme-light .timer-icon-action:hover,
+html.theme-light .app-header-icon-button:hover {
+  color: var(--light-ink) !important;
 }
 
 /* Local product fallback should remain visible enough for theme transitions to read clearly. */
