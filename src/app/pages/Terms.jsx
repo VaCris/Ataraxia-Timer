@@ -26,7 +26,7 @@ export default function Terms({ isInline }) {
         <article className="space-y-6 text-base leading-relaxed">
           <h2 className="text-2xl font-black uppercase tracking-tight mt-10 mb-4">1. Agreement to Terms</h2>
           <p>
-            By accessing or using <strong>Ataraxia</strong> and <strong>Aputrak</strong> (the "Services") provided by <strong>TKOH Studios</strong>, you agree to be bound by these Terms & Conditions. If you disagree with any part of the terms, you may not access the Services.
+            By accessing or using <strong>Ataraxia</strong> and <strong>Aputrak</strong> (the "Services") provided by <strong>Studios TKOH</strong>, you agree to be bound by these Terms & Conditions. If you disagree with any part of the terms, you may not access the Services.
           </p>
 
           <h2 className="text-2xl font-black uppercase tracking-tight mt-10 mb-4">2. Use of the Services</h2>
@@ -37,7 +37,7 @@ export default function Terms({ isInline }) {
           <h2 className="text-2xl font-black uppercase tracking-tight mt-10 mb-4">3. Offline-First Nature & Data Responsibility</h2>
           <p>
             The Services are designed to operate primarily offline. Your data is stored locally in your browser or device using <em>IndexedDB</em>. We provide Cloud Synchronization as an optional convenience to bridge data across devices. 
-            <strong>TKOH Studios is not responsible for data loss</strong> resulting from:
+            <strong>Studios TKOH is not responsible for data loss</strong> resulting from:
           </p>
           <ul className="list-disc pl-6 space-y-2 text-[var(--color-text-80)]">
             <li>Clearing your browser's site data or cache before syncing.</li>
@@ -55,12 +55,12 @@ export default function Terms({ isInline }) {
 
           <h2 className="text-2xl font-black uppercase tracking-tight mt-10 mb-4">5. Intellectual Property</h2>
           <p>
-            The Services and their original content, features, and functionality are and will remain the exclusive property of TKOH Studios and its licensors. The Services are protected by copyright, trademark, and other laws of both the local and international jurisdictions.
+            The Services and their original content, features, and functionality are and will remain the exclusive property of Studios TKOH and its licensors. The Services are protected by copyright, trademark, and other laws of both the local and international jurisdictions.
           </p>
 
           <h2 className="text-2xl font-black uppercase tracking-tight mt-10 mb-4">6. Limitation of Liability</h2>
           <p>
-            In no event shall TKOH Studios, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Services.
+            In no event shall Studios TKOH, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Services.
           </p>
 
           <h2 className="text-2xl font-black uppercase tracking-tight mt-10 mb-4">7. Changes to Terms</h2>
@@ -70,7 +70,7 @@ export default function Terms({ isInline }) {
 
           <p className="mt-16 text-sm font-bold text-[var(--color-text-45)] uppercase tracking-widest">
             Last Updated: June 2026<br/>
-            TKOH Studios
+            Studios TKOH
           </p>
         </article>
       </main>
