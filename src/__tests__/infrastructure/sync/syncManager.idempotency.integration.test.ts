@@ -97,7 +97,7 @@ describe('syncManager idempotency and conflicts', () => {
     localStorage.setItem('token', 'remote-token')
     const ownerId = await putSyncedTask('task-idempotent', 'Idempotent task')
 
-    await db.tasks.update('task-idempotent', { syncStatus: 'pending_update' })
+    await tasksLocalRepository.update('task-idempotent', { title: 'Idempotent task updated' })
     await addToSyncQueue({
       method: 'PATCH',
       url: '/tasks/task-idempotent',
@@ -130,6 +130,7 @@ describe('syncManager idempotency and conflicts', () => {
 
     expect(pushMock.mock.calls[1]?.[0].mutations?.[0]?.clientMutationId).toBe(queued.id)
     expect(await db.syncQueue.get(queued.id)).toBeUndefined()
+    expect((await db.tasks.get('task-idempotent'))?.title).toBe('Idempotent task updated')
     expect((await db.tasks.get('task-idempotent'))?.syncStatus).toBe('synced')
     expect(localStorage.getItem(getSyncCursorStorageKey(ownerId))).toBe('cursor-idempotent')
   })
