@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 
 import { authService } from '@/features/auth/api/auth.api';
 import { authLocalRepository } from '@/features/auth/repositories/auth.local.repository';
+import { clearCurrentOwnerData } from '@/infrastructure/database/ownerMigration';
 import {
   checkAuthRequest,
   loginRequest,
@@ -248,7 +249,11 @@ function* handleResetPassword(
   }
 }
 
-function* handleLogout(): Generator<unknown, void, unknown> {
+function* handleLogout(
+  action: ReturnType<typeof logoutRequest>
+): Generator<unknown, void, unknown> {
+  const preserveLocalData = action.payload?.preserveLocalData ?? true;
+
   try {
     if (navigator.onLine && localStorage.getItem('token')) {
       yield call(authService.logout);
@@ -258,6 +263,11 @@ function* handleLogout(): Generator<unknown, void, unknown> {
   } finally {
     persistRemoteTokens(null, null);
     localStorage.removeItem('deviceId');
+
+    if (!preserveLocalData) {
+      yield call(clearCurrentOwnerData);
+    }
+
     authLocalRepository.clearProfile();
 
     yield put(clearTasks());
