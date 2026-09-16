@@ -26,7 +26,7 @@ export default function Privacy({ isInline }) {
         <article className="space-y-6 text-base leading-relaxed">
           <h2 className="text-2xl font-black uppercase tracking-tight mt-10 mb-4">1. Introduction</h2>
           <p>
-            At <strong>TKOH Studios</strong> ("we", "our", "us"), your privacy is a top priority. This Privacy Policy explains how we collect, use, and protect your information when you use <strong>Ataraxia</strong> and <strong>Aputrak</strong> (the "Services").
+            At <strong>Studios TKOH</strong> ("we", "our", "us"), your privacy is a top priority. This Privacy Policy explains how we collect, use, and protect your information when you use <strong>Ataraxia</strong> and <strong>Aputrak</strong> (the "Services").
           </p>
 
           <h2 className="text-2xl font-black uppercase tracking-tight mt-10 mb-4">2. Offline-First Architecture</h2>
@@ -74,7 +74,7 @@ export default function Privacy({ isInline }) {
 
           <p className="mt-16 text-sm font-bold text-[var(--color-text-45)] uppercase tracking-widest">
             Last Updated: June 2026<br/>
-            TKOH Studios
+            Studios TKOH
           </p>
         </article>
       </main>
