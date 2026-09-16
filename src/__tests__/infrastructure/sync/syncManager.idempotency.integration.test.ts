@@ -262,7 +262,10 @@ describe('syncManager idempotency and conflicts', () => {
       },
     } as never)
 
-    vi.spyOn(db.tasks, 'put').mockRejectedValueOnce(new Error('IndexedDB write interrupted'))
+    const originalPut = db.tasks.put.bind(db.tasks)
+    vi.spyOn(db.tasks, 'put')
+      .mockRejectedValueOnce(new Error('IndexedDB write interrupted'))
+      .mockImplementation((...args) => originalPut(...args))
 
     await processSyncQueue()
 
