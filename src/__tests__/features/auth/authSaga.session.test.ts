@@ -44,6 +44,7 @@ const localUser = {
   id: 'local-user',
   name: 'Local User',
   email: 'local@example.test',
+  isGuest: false,
 }
 
 const setOnline = (online: boolean) => {
@@ -59,7 +60,7 @@ const runCheckAuth = async () => {
   const task = runSaga(
     {
       channel,
-      dispatch: (action) => {
+      dispatch: (action: { type: string; payload?: unknown }) => {
         dispatched.push(action)
       },
     },
