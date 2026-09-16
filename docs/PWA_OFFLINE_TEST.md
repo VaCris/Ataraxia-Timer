@@ -9,7 +9,7 @@ This checklist validates the production PWA behavior required by issue #14.
 - The first load must be online so the app shell can be installed in the browser cache.
 - Core local data should already exist if you want to verify task/timer/settings restoration.
 
-Development intentionally keeps the PWA service worker disabled through `devOptions.enabled = false` in `vite.config.js` to avoid stale development caches.
+Development intentionally keeps the PWA service worker disabled through `devOptions.enabled = false` in `vite.config.js`. In addition, `UpdatePrompt` is mounted only when `import.meta.env.PROD` is true, so normal Vite development does not execute the service-worker registration hook.
 
 ## Start a production preview
 
@@ -73,23 +73,30 @@ Expected:
 
 - timer controls remain usable;
 - local tasks remain readable/editable according to the local-first workflow;
-- missing Google Fonts do not block rendering because CSS includes system font fallbacks;
+- the default dashboard background is served from `/assets/default-image.png`, which is included by the Workbox precache glob;
+- missing Google Fonts do not block rendering because CSS includes `ui-sans-serif`/`system-ui` fallbacks;
 - third-party or remote-only features may be unavailable without breaking the core shell.
+
+Remote Open Graph/social preview images are metadata and are not required to render the application shell.
 
 ## 6. Service worker update safety
 
 1. Restore connectivity.
 2. Keep the current application open with local state present.
 3. Trigger or wait for a service worker update check.
+4. When the update prompt appears, choose **Later** first and confirm the current session continues without reloading.
+5. Reopen/trigger the prompt and choose **Update Now** only after the current local state has been persisted.
 
 Expected:
 
+- service-worker registration is owned by `UpdatePrompt` in production;
 - the active Workbox precache is not manually deleted;
 - Ataraxia application IndexedDB is not deleted;
 - no forced `window.location.reload()` occurs from the version guard;
-- a newer worker may wait until the current session can transition safely.
+- a newer worker waits until the user explicitly accepts the update;
+- dismissing the update does not interrupt the active session.
 
-The production configuration uses `registerType: 'prompt'` and `skipWaiting: false` specifically to avoid replacing the worker in the middle of an active session.
+The production configuration uses `registerType: 'prompt'` and `skipWaiting: false`. The version guard only asks the browser to check for a newer worker; activation remains user-controlled through the update prompt.
 
 ## Pass criteria
 
@@ -101,4 +108,5 @@ Issue #14 can be considered manually validated when all of the following are con
 - core local data remains usable;
 - external fonts/resources do not block the core UI;
 - service worker update checks do not erase active caches or application IndexedDB;
+- choosing **Later** does not reload or interrupt the active session;
 - development mode does not register a service worker accidentally.
