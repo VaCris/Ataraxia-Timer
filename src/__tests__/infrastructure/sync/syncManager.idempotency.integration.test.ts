@@ -116,7 +116,7 @@ describe('syncManager idempotency and conflicts', () => {
 
     const retained = await db.syncQueue.get(queued.id)
     expect(retained?.status).toBe('retrying')
-    expect(pushMock.mock.calls[0]?.[0].mutations[0]?.clientMutationId).toBe(queued.id)
+    expect(pushMock.mock.calls[0]?.[0].mutations?.[0]?.clientMutationId).toBe(queued.id)
 
     now = (retained?.nextRetryAt ?? now) + 10_000
     pushMock.mockReturnValueOnce(Promise.resolve({
@@ -128,7 +128,7 @@ describe('syncManager idempotency and conflicts', () => {
 
     await processSyncQueue()
 
-    expect(pushMock.mock.calls[1]?.[0].mutations[0]?.clientMutationId).toBe(queued.id)
+    expect(pushMock.mock.calls[1]?.[0].mutations?.[0]?.clientMutationId).toBe(queued.id)
     expect(await db.syncQueue.get(queued.id)).toBeUndefined()
     expect((await db.tasks.get('task-idempotent'))?.syncStatus).toBe('synced')
     expect(localStorage.getItem(getSyncCursorStorageKey(ownerId))).toBe('cursor-idempotent')
