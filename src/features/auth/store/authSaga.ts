@@ -4,6 +4,12 @@ import { toast } from 'react-hot-toast';
 import { authService } from '@/features/auth/api/auth.api';
 import { authLocalRepository } from '@/features/auth/repositories/auth.local.repository';
 import { clearCurrentOwnerData } from '@/infrastructure/database/ownerMigration';
+import { tryRefresh } from '@/infrastructure/api/client';
+import {
+  clearRemoteSession,
+  getAccessToken,
+  setAccessToken,
+} from '@/infrastructure/auth/remoteSession';
 import {
   checkAuthRequest,
   loginRequest,
@@ -54,14 +60,6 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return candidate.response?.data?.message || candidate.message || fallback;
 };
 
-const persistRemoteTokens = (accessToken?: string | null, refreshToken?: string | null) => {
-  if (accessToken) localStorage.setItem('token', accessToken);
-  else localStorage.removeItem('token');
-
-  if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-  else localStorage.removeItem('refreshToken');
-};
-
 function* hydrateCoreData(): Generator<unknown, void, unknown> {
   yield put(fetchTagsRequest());
   yield put(fetchTasksRequest());
@@ -75,19 +73,17 @@ function* handleLogin(
     const res = (yield call(authService.login, action.payload as LoginDto)) as AuthResponse;
     const user = res.user;
     const token = res.access_token;
-    const refresh = res.refresh_token;
 
     if (!user || !token) {
       throw new Error('The server response does not have the expected format.');
     }
 
-    persistRemoteTokens(token, refresh);
+    setAccessToken(token);
     authLocalRepository.saveProfile(user);
 
     yield put(loginSuccess({
       user,
       accessToken: token,
-      refreshToken: refresh,
       isRemoteSessionAvailable: true,
     }));
 
@@ -109,13 +105,12 @@ function* handleRegister(
       action.payload as RegisterDto
     )) as AuthResponse;
 
-    persistRemoteTokens(res.access_token, res.refresh_token);
+    setAccessToken(res.access_token);
     authLocalRepository.saveProfile(res.user);
 
     yield put(registerSuccess({
       user: res.user,
       accessToken: res.access_token,
-      refreshToken: res.refresh_token,
     }));
 
     yield call(hydrateCoreData);
@@ -137,7 +132,7 @@ function* handleGuestLogin(
     )) as AuthResponse;
 
     if (res.user?.deviceId) localStorage.setItem('deviceId', res.user.deviceId);
-    persistRemoteTokens(res.access_token, res.refresh_token);
+    setAccessToken(res.access_token);
     authLocalRepository.saveProfile(res.user);
 
     yield put(guestLoginSuccess({
@@ -156,7 +151,6 @@ function* restoreLocalSession(user: AuthUser): Generator<unknown, void, unknown>
   yield put(loginSuccess({
     user,
     accessToken: null,
-    refreshToken: null,
     isRemoteSessionAvailable: false,
   }));
   yield call(hydrateCoreData);
@@ -164,7 +158,6 @@ function* restoreLocalSession(user: AuthUser): Generator<unknown, void, unknown>
 
 function* handleCheckAuth(): Generator<unknown, void, unknown> {
   const localUser = authLocalRepository.getProfile();
-  const token = localStorage.getItem('token');
 
   if (!navigator.onLine) {
     if (localUser) {
@@ -173,6 +166,13 @@ function* handleCheckAuth(): Generator<unknown, void, unknown> {
       yield put(logoutSuccess());
     }
     return;
+  }
+
+  let token = getAccessToken();
+
+  if (!token) {
+    const refreshed = (yield call(tryRefresh)) as boolean;
+    if (refreshed) token = getAccessToken();
   }
 
   if (!token) {
@@ -194,8 +194,7 @@ function* handleCheckAuth(): Generator<unknown, void, unknown> {
 
     yield put(loginSuccess({
       user,
-      accessToken: localStorage.getItem('token'),
-      refreshToken: localStorage.getItem('refreshToken'),
+      accessToken: getAccessToken(),
       isRemoteSessionAvailable: true,
     }));
     yield call(hydrateCoreData);
@@ -255,13 +254,13 @@ function* handleLogout(
   const preserveLocalData = action.payload?.preserveLocalData ?? true;
 
   try {
-    if (navigator.onLine && localStorage.getItem('token')) {
+    if (navigator.onLine) {
       yield call(authService.logout);
     }
   } catch (error: unknown) {
     console.error('Remote logout failed:', error);
   } finally {
-    persistRemoteTokens(null, null);
+    clearRemoteSession();
     localStorage.removeItem('deviceId');
 
     if (!preserveLocalData) {
