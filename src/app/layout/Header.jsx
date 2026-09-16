@@ -21,7 +21,7 @@ const Header = ({ is24Hour = false, accentColor = '#14b8a6', onOpenSidebar = () 
   const authStatus = useSelector((state) => state.auth.status);
   const authUser = useSelector((state) => state.auth.user);
 
-  const logout = () => dispatch(logoutRequest());
+  const logout = () => dispatch(logoutRequest({ preserveLocalData: true }));
   const isGranted = permission === 'granted';
 
   const profile = useMemo(() => {
