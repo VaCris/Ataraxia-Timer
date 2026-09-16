@@ -12,7 +12,7 @@ export const DEFAULT_SHORTCUTS: Record<string, string> = {
 export const INITIAL_UI_SETTINGS: UISettings = {
   theme: 'dark',
   accentColor: '#14b8a6',
-  bgImage: null,
+  bgImage: '/assets/default-image.png',
   blurIntensity: 0,
   volume: 50,
   isMuted: false,
