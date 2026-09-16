@@ -278,9 +278,11 @@ const reconcilePushResult = async (
   const ignored = new Set(result.ignored || [])
   const conflicts = new Set(result.conflicts || [])
   const hasDetailedResult = applied.size > 0 || ignored.size > 0 || conflicts.size > 0
+  let everyMutationAcknowledged = true
 
   for (const item of queue) {
     if (conflicts.has(item.id)) {
+      everyMutationAcknowledged = false
       await db.syncQueue.update(item.id, {
         status: 'conflict',
         lastError: 'Server reported a synchronization conflict.',
@@ -290,13 +292,16 @@ const reconcilePushResult = async (
     }
 
     const wasAccepted = !hasDetailedResult || applied.has(item.id) || ignored.has(item.id)
-    if (!wasAccepted) continue
+    if (!wasAccepted) {
+      everyMutationAcknowledged = false
+      continue
+    }
 
     await markLocalMutationSynced(item)
     await db.syncQueue.delete(item.id)
   }
 
-  if (conflicts.size === 0 && result.nextCursor) {
+  if (everyMutationAcknowledged && conflicts.size === 0 && result.nextCursor) {
     localStorage.setItem(getSyncCursorStorageKey(ownerId), result.nextCursor)
   }
 }
