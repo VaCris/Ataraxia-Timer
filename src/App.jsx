@@ -44,8 +44,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) dispatch(checkAuthRequest());
+    dispatch(checkAuthRequest());
   }, [dispatch]);
 
   useEffect(() => {
