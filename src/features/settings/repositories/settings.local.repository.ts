@@ -4,7 +4,7 @@ import { getSettingsStorageId } from "@/infrastructure/database/localOwner"
 import { SettingModel } from "../types/setting.model"
 
 const toPublicSetting = (setting: SettingModel): SettingModel => {
-    const remoteId = setting.remoteId || setting.id.split(':').at(-1) || 'me'
+    const remoteId = setting.remoteId || setting.id.split(':').pop() || 'me'
     const {
         ownerId: _ownerId,
         remoteId: _remoteId,
@@ -53,7 +53,7 @@ export const settingsLocalRepository = {
             throw new Error("Settings not initialized")
         }
 
-        const remoteId = current.remoteId || current.id.split(':').at(-1) || 'me'
+        const remoteId = current.remoteId || current.id.split(':').pop() || 'me'
         const updated: SettingModel = {
             ...current,
             ...partial,
