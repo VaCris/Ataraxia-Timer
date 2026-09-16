@@ -14,6 +14,7 @@ export default defineConfig({
         setupFiles: './src/setupTests.ts',
         include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
         alias: {
+            'virtual:pwa-register/react': path.resolve(__dirname, './src/__tests__/mocks/pwa-register-react.js'),
             '@': path.resolve(__dirname, './src'),
             '@app': path.resolve(__dirname, './src/app'),
             '@components': path.resolve(__dirname, './src/app/components'),
