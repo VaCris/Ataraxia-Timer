@@ -64,6 +64,7 @@ export default function RouteSeo() {
     document.title = metadata.title;
     setCanonical(metadata.canonical);
 
+    setMetaContent('meta[name="title"]', 'name', 'title', metadata.title);
     setMetaContent('meta[name="description"]', 'name', 'description', metadata.description);
     setMetaContent('meta[name="robots"]', 'name', 'robots', metadata.robots);
     setMetaContent('meta[name="googlebot"]', 'name', 'googlebot', metadata.robots);
