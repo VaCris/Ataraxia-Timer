@@ -3,6 +3,10 @@ import type { AuthUser } from '@/features/auth/types/auth.dto'
 
 type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'error'
 
+export type LogoutRequestPayload = {
+  preserveLocalData: boolean
+}
+
 type AuthState = {
   user: AuthUser | null
   accessToken: string | null
@@ -163,7 +167,10 @@ const slice = createSlice({
       state.error = action.payload
     },
 
-    logoutRequest: (state) => {
+    logoutRequest: (
+      state,
+      _action: PayloadAction<LogoutRequestPayload>
+    ) => {
       state.status = 'loading'
     },
 
