@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import type { AuthUser } from '@/features/auth/types/auth.dto'
+import { getAccessToken } from '@/infrastructure/auth/remoteSession'
 
 type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'error'
 
@@ -10,19 +11,19 @@ export type LogoutRequestPayload = {
 type AuthState = {
   user: AuthUser | null
   accessToken: string | null
-  refreshToken: string | null
   status: AuthStatus
   error: string | null
   isRemoteSessionAvailable: boolean
 }
 
+const initialAccessToken = getAccessToken()
+
 const initialState: AuthState = {
   user: null,
-  accessToken: localStorage.getItem('token'),
-  refreshToken: localStorage.getItem('refreshToken'),
+  accessToken: initialAccessToken,
   status: 'idle',
   error: null,
-  isRemoteSessionAvailable: Boolean(localStorage.getItem('token')),
+  isRemoteSessionAvailable: Boolean(initialAccessToken),
 }
 
 const slice = createSlice({
@@ -47,14 +48,12 @@ const slice = createSlice({
       action: PayloadAction<{
         user: AuthUser
         accessToken?: string | null
-        refreshToken?: string | null
         isRemoteSessionAvailable?: boolean
       }>
     ) => {
       state.status = 'authenticated'
       state.user = action.payload.user
       state.accessToken = action.payload.accessToken || null
-      state.refreshToken = action.payload.refreshToken || null
       state.isRemoteSessionAvailable = action.payload.isRemoteSessionAvailable
         ?? Boolean(action.payload.accessToken)
       state.error = null
@@ -64,7 +63,6 @@ const slice = createSlice({
       state.status = 'error'
       state.user = null
       state.accessToken = null
-      state.refreshToken = null
       state.isRemoteSessionAvailable = false
       state.error = action.payload
     },
@@ -87,12 +85,10 @@ const slice = createSlice({
       action: PayloadAction<{
         user: AuthUser
         accessToken?: string | null
-        refreshToken?: string | null
       }>
     ) => {
       state.user = action.payload.user
       state.accessToken = action.payload.accessToken || null
-      state.refreshToken = action.payload.refreshToken || null
       state.status = 'authenticated'
       state.isRemoteSessionAvailable = Boolean(action.payload.accessToken)
       state.error = null
@@ -121,7 +117,6 @@ const slice = createSlice({
       state.status = 'authenticated'
       state.user = action.payload.user
       state.accessToken = action.payload.accessToken || null
-      state.refreshToken = null
       state.isRemoteSessionAvailable = Boolean(action.payload.accessToken)
       state.error = null
     },
@@ -177,7 +172,6 @@ const slice = createSlice({
     logoutSuccess: (state) => {
       state.user = null
       state.accessToken = null
-      state.refreshToken = null
       state.status = 'idle'
       state.isRemoteSessionAvailable = false
       state.error = null
@@ -186,7 +180,6 @@ const slice = createSlice({
     logoutFailure: (state, action: PayloadAction<string>) => {
       state.user = null
       state.accessToken = null
-      state.refreshToken = null
       state.status = 'idle'
       state.isRemoteSessionAvailable = false
       state.error = action.payload
