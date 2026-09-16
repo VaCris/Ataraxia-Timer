@@ -59,7 +59,20 @@ Ataraxia distinguishes between:
 - **Local session/profile:** allows a previously known user to keep accessing locally persisted productivity data.
 - **Remote session:** authorizes API and synchronization operations.
 
-An expired or temporarily unavailable remote session must not invalidate the local session. Explicit logout clears the local profile and remote credentials.
+An expired or temporarily unavailable remote session must not invalidate the local session. Explicit logout clears the local profile and remote credentials according to the selected local-data policy.
+
+### Remote credential strategy
+
+The frontend uses one refresh strategy:
+
+- The short-lived **access token** is stored client-side under the `token` key and is the only credential JavaScript can read. Axios and the generated OpenAPI client obtain it through `src/infrastructure/auth/remoteSession.ts`.
+- The **refresh token** is not persisted in Redux or Web Storage. The backend stores it in the `refresh_token` cookie with `HttpOnly`; production can additionally enforce `Secure` and the configured `SameSite` policy.
+- `src/infrastructure/api/client.js` is the only module that performs refresh. It calls `/auth/refresh` with credentials enabled and coordinates concurrent 401 responses through one shared refresh promise.
+- HTTP 500 responses never trigger refresh or logout.
+- If refresh fails, only the remote access credential is cleared. The local profile and IndexedDB data remain available for offline core functionality.
+- On an online cold start without an access token, auth bootstrap may attempt cookie-based refresh once before falling back to the known local profile.
+
+Legacy `refreshToken` values left in `localStorage` by older frontend versions are removed by the API/session layer and are not reused.
 
 ## Development
 
