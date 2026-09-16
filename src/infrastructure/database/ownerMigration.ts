@@ -100,3 +100,24 @@ export const ensureCurrentOwnerData = async (): Promise<string> => {
   localStorage.setItem(markerKey, '1')
   return ownerId
 }
+
+export const clearCurrentOwnerData = async (ownerId = getLocalOwnerId()): Promise<void> => {
+  if (ownerId === ANONYMOUS_OWNER_ID) return
+
+  await db.transaction(
+    'rw',
+    [db.settings, db.tasks, db.tags, db.syncQueue, db.timerSessions],
+    async () => {
+      await Promise.all([
+        db.settings.where('ownerId').equals(ownerId).delete(),
+        db.tasks.where('ownerId').equals(ownerId).delete(),
+        db.tags.where('ownerId').equals(ownerId).delete(),
+        db.syncQueue.where('ownerId').equals(ownerId).delete(),
+        db.timerSessions.where('ownerId').equals(ownerId).delete(),
+      ])
+    }
+  )
+
+  localStorage.removeItem(getCurrentRoundStorageKey(ownerId))
+  localStorage.removeItem(`${MIGRATION_MARKER_PREFIX}${ownerId}`)
+}
