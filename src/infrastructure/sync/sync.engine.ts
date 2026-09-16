@@ -1,6 +1,3 @@
-import { settingsLocalRepository } from "@/features/settings/repositories/settings.local.repository"
-import { settingsRemoteRepository } from "@/features/settings/repositories/settings.remote.repository"
-
 class SyncEngine {
     private isRunning = false
 
@@ -9,8 +6,8 @@ class SyncEngine {
         this.isRunning = true
 
         try {
-            await this.syncSettings()
-            // futuro:
+            // futuro: implementar sync individual por entidad
+            // await this.syncSettings()
             // await this.syncTasks()
             // await this.syncTags()
         } finally {

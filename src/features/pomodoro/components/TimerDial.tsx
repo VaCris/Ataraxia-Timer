@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from 'react';
+import React, { useEffect, useMemo, memo } from 'react';
 import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
@@ -28,6 +28,16 @@ export const TimerDial: React.FC<TimerDialProps> = memo(({ controller }) => {
     const apiSettings = useSelector((state: RootState) => state.settings.api);
 
     const longBreakInterval = apiSettings?.longBreakInterval ?? 4;
+    const isImmersiveFocus = timerState.isActive && timerState.mode === 'FOCUS';
+
+    useEffect(() => {
+        const root = document.documentElement;
+        root.classList.toggle('focus-immersive', isImmersiveFocus);
+
+        return () => {
+            root.classList.remove('focus-immersive');
+        };
+    }, [isImmersiveFocus]);
 
     const { minutes, seconds, progress } = useMemo(() => {
         const m = String(Math.floor(timerState.timeLeft / 60)).padStart(2, '0');
@@ -39,20 +49,20 @@ export const TimerDial: React.FC<TimerDialProps> = memo(({ controller }) => {
 
     return (
         <div className="timer-dial">
-            <svg className="drop-shadow-[0_0_22px_rgba(0,0,0,0.45)] w-full h-full -rotate-90 transform">
+            <svg className="drop-shadow-[0_0_22px_rgba(0,0,0,0.45)] w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
                 <circle
-                    cx="50%"
-                    cy="50%"
-                    r="45%"
+                    cx="50"
+                    cy="50"
+                    r="45"
                     className="opacity-10 fill-none"
                     style={{ stroke: 'var(--color-accent)' }}
                     strokeWidth="1.5"
                 />
 
                 <motion.circle
-                    cx="50%"
-                    cy="50%"
-                    r="45%"
+                    cx="50"
+                    cy="50"
+                    r="45"
                     className="fill-none"
                     style={{
                         stroke: 'var(--color-accent)',
@@ -66,36 +76,36 @@ export const TimerDial: React.FC<TimerDialProps> = memo(({ controller }) => {
                 />
             </svg>
 
-            <div className="absolute flex flex-col items-center px-4 max-w-full">
-                <div className="timer-digits flex items-center font-black text-white italic leading-none tracking-tighter">
+            <div className="timer-content absolute inset-0 flex flex-col items-center justify-center px-5 sm:px-6 max-w-full">
+                <div className="timer-digits flex items-center font-black text-white italic leading-none tracking-tighter tabular-nums">
                     {minutes}
                     <span
                         style={{ color: 'var(--color-accent)' }}
-                        className={`mx-0.5 sm:mx-1 ${timerState.isActive ? 'animate-pulse' : ''}`}
+                        className={`timer-separator mx-1 sm:mx-2 ${timerState.isActive ? 'animate-pulse' : ''}`}
                     >
                         :
                     </span>
                     {seconds}
                 </div>
 
-                <div className="flex flex-col items-center gap-1.5 sm:gap-2 mt-2.5 sm:mt-3 2xl:mt-4">
-                    <span className="font-black text-[9px] xs:text-[10px] sm:text-[11px] lg:text-[11px] 2xl:text-sm text-white/20 italic uppercase tracking-[0.32em] xs:tracking-[0.42em] sm:tracking-[0.48em] 2xl:tracking-[0.55em]">
+                <div className="timer-meta flex flex-col items-center gap-1.5 sm:gap-2 mt-3 sm:mt-4 2xl:mt-5">
+                    <span className="timer-mode-label font-black text-[10px] sm:text-[11px] 2xl:text-xs text-white/40 italic uppercase tracking-[0.24em] sm:tracking-[0.32em] 2xl:tracking-[0.38em]">
                         {timerState.mode.replace('_', ' ')}
                     </span>
 
                     <div
-                        className="px-3 xs:px-4 sm:px-4 2xl:px-5 py-1.5 border rounded-full"
+                        className="timer-round-badge px-3.5 sm:px-4.5 2xl:px-5 py-1.5 border rounded-full"
                         style={{
                             backgroundColor: 'rgba(var(--color-accent-rgb), 0.15)',
                             borderColor: 'rgba(var(--color-accent-rgb), 0.3)',
                         }}
                     >
                         <span
-                            className="font-black text-[9px] xs:text-[10px] sm:text-[11px] 2xl:text-xs uppercase tracking-[0.2em] xs:tracking-[0.22em] sm:tracking-[0.26em] 2xl:tracking-[0.3em]"
+                            className="font-black text-[9px] xs:text-[10px] sm:text-[11px] 2xl:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] 2xl:tracking-[0.24em]"
                             style={{ color: 'var(--color-accent)' }}
                         >
                             ROUND {controller.currentRound}
-                            <span className="opacity-30 mx-1">/</span>
+                            <span className="opacity-45 mx-1">/</span>
                             {longBreakInterval}
                         </span>
                     </div>

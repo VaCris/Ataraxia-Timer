@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { gamificationService } from '../../gamification/api/gamification.api'
 import type { RootState } from '@/store'
 import { db } from '@/infrastructure/database/db'
+import { ensureCurrentOwnerData } from '@/infrastructure/database/ownerMigration'
+import { getCurrentRoundStorageKey, getTimerSessionStorageId } from '@/infrastructure/database/localOwner'
 import { mapSettings } from '../mappers/mapSettings'
 import {
     Mode,
@@ -10,9 +13,15 @@ import {
     resumeTimer,
     updateDurations,
     startTimer,
-    restoreSession
+    restoreSession,
+    setServerId
 } from '../store/timerSlice'
 import { useTimer } from './useTimer'
+import { TimerControllerService } from '@/infrastructure/api/generated/services/TimerControllerService'
+import { TimerRequestDto } from '@/infrastructure/api/generated/models/TimerRequestDto'
+
+const canUseRemoteServices = () =>
+    navigator.onLine && Boolean(localStorage.getItem('token'))
 
 export const usePomodoroController = () => {
     const dispatch = useDispatch()
@@ -31,8 +40,9 @@ export const usePomodoroController = () => {
     useEffect(() => {
         const loadSession = async () => {
             try {
-                const savedSession = await db.timerSessions.get('current_session')
-                if (savedSession) {
+                const ownerId = await ensureCurrentOwnerData()
+                const savedSession = await db.timerSessions.get(getTimerSessionStorageId(ownerId))
+                if (savedSession && savedSession.ownerId === ownerId) {
                     setCurrentRound(savedSession.currentRound)
                     dispatch(restoreSession({
                         mode: savedSession.mode,
@@ -42,7 +52,7 @@ export const usePomodoroController = () => {
                         isPaused: savedSession.isPaused
                     }))
                 } else {
-                    const savedRound = localStorage.getItem('ataraxia_currentRound')
+                    const savedRound = localStorage.getItem(getCurrentRoundStorageKey(ownerId))
                     if (savedRound) setCurrentRound(Number(savedRound))
                 }
             } catch (error) {
@@ -57,29 +67,48 @@ export const usePomodoroController = () => {
     useEffect(() => {
         if (!isSessionLoaded) return;
 
-        localStorage.setItem('ataraxia_currentRound', currentRound.toString())
+        let cancelled = false
+        let saveTimer: ReturnType<typeof setTimeout> | null = null
 
-        const saveTimer = setTimeout(async () => {
+        const persistSession = async () => {
             try {
-                await db.timerSessions.put({
-                    id: 'current_session',
-                    mode: timerState.mode,
-                    timeLeft: timerState.timeLeft,
-                    initialTime: timerState.initialTime,
-                    isActive: timerState.isActive,
-                    isPaused: timerState.isPaused,
-                    currentRound: currentRound,
-                    lastUpdatedAt: Date.now()
-                })
-            } catch (error) {
-                console.error("Error saving offline session:", error)
-            }
-        }, 1000)
+                const ownerId = await ensureCurrentOwnerData()
+                if (cancelled) return
 
-        return () => clearTimeout(saveTimer)
+                localStorage.setItem(getCurrentRoundStorageKey(ownerId), currentRound.toString())
+
+                saveTimer = setTimeout(async () => {
+                    try {
+                        await db.timerSessions.put({
+                            id: getTimerSessionStorageId(ownerId),
+                            ownerId,
+                            mode: timerState.mode,
+                            timeLeft: timerState.timeLeft,
+                            initialTime: timerState.initialTime,
+                            isActive: timerState.isActive,
+                            isPaused: timerState.isPaused,
+                            currentRound: currentRound,
+                            lastUpdatedAt: Date.now()
+                        })
+                    } catch (error) {
+                        console.error("Error saving offline session:", error)
+                    }
+                }, 1000)
+            } catch (error) {
+                console.error("Error preparing offline session persistence:", error)
+            }
+        }
+
+        persistSession()
+
+        return () => {
+            cancelled = true
+            if (saveTimer) clearTimeout(saveTimer)
+        }
     }, [
         timerState.mode,
         timerState.timeLeft,
+        timerState.initialTime,
         timerState.isActive,
         timerState.isPaused,
         currentRound,
@@ -88,15 +117,20 @@ export const usePomodoroController = () => {
 
     const getDurationForMode = useCallback(
         (mode: Mode): number => {
+            let duration: number;
             switch (mode) {
                 case 'SHORT_BREAK':
-                    return settings.shortBreakDuration
+                    duration = settings.shortBreakLength;
+                    break;
                 case 'LONG_BREAK':
-                    return settings.longBreakDuration
+                    duration = settings.longBreakLength;
+                    break;
                 case 'FOCUS':
                 default:
-                    return settings.focusDuration
+                    duration = settings.pomodoroLength;
+                    break;
             }
+            return Number.isFinite(duration) && duration > 0 ? duration : 25;
         },
         [settings]
     )
@@ -124,18 +158,52 @@ export const usePomodoroController = () => {
         isSessionLoaded
     ])
 
-    const handleTimerComplete = useCallback(() => {
+    const handleStartTimer = useCallback(async (mode: Mode, duration: number) => {
+        dispatch(startTimer());
+
+        if (!canUseRemoteServices()) return;
+
+        try {
+            const modeMap: Record<Mode, TimerRequestDto.mode> = {
+                'FOCUS': TimerRequestDto.mode.POMODORO,
+                'SHORT_BREAK': TimerRequestDto.mode.SHORT_BREAK,
+                'LONG_BREAK': TimerRequestDto.mode.LONG_BREAK
+            };
+
+            const res = await TimerControllerService.createTimer({
+                duration: duration,
+                mode: modeMap[mode]
+            });
+
+            if (res.id) {
+                dispatch(setServerId(res.id));
+            }
+        } catch (error) {
+            console.error("Failed to create timer in backend:", error);
+        }
+    }, [dispatch]);
+
+    const handleTimerComplete = useCallback(async () => {
+        if (timerState.serverId && canUseRemoteServices()) {
+            try {
+                await TimerControllerService.completeTimer(timerState.serverId);
+            } catch (error) {
+                console.error("Failed to complete timer in backend:", error);
+            }
+        }
+
         let nextMode: Mode = 'FOCUS'
-        let nextDuration = settings.focusDuration
         let shouldAutoStart = false
 
         if (timerState.mode === 'FOCUS') {
+            if (canUseRemoteServices()) {
+                gamificationService.checkAchievements().catch(console.error);
+            }
+
             if (currentRound >= settings.longBreakInterval) {
                 nextMode = 'LONG_BREAK'
-                nextDuration = settings.longBreakDuration
             } else {
                 nextMode = 'SHORT_BREAK'
-                nextDuration = settings.shortBreakDuration
             }
 
             shouldAutoStart = settings.autoStartBreaks
@@ -147,18 +215,18 @@ export const usePomodoroController = () => {
             )
 
             nextMode = 'FOCUS'
-            nextDuration = settings.focusDuration
             shouldAutoStart = settings.autoStartPomodoros
         }
 
+        const nextDuration = getDurationForMode(nextMode)
         dispatch(updateDurations({ mode: nextMode, duration: nextDuration }))
 
         if (shouldAutoStart) {
             window.setTimeout(() => {
-                dispatch(startTimer())
+                handleStartTimer(nextMode, nextDuration);
             }, 1200)
         }
-    }, [settings, timerState.mode, currentRound, dispatch])
+    }, [settings, timerState.mode, timerState.serverId, currentRound, dispatch, handleStartTimer, getDurationForMode])
 
     useTimer(handleTimerComplete)
 
@@ -184,13 +252,13 @@ export const usePomodoroController = () => {
             const duration = getDurationForMode(pendingMode);
             dispatch(updateDurations({ mode: pendingMode, duration }));
         }
-        setShowModeModal(false);
-        setPendingMode(null);
+        setShowModeModal(false)
+        setPendingMode(null)
     }, [dispatch, getDurationForMode, pendingMode])
 
     const cancelModeChange = useCallback(() => {
-        setShowModeModal(false);
-        setPendingMode(null);
+        setShowModeModal(false)
+        setPendingMode(null)
     }, [])
 
     const toggleSession = useCallback(() => {
@@ -204,8 +272,8 @@ export const usePomodoroController = () => {
             return
         }
 
-        dispatch(startTimer())
-    }, [dispatch, timerState.isActive, timerState.isPaused])
+        handleStartTimer(timerState.mode, timerState.initialTime / 60);
+    }, [dispatch, timerState.isActive, timerState.isPaused, timerState.mode, timerState.initialTime, handleStartTimer])
 
     const resetSession = useCallback(() => {
         const duration = getDurationForMode(timerState.mode)

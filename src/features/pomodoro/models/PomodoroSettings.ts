@@ -1,9 +1,9 @@
 export type TimerMode = 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
 
 export interface PomodoroSettings {
-    focusDuration: number;
-    shortBreakDuration: number;
-    longBreakDuration: number;
+    pomodoroLength: number;
+    shortBreakLength: number;
+    longBreakLength: number;
     longBreakInterval: number;
     autoStartBreaks: boolean;
     autoStartPomodoros: boolean;

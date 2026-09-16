@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Tag as TagIcon, ChevronDown, Check, Trash2, Edit2, X } from 'lucide-react';
 import { useTags } from '@/features/tags/hooks/useTags';
+import { TEXTS } from '@/shared/constants/texts.constants';
 
 interface TagSelectorProps {
     selectedTagId: string | null;
@@ -14,6 +15,7 @@ const TagSelector: React.FC<TagSelectorProps> = ({ selectedTagId, onSelectTag })
 
     const [editingTagId, setEditingTagId] = useState<string | null>(null);
     const [editingTagName, setEditingTagName] = useState('');
+    const [confirmDeleteTagId, setConfirmDeleteTagId] = useState<string | null>(null);
 
     // Encontramos el tag seleccionado para mostrar su nombre y color en el botón
     const selectedTag = tags.find(t => t.id === selectedTagId);
@@ -23,6 +25,7 @@ const TagSelector: React.FC<TagSelectorProps> = ({ selectedTagId, onSelectTag })
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
+                setConfirmDeleteTagId(null);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -52,7 +55,10 @@ const TagSelector: React.FC<TagSelectorProps> = ({ selectedTagId, onSelectTag })
             {/* BOTÓN PRINCIPAL (Actúa como el Select) */}
             <button
                 type="button"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => {
+                    setIsOpen(!isOpen);
+                    setConfirmDeleteTagId(null);
+                }}
                 className="flex justify-between items-center gap-3 bg-black/40 hover:bg-black/60 px-4 py-3 border border-white/5 focus-within:border-white/10 rounded-2xl w-full transition-all group"
             >
                 <div className="flex items-center gap-3">
@@ -66,13 +72,13 @@ const TagSelector: React.FC<TagSelectorProps> = ({ selectedTagId, onSelectTag })
                                     backgroundColor: selectedTag.color || '#5fbfff'
                                 }}
                             />
-                            <span className="font-bold text-white text-xs uppercase tracking-widest">
+                            <span className="font-bold text-white/80 text-xs uppercase tracking-widest">
                                 {selectedTag.name}
                             </span>
                         </div>
                     ) : (
                         <span className="font-bold text-white/20 text-xs uppercase tracking-widest">
-                            Select Category
+                            {TEXTS.tags.selectCategory}
                         </span>
                     )}
                 </div>
@@ -93,7 +99,7 @@ const TagSelector: React.FC<TagSelectorProps> = ({ selectedTagId, onSelectTag })
                         className="flex justify-between items-center hover:bg-white/5 px-3 py-2.5 rounded-xl transition-colors"
                     >
                         <span className="font-bold text-white/30 text-xs uppercase tracking-widest">
-                            No Category
+                            {TEXTS.tags.noCategory}
                         </span>
                         {!selectedTagId && <Check size={14} className="text-white/30" />}
                     </button>
@@ -102,11 +108,12 @@ const TagSelector: React.FC<TagSelectorProps> = ({ selectedTagId, onSelectTag })
                     {tags.map((tag) => {
                         const isSelected = selectedTagId === tag.id;
                         const isEditing = editingTagId === tag.id;
+                        const isConfirmingDelete = confirmDeleteTagId === tag.id;
 
                         return (
                             <div
                                 key={tag.id}
-                                className={`flex items-center justify-between px-3 py-1.5 rounded-xl transition-colors group/item ${
+                                className={`flex items-center justify-between px-3 py-1.5 rounded-xl transition-colors group/item min-h-[36px] ${
                                     isSelected ? 'bg-white/10' : 'hover:bg-white/5'
                                 }`}
                             >
@@ -140,6 +147,34 @@ const TagSelector: React.FC<TagSelectorProps> = ({ selectedTagId, onSelectTag })
                                         >
                                             <X size={13} />
                                         </button>
+                                    </div>
+                                ) : isConfirmingDelete ? (
+                                    <div className="flex flex-1 items-center justify-between min-w-0" onClick={(e) => e.stopPropagation()}>
+                                        <span className="font-bold text-red-500 text-[10px] uppercase tracking-widest truncate mr-2">
+                                            Delete?
+                                        </span>
+                                        <div className="flex items-center gap-3 shrink-0">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    removeTag(tag.id);
+                                                    if (selectedTagId === tag.id) {
+                                                        onSelectTag(null);
+                                                    }
+                                                    setConfirmDeleteTagId(null);
+                                                }}
+                                                className="font-bold text-red-400 hover:text-red-300 text-[10px] uppercase tracking-widest hover:underline cursor-pointer"
+                                            >
+                                                Yes
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setConfirmDeleteTagId(null)}
+                                                className="font-bold text-white/40 hover:text-white text-[10px] uppercase tracking-widest hover:underline cursor-pointer"
+                                            >
+                                                No
+                                            </button>
+                                        </div>
                                     </div>
                                 ) : (
                                     <>
@@ -179,10 +214,7 @@ const TagSelector: React.FC<TagSelectorProps> = ({ selectedTagId, onSelectTag })
                                                 type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    removeTag(tag.id);
-                                                    if (selectedTagId === tag.id) {
-                                                        onSelectTag(null);
-                                                    }
+                                                    setConfirmDeleteTagId(tag.id);
                                                 }}
                                                 className="p-1 text-white/20 hover:text-red-500 hover:scale-115 transition-all cursor-pointer"
                                                 title="Delete Tag"

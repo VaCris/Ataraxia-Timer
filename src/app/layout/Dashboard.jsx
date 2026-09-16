@@ -1,29 +1,42 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink, Play, Pause, RotateCcw } from 'lucide-react';
 import { useDispatch } from 'react-redux';
+import { TEXTS } from '@/shared/constants/texts.constants';
 
 import { usePomodoroController } from '@/features/pomodoro/hooks/usePomodoroController';
 import { usePipController } from '@/features/pomodoro/hooks/usePipController';
 import { useUISettings } from '@/features/settings/hooks/useUISettings';
 import { useThemeEffect } from '@/app/providers/theme/useThemeEffect';
 import { updateUISettings, updateSettingsRequest } from '@/features/settings/store/settingsSlice';
+import { sanitizeForCss } from '@/shared/utils/sanitize';
 
 import Sidebar from '@/app/layout/Sidebar';
 import Header from '@/app/layout/Header';
 import TimerDial from '@/features/pomodoro/components/TimerDial';
 import TaskManager from '@/features/tasks/components/TaskManager';
-import SettingsModal from '@/features/settings/components/SettingsModal';
-import SupportModal from '@/shared/ui/modals/SupportModal';
-import MusicWidget from '@/features/pomodoro/components/MusicWidget';
 import PipPortal from '@/features/pomodoro/components/PipPortal';
 import PaintTransitionOverlay from '@/app/components/PaintTransitionOverlay';
+import ThemeChangeIndicator from '@/app/components/ThemeChangeIndicator';
 
-const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
+const SettingsModal = React.lazy(() => import('@/features/settings/components/SettingsModal'));
+const SupportModal = React.lazy(() => import('@/shared/ui/modals/SupportModal'));
+const MusicWidget = React.lazy(() => import('@/features/pomodoro/components/MusicWidget'));
+const ProfileModal = React.lazy(() => import('@/features/profile/components/ProfileModal'));
+const StatsModal = React.lazy(() => import('@/features/stats/components/StatsModal'));
+const GamificationModal = React.lazy(() => import('@/features/gamification/components/GamificationModal'));
+
+const THEME_INDICATOR_DURATION_MS = 1600;
+
+const Dashboard = ({ onOpenGames }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isSupportOpen, setIsSupportOpen] = useState(false);
     const [isMusicOpen, setIsMusicOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [isStatsOpen, setIsStatsOpen] = useState(false);
+    const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
+    const [themeIndicator, setThemeIndicator] = useState({ visible: false, theme: 'dark' });
 
     const uiSettings = useUISettings();
     const pomodoro = usePomodoroController();
@@ -31,6 +44,7 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
 
     const dispatch = useDispatch();
     const triggerPaintRef = useRef(null);
+    const themeIndicatorTimerRef = useRef(null);
 
     const toggleMusic = () => {
         setIsMusicOpen((prev) => !prev);
@@ -46,15 +60,35 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
         dispatch(updateSettingsRequest({ theme: newTheme }));
     }, [dispatch]);
 
+    const showThemeIndicator = useCallback((theme) => {
+        if (themeIndicatorTimerRef.current) {
+            window.clearTimeout(themeIndicatorTimerRef.current);
+        }
+
+        setThemeIndicator({ visible: true, theme });
+        themeIndicatorTimerRef.current = window.setTimeout(() => {
+            setThemeIndicator((current) => ({ ...current, visible: false }));
+            themeIndicatorTimerRef.current = null;
+        }, THEME_INDICATOR_DURATION_MS);
+    }, []);
+
+    useEffect(() => () => {
+        if (themeIndicatorTimerRef.current) {
+            window.clearTimeout(themeIndicatorTimerRef.current);
+        }
+    }, []);
+
     const toggleTheme = useCallback(() => {
         const currentTheme = uiSettings.theme || 'dark';
         const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
+
         if (triggerPaintRef.current) {
             triggerPaintRef.current(nextTheme);
         }
+
         applyThemeChange(nextTheme);
-    }, [uiSettings.theme, applyThemeChange]);
+        showThemeIndicator(nextTheme);
+    }, [uiSettings.theme, applyThemeChange, showThemeIndicator]);
 
     useThemeEffect(
         uiSettings.accentColor,
@@ -65,31 +99,31 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
 
     return (
         <motion.div
-            className="dashboard-root"
+            className={`dashboard-root ${uiSettings.isDefaultBackground ? 'dashboard-default-background' : ''}`}
             style={{
                 '--color-accent': uiSettings.accentColor,
             }}
         >
             <div
-                className="z-0 fixed inset-0 transition-opacity duration-500 pointer-events-none dashboard-background-image"
+                className={`z-0 fixed inset-0 transition-opacity duration-500 pointer-events-none dashboard-background-image ${uiSettings.isDefaultBackground ? 'dashboard-background-image--default' : ''}`}
                 style={{
-                    backgroundImage: uiSettings.bgImage ? `url(${uiSettings.bgImage})` : 'none',
+                    backgroundImage: uiSettings.bgImage ? `url(${sanitizeForCss(uiSettings.bgImage)})` : 'none',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     opacity: uiSettings.bgImage ? 1 : 0,
                 }}
             />
 
-            <div className="z-0 fixed inset-0 bg-black/70 pointer-events-none dashboard-glass-overlay" />
+            <div className={`z-0 fixed inset-0 bg-black/70 pointer-events-none dashboard-glass-overlay ${uiSettings.isDefaultBackground ? 'dashboard-glass-overlay--default' : ''}`} />
 
             <Sidebar
                 isMobileOpen={isSidebarOpen}
                 onCloseMobile={() => setIsSidebarOpen(false)}
-                onOpenSettings={() => setIsSettingsOpen(true)}
-                onOpenSupport={() => setIsSupportOpen(true)}
+                onOpenSettings={() => setIsSettingsOpen((prev) => !prev)}
+                onOpenSupport={() => setIsSupportOpen((prev) => !prev)}
                 onOpenGames={onOpenGames}
-                onOpenStats={onOpenStats}
-                onOpenAchievements={onOpenAchievements}
+                onOpenStats={() => setIsStatsOpen((prev) => !prev)}
+                onOpenAchievements={() => setIsAchievementsOpen((prev) => !prev)}
                 onOpenMusic={toggleMusic}
                 isMusicOpen={isMusicOpen}
                 customShortcuts={uiSettings.customShortcuts}
@@ -102,6 +136,7 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                     is24Hour={uiSettings.is24Hour}
                     accentColor={uiSettings.accentColor}
                     onOpenSidebar={() => setIsSidebarOpen(true)}
+                    onOpenProfile={() => setIsProfileOpen((prev) => !prev)}
                 />
 
                 <section className="dashboard-grid">
@@ -111,9 +146,9 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
 
                             <div className="mode-tabs">
                                 {[
-                                    { label: 'Focus', value: 'FOCUS' },
-                                    { label: 'Short', value: 'SHORT_BREAK' },
-                                    { label: 'Long', value: 'LONG_BREAK' },
+                                    { label: TEXTS.dashboard.focus, value: 'FOCUS' },
+                                    { label: TEXTS.dashboard.shortBreak, value: 'SHORT_BREAK' },
+                                    { label: TEXTS.dashboard.longBreak, value: 'LONG_BREAK' },
                                 ].map((item) => {
                                     const isActive = pomodoro.mode === item.value;
 
@@ -157,12 +192,12 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                                     {pomodoro.isActive ? (
                                         <>
                                             <Pause size={19} fill="currentColor" />
-                                            PAUSE
+                                            {TEXTS.dashboard.pause}
                                         </>
                                     ) : (
                                         <>
                                             <Play size={19} fill="currentColor" />
-                                            START
+                                            {TEXTS.dashboard.start}
                                         </>
                                     )}
                                 </button>
@@ -211,49 +246,94 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                 />
             )}
 
+            <ThemeChangeIndicator
+                theme={themeIndicator.theme}
+                visible={themeIndicator.visible}
+                accentColor={uiSettings.accentColor}
+            />
+
             <AnimatePresence>
                 {isSettingsOpen && (
-                    <SettingsModal
-                        isOpen={isSettingsOpen}
-                        onClose={() => setIsSettingsOpen(false)}
-                    />
+                    <React.Suspense fallback={null}>
+                        <SettingsModal
+                            isOpen={isSettingsOpen}
+                            onClose={() => setIsSettingsOpen(false)}
+                        />
+                    </React.Suspense>
                 )}
 
                 {isSupportOpen && (
-                    <SupportModal
-                        isOpen={isSupportOpen}
-                        onClose={() => setIsSupportOpen(false)}
-                    />
+                    <React.Suspense fallback={null}>
+                        <SupportModal
+                            isOpen={isSupportOpen}
+                            onClose={() => setIsSupportOpen(false)}
+                        />
+                    </React.Suspense>
+                )}
+
+                {isProfileOpen && (
+                    <React.Suspense fallback={null}>
+                        <ProfileModal
+                            isOpen={isProfileOpen}
+                            onClose={() => setIsProfileOpen(false)}
+                        />
+                    </React.Suspense>
+                )}
+
+                {isStatsOpen && (
+                    <React.Suspense fallback={null}>
+                        <StatsModal
+                            isOpen={isStatsOpen}
+                            onClose={() => setIsStatsOpen(false)}
+                        />
+                    </React.Suspense>
+                )}
+
+                {isAchievementsOpen && (
+                    <React.Suspense fallback={null}>
+                        <GamificationModal
+                            isOpen={isAchievementsOpen}
+                            onClose={() => setIsAchievementsOpen(false)}
+                        />
+                    </React.Suspense>
                 )}
 
                 {pomodoro.showModeModal && (
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+                        initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+                        animate={{ opacity: 1, backdropFilter: 'blur(16px)' }}
+                        exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="mode-modal-title"
+                        aria-describedby="mode-modal-desc"
                     >
                         <motion.div
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-[#1a1a1a] border border-white/10 p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center"
+                            initial={{ scale: 0.95, opacity: 0, y: 20, rotateX: 5 }}
+                            animate={{ scale: 1, opacity: 1, y: 0, rotateX: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 15 }}
+                            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                            className="bg-[#050505]/95 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] backdrop-blur-3xl border border-white/10 p-8 sm:p-10 rounded-[2rem] max-w-sm w-full text-center ring-1 ring-white/5"
+                            style={{ perspective: '1000px' }}
                         >
-                            <h3 className="text-xl font-bold mb-2 text-white">Change mode?</h3>
-                            <p className="text-white/60 mb-6">Your current session will be reset.</p>
+                            <h3 id="mode-modal-title" className="text-xl sm:text-2xl font-black mb-2 text-white italic tracking-tight uppercase">Change Mode?</h3>
+                            <p id="mode-modal-desc" className="text-white/40 mb-8 text-[11px] sm:text-xs uppercase tracking-widest">Your current session will be reset.</p>
 
-                            <div className="flex gap-3 justify-center">
+                            <div className="flex gap-4 justify-center">
                                 <button
                                     onClick={pomodoro.cancelModeChange}
-                                    className="flex-1 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors font-medium text-white/80"
+                                    className="flex-1 py-4 px-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-all font-bold text-white/60 hover:text-white uppercase text-[10px] sm:text-[11px] tracking-widest focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 active:scale-95"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={pomodoro.confirmModeChange}
-                                    className="flex-1 py-3 px-4 rounded-xl bg-accent hover:opacity-90 transition-opacity font-bold text-white shadow-[0_0_15px_rgba(var(--color-accent-rgb),0.3)]"
+                                    style={{ backgroundColor: uiSettings.accentColor }}
+                                    className="flex-1 py-4 px-4 rounded-2xl transition-all font-black text-white uppercase text-[10px] sm:text-[11px] tracking-[0.2em] shadow-[0_8px_24px_-10px_rgba(var(--color-accent-rgb),0.4)] hover:brightness-110 focus:outline-none focus-visible:ring-4 focus-visible:ring-accent/40 active:scale-95"
                                 >
-                                    Change Mode
+                                    Confirm
                                 </button>
                             </div>
                         </motion.div>
@@ -261,10 +341,12 @@ const Dashboard = ({ onOpenGames, onOpenStats, onOpenAchievements }) => {
                 )}
             </AnimatePresence>
 
-            <MusicWidget
-                isOpen={isMusicOpen}
-                onClose={closeMusic}
-            />
+            <React.Suspense fallback={null}>
+                <MusicWidget
+                    isOpen={isMusicOpen}
+                    onClose={closeMusic}
+                />
+            </React.Suspense>
 
             <PaintTransitionOverlay
                 triggerRef={triggerPaintRef}

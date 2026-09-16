@@ -1,24 +1,43 @@
 export type SettingTheme = 'light' | 'dark' | 'system'
-export type SettingPlatform = 'web' | 'mobile' | 'desktop'
+export type SettingTimeFormat = '12h' | '24h'
+export type SettingWeekStart = 'monday' | 'sunday'
 
-export interface SettingDto {
-    focusDuration?: number
-    shortBreakDuration?: number
-    longBreakDuration?: number
+export interface SettingRequestDto {
+    pomodoroLength?: number
+    shortBreakLength?: number
+    longBreakLength?: number
     longBreakInterval?: number
 
     autoStartBreaks?: boolean
     autoStartPomodoros?: boolean
 
-    theme?: SettingTheme
     soundEnabled?: boolean
-    platform?: SettingPlatform
+    volume?: number
+    theme?: SettingTheme
+    language?: string
+    timeFormat?: SettingTimeFormat
+    weekStart?: SettingWeekStart
+    notificationsEnabled?: boolean
 }
 
-export interface SettingResponse extends SettingDto {
+export interface SettingResponseDto {
     id: string
-    userId: string
+    pomodoroLength: number
+    shortBreakLength: number
+    longBreakLength: number
+    longBreakInterval: number
+
+    autoStartBreaks: boolean
+    autoStartPomodoros: boolean
+
+    soundEnabled: boolean
+    volume: number
+    theme: SettingTheme
+    language: string
+    timeFormat: SettingTimeFormat
+    weekStart: SettingWeekStart
+    notificationsEnabled: boolean
 }
 
-export type CreateSettingDto = SettingDto
-export type UpdateSettingDto = Partial<SettingDto>
+export type CreateSettingDto = SettingRequestDto
+export type UpdateSettingDto = Partial<SettingRequestDto>

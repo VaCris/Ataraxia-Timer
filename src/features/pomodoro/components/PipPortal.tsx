@@ -1,6 +1,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { Play, Pause, RotateCcw } from 'lucide-react';
+import { sanitizeForCss } from '@/shared/utils/sanitize';
+import { TEXTS } from '@/shared/constants/texts.constants';
 
 export interface PipPortalProps {
     pipWindow: Window;
@@ -59,7 +61,7 @@ export const PipPortal: React.FC<PipPortalProps> = ({
                 <div style={{
                     position: 'absolute',
                     inset: 0,
-                    backgroundImage: `url(${bgImage})`,
+                    backgroundImage: `url(${sanitizeForCss(bgImage)})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     zIndex: 0,
@@ -117,7 +119,7 @@ export const PipPortal: React.FC<PipPortalProps> = ({
                 borderRadius: '50px',
                 border: '1px solid rgba(255,255,255,0.05)'
             }}>
-                Round {currentRound} / {longBreakInterval}
+                {TEXTS.dashboard.round} {currentRound} / {longBreakInterval}
             </div>
 
             <div style={{

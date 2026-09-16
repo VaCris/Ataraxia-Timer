@@ -6,13 +6,15 @@ import { CreateTagDto, UpdateTagDto } from '@/features/tags/types/tag.dto'
 
 export const useTags = () => {
   const dispatch = useDispatch()
-  const { items, loading } = useSelector((s: RootState) => s.tags)
+  const { items, loading, initialized } = useSelector((s: RootState) => s.tags)
 
   useEffect(() => {
-    dispatch(actions.fetchTagsRequest())
-  }, [dispatch])
+    if (!initialized && !loading) {
+      dispatch(actions.fetchTagsRequest())
+    }
+  }, [dispatch, initialized, loading])
 
-  const addTag = (data: CreateTagDto) => dispatch(actions.addTagRequest(data))
+  const addTag = (data: CreateTagDto & { id?: string }) => dispatch(actions.addTagRequest(data))
   const updateTag = (id: string, data: UpdateTagDto) =>
     dispatch(actions.updateTagRequest({ id, data }))
   const removeTag = (id: string) => dispatch(actions.deleteTagRequest(id))

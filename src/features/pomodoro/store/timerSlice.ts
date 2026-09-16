@@ -1,4 +1,5 @@
-﻿import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { DEFAULT_FOCUS_TIME } from '../constants/pomodoro.constants'
 
 export type Mode = 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK'
 
@@ -9,9 +10,8 @@ interface TimerState {
     timeLeft: number
     initialTime: number
     toast: { isOpen: boolean; message: string }
+    serverId?: string
 }
-
-const DEFAULT_FOCUS_TIME = 25 * 60
 
 const initialState: TimerState = {
     mode: 'FOCUS',
@@ -20,6 +20,7 @@ const initialState: TimerState = {
     timeLeft: DEFAULT_FOCUS_TIME,
     initialTime: DEFAULT_FOCUS_TIME,
     toast: { isOpen: false, message: '' },
+    serverId: undefined,
 }
 
 const slice = createSlice({
@@ -33,6 +34,9 @@ const slice = createSlice({
         startTimer: (state) => {
             state.isActive = true
             state.isPaused = false
+        },
+        setServerId: (state, action: PayloadAction<string | undefined>) => {
+            state.serverId = action.payload;
         },
         pauseTimer: (state) => {
             state.isActive = false
@@ -59,6 +63,7 @@ const slice = createSlice({
             state.isPaused = false
             state.initialTime = action.payload
             state.timeLeft = action.payload
+            state.serverId = undefined
         },
 
         restoreSession: (
@@ -88,13 +93,15 @@ const slice = createSlice({
             state,
             action: PayloadAction<{ mode: Mode; duration: number }>
         ) => {
-            const seconds = action.payload.duration * 60
+            const rawSeconds = action.payload.duration * 60
+            const seconds = Number.isFinite(rawSeconds) && rawSeconds > 0 ? rawSeconds : 1500
 
             state.mode = action.payload.mode
             state.isActive = false
             state.isPaused = false
             state.initialTime = seconds
             state.timeLeft = seconds
+            state.serverId = undefined
         },
 
         showToast: (state, action: PayloadAction<string>) => {
@@ -110,6 +117,7 @@ const slice = createSlice({
 export const {
     setMode,
     startTimer,
+    setServerId,
     stopTimer,
     pauseTimer,
     resumeTimer,

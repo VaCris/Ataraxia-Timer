@@ -1,5 +1,5 @@
 import api from '@api/client';
-import { CreateAchievementDto, UpdateAchievementDto, GetLeaderboardDto } from './dto/gamification.dto';
+import { CreateAchievementDto, UpdateAchievementDto, GetLeaderboardDto } from '@/features/gamification/types/gamification.dto';
 
 export const gamificationService = {
     getLeaderboard: async (params?: GetLeaderboardDto) => {
@@ -27,7 +27,6 @@ export const gamificationService = {
         return data
     },
 
-    // Admin endpoints
     createAchievement: async (data: CreateAchievementDto) => {
         const res = await api.post('/gamification/achievements', data)
         return res.data

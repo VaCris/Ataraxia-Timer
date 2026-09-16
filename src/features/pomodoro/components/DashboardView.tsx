@@ -41,13 +41,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const timerState = useSelector((state: RootState) => state.timer);
   const apiSettings = useSelector((state: RootState) => state.settings.api);
 
-  const toggleMusic = () => {
-    setIsMusicOpen((prev) => !prev);
-  };
-
-  const closeMusic = () => {
-    setIsMusicOpen(false);
-  };
+  const toggleMusic = () => setIsMusicOpen((prev) => !prev);
+  const closeMusic = () => setIsMusicOpen(false);
 
   useThemeEffect(
     uiSettings.accentColor,
@@ -77,54 +72,33 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenSupport={() => setIsSupportOpen(true)}
         onOpenMusic={toggleMusic}
+        onOpenGames={onOpenGames}
+        onOpenStats={onOpenStats}
+        onOpenAchievements={onOpenAchievements}
         isMusicOpen={isMusicOpen}
         customShortcuts={uiSettings.customShortcuts}
         isMobileOpen={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        theme={uiSettings.theme}
+        onToggleTheme={() => {}}
       />
 
       <main className="z-10 relative flex flex-col flex-1 lg:ml-24 pb-20 lg:pb-0">
-        <Header
-          onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-        />
+        <Header onOpenSidebar={() => setIsMobileSidebarOpen(true)} />
 
         <div className="flex flex-col flex-1 justify-center items-center gap-10 md:gap-14 mx-auto px-6 pt-8 w-full max-w-4xl">
           <TimerDial controller={pomodoroController} />
 
           <div className="flex justify-center items-center gap-3 bg-white/5 shadow-2xl backdrop-blur-md p-2 border border-white/10 rounded-full">
-            <button
-              type="button"
-              onClick={togglePip}
-              className="hover:bg-white/10 p-4 rounded-full text-white/50 hover:text-white transition-all duration-300"
-              aria-label="Picture in Picture"
-            >
+            <button type="button" onClick={togglePip} className="hover:bg-white/10 p-4 rounded-full text-white/50 hover:text-white transition-all duration-300" aria-label="Picture in Picture">
               <ExternalLink size={22} strokeWidth={2.5} />
             </button>
 
-            <button
-              type="button"
-              onClick={pomodoroController.toggleSession}
-              className="flex justify-center items-center gap-2 bg-accent px-10 py-4 rounded-full min-w-50 font-black text-white uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all duration-300 shadow-[0_0_20px_rgba(var(--color-accent-rgb),0.4)] hover:shadow-[0_0_30px_rgba(var(--color-accent-rgb),0.6)]"
-            >
-              {timerState.isActive ? (
-                <>
-                  <Pause size={20} fill="currentColor" />
-                  <span>Pause</span>
-                </>
-              ) : (
-                <>
-                  <Play size={20} fill="currentColor" />
-                  <span>{timerState.isPaused ? 'Resume' : 'Start'}</span>
-                </>
-              )}
+            <button type="button" onClick={pomodoroController.toggleSession} className="flex justify-center items-center gap-2 bg-accent px-10 py-4 rounded-full min-w-50 font-black text-white uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all duration-300 shadow-[0_0_20px_rgba(var(--color-accent-rgb),0.4)] hover:shadow-[0_0_30px_rgba(var(--color-accent-rgb),0.6)]">
+              {timerState.isActive ? <><Pause size={20} fill="currentColor" /><span>Pause</span></> : <><Play size={20} fill="currentColor" /><span>{timerState.isPaused ? 'Resume' : 'Start'}</span></>}
             </button>
 
-            <button
-              type="button"
-              onClick={pomodoroController.resetSession}
-              className="hover:bg-white/10 p-4 rounded-full text-white/50 hover:text-white transition-all duration-300"
-              aria-label="Reset Timer"
-            >
+            <button type="button" onClick={pomodoroController.resetSession} className="hover:bg-white/10 p-4 rounded-full text-white/50 hover:text-white transition-all duration-300" aria-label="Reset Timer">
               <RotateCcw size={22} strokeWidth={2.5} />
             </button>
           </div>
@@ -135,12 +109,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </main>
 
-      <BottomNav
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        onOpenGames={onOpenGames}
-        onOpenStats={onOpenStats}
-        onOpenAchievements={onOpenAchievements}
-      />
+      <BottomNav onOpenSettings={() => setIsSettingsOpen(true)} onOpenGames={onOpenGames} onOpenStats={onOpenStats} onOpenAchievements={onOpenAchievements} />
 
       {pipWindow && (
         <PipPortal
@@ -159,27 +128,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       )}
 
       <AnimatePresence>
-        {isSettingsOpen && (
-          <SettingsModal
-            isOpen={isSettingsOpen}
-            onClose={() => setIsSettingsOpen(false)}
-          />
-        )}
-
-        {isSupportOpen && (
-          <SupportModal
-            isOpen={isSupportOpen}
-            onClose={() => setIsSupportOpen(false)}
-          />
-        )}
-
-
+        {isSettingsOpen && <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />}
+        {isSupportOpen && <SupportModal isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />}
       </AnimatePresence>
 
-      <MusicWidget
-        isOpen={isMusicOpen}
-        onClose={closeMusic}
-      />
+      <MusicWidget isOpen={isMusicOpen} onClose={closeMusic} />
     </motion.div>
   );
 };

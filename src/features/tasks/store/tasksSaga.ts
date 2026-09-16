@@ -1,5 +1,4 @@
 import { call, put, takeLatest, all } from 'redux-saga/effects';
-import { tasksService } from '@/features/tasks/api/tasks.api';
 import { tasksLocalRepository } from '@/features/tasks/repositories/tasks.local.repository';
 import { addToSyncQueue, processSyncQueue } from '@/infrastructure/sync/syncManager';
 import {
@@ -9,11 +8,6 @@ import {
   deleteTaskRequest, deleteTaskSuccess, deleteTaskFailure
 } from './tasksSlice';
 import { TaskResponse } from '@/features/tasks/types/task.dto';
-
-const isNetworkError = (error: any) =>
-  error.message === 'Network Error' || error.code === 'ERR_NETWORK' || !navigator.onLine;
-
-
 
 function* handleFetchTasks() {
   try {
@@ -30,15 +24,12 @@ function* handleFetchTasks() {
 
     if (navigator.onLine) {
       yield call(processSyncQueue);
-
-      const data: TaskResponse[] = yield call(tasksService.getAll);
-
-      yield call(
-        [tasksLocalRepository, tasksLocalRepository.replaceAll],
-        data
+      
+      const localTasks: TaskResponse[] = yield call(
+        [tasksLocalRepository, tasksLocalRepository.getAll]
       );
-
-      yield put(fetchTasksSuccess(data));
+      
+      yield put(fetchTasksSuccess(localTasks));
       return;
     }
 
@@ -62,36 +53,27 @@ function* handleFetchTasks() {
 
 function* handleCreateTask(action: ReturnType<typeof createTaskRequest>) {
   const payload = {
-    ...action.payload,
-    tag: action.payload.tag?.trim() || 'General'
+    ...action.payload
   };
 
   try {
-    if (navigator.onLine) {
-      const data: TaskResponse = yield call(tasksService.create, payload);
-      yield call([tasksLocalRepository, tasksLocalRepository.createFromRemote], data);
-      yield put(createTaskSuccess(data));
-      return;
-    }
-
-    throw new Error('Network Error');
-  } catch (e: any) {
-    if (!isNetworkError(e)) {
-      yield put(createTaskFailure(e.response?.data?.message || e.message));
-      return;
-    }
-
     const localTask: TaskResponse = yield call([tasksLocalRepository, tasksLocalRepository.create], payload);
 
     yield call(addToSyncQueue, {
       method: 'POST',
       url: '/tasks',
-      data: payload,
       entity: 'tasks',
       entityId: localTask.id,
+      data: payload,
     });
 
     yield put(createTaskSuccess(localTask));
+    
+    if (navigator.onLine) {
+      yield call(processSyncQueue);
+    }
+  } catch (e: any) {
+    yield put(createTaskFailure(e.message));
   }
 }
 
@@ -103,65 +85,44 @@ function* handleUpdateTask(action: ReturnType<typeof updateTaskRequest>) {
       action.payload.data
     );
 
-    yield put(updateTaskSuccess(localTask));
-
-    if (navigator.onLine && !action.payload.id.startsWith('local-')) {
-      try {
-        const data: TaskResponse = yield call(
-          tasksService.update,
-          action.payload.id,
-          action.payload.data
-        );
-
-        yield call([tasksLocalRepository, tasksLocalRepository.updateFromRemote], data);
-        yield put(updateTaskSuccess(data));
-        return;
-      } catch (error: any) {
-        if (!isNetworkError(error)) throw error;
-      }
-    }
-
     yield call(addToSyncQueue, {
       method: 'PATCH',
       url: `/tasks/${action.payload.id}`,
-      data: action.payload.data,
       entity: 'tasks',
       entityId: action.payload.id,
+      data: action.payload.data,
     });
+
+    yield put(updateTaskSuccess(localTask));
+    
+    if (navigator.onLine) {
+      yield call(processSyncQueue);
+    }
   } catch (e: any) {
-    yield put(updateTaskFailure(e.response?.data?.message || e.message));
+    yield put(updateTaskFailure(e.message));
   }
 }
 
 function* handleDeleteTask(action: ReturnType<typeof deleteTaskRequest>) {
   try {
-    const shouldSyncDelete: boolean = yield call(
-      [tasksLocalRepository, tasksLocalRepository.remove],
-      action.payload
-    );
+    const shouldSyncDelete: boolean = yield call([tasksLocalRepository, tasksLocalRepository.remove], action.payload);
 
-    yield put(deleteTaskSuccess(action.payload));
-
-    if (!shouldSyncDelete) return;
-
-    if (navigator.onLine && !action.payload.startsWith('local-')) {
-      try {
-        yield call(tasksService.delete, action.payload);
-        yield call([tasksLocalRepository, tasksLocalRepository.removeSynced], action.payload);
-        return;
-      } catch (error: any) {
-        if (!isNetworkError(error)) throw error;
-      }
+    if (shouldSyncDelete) {
+      yield call(addToSyncQueue, {
+        method: 'DELETE',
+        url: `/tasks/${action.payload}`,
+        entity: 'tasks',
+        entityId: action.payload,
+      });
     }
 
-    yield call(addToSyncQueue, {
-      method: 'DELETE',
-      url: `/tasks/${action.payload}`,
-      entity: 'tasks',
-      entityId: action.payload,
-    });
+    yield put(deleteTaskSuccess(action.payload));
+    
+    if (navigator.onLine) {
+      yield call(processSyncQueue);
+    }
   } catch (e: any) {
-    yield put(deleteTaskFailure(e.response?.data?.message || e.message));
+    yield put(deleteTaskFailure(e.message));
   }
 }
 

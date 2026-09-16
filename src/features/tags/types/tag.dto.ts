@@ -1,11 +1,10 @@
-export interface CreateTagDto {
-    name: string;
-    color?: string;
-}
+import { TagRequestDto, TagResponseDto } from '@/infrastructure/api/generated';
 
-export interface UpdateTagDto extends Partial<CreateTagDto> {}
+export type CreateTagDto = TagRequestDto;
 
-export interface TagResponse extends CreateTagDto {
+export type UpdateTagDto = Partial<CreateTagDto>;
+
+export interface TagResponse extends Omit<TagResponseDto, 'id' | 'name'> {
     id: string;
-    userId: string;
+    name: string;
 }

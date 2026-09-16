@@ -82,10 +82,10 @@ const TagLibrary = () => {
                                 </>
                             ) : (
                                 <>
-                                    <button onClick={() => handleStartEdit(tag)} className="opacity-0 group-hover:opacity-100 p-1.5 text-white/10 hover:text-white transition-all">
+                                    <button onClick={() => handleStartEdit(tag)} className="sm:opacity-0 sm:group-hover:opacity-100 p-1.5 text-white/40 sm:text-white/10 hover:text-white transition-all">
                                         <Edit2 size={14} />
                                     </button>
-                                    <button onClick={() => removeTag(tag.id)} className="opacity-0 group-hover:opacity-100 p-1.5 text-white/10 hover:text-red-500 transition-all">
+                                    <button onClick={() => removeTag(tag.id)} className="sm:opacity-0 sm:group-hover:opacity-100 p-1.5 text-white/40 sm:text-red-400/60 sm:hover:text-red-500 transition-all">
                                         <Trash2 size={14} />
                                     </button>
                                 </>

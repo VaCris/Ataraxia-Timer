@@ -2,10 +2,10 @@ import { useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
 import { updateSettingsRequest } from '../store/settingsSlice';
-import { SettingResponse, UpdateSettingDto } from '@/features/settings/types/setting.dto';
+import { SettingResponseDto, UpdateSettingDto } from '@/features/settings/types/setting.dto';
 
 interface UseSettingsManagerReturn {
-    apiSettings: SettingResponse | null;
+    apiSettings: SettingResponseDto | null;
     isLoading: boolean;
     error: string | null;
     updateSettings: (settings: UpdateSettingDto) => void;

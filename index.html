@@ -4,6 +4,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://ataraxia-api.studios-tkoh.online; frame-src https://www.lofi.cafe; media-src https://www.lofi.cafe; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()" />
 
   <title>Ataraxia Timer | Pomodoro Focus Timer & Task Manager</title>
   <meta name="title" content="Ataraxia Timer | Pomodoro Focus Timer & Task Manager" />
@@ -17,7 +21,6 @@
   <meta name="publisher" content="Ataraxia" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-  <meta name="referrer" content="strict-origin-when-cross-origin" />
 
   <link rel="canonical" href="https://ataraxiatimer.app/" />
   <link rel="icon" type="image/svg+xml" href="/pwa-192x192.svg" />
@@ -38,18 +41,23 @@
   <meta property="og:description"
     content="A clean Pomodoro focus timer with tasks, rounds, break sessions, offline support and a distraction-free workspace for deep work." />
   <meta property="og:url" content="https://ataraxiatimer.app/" />
-  <meta property="og:image" content="https://ataraxiatimer.app/screenshot-desktop.png" />
-  <meta property="og:image:secure_url" content="https://ataraxiatimer.app/screenshot-desktop.png" />
+  <meta property="og:image" content="https://i.ibb.co/rRNbd7rQ/screenshot-desktop.jpg" />
+  <meta property="og:image:secure_url" content="https://i.ibb.co/rRNbd7rQ/screenshot-desktop.jpg" />
   <meta property="og:image:alt" content="Ataraxia Timer dashboard with Pomodoro timer and mission log" />
+  <meta property="og:image" content="https://i.ibb.co/gZgdYHSQ/screenshot-mobile.jpg" />
+  <meta property="og:image:secure_url" content="https://i.ibb.co/gZgdYHSQ/screenshot-mobile.jpg" />
+  <meta property="og:image:alt" content="Ataraxia Timer mobile Pomodoro dashboard" />
   <meta property="og:locale" content="en_US" />
 
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Ataraxia Timer | Pomodoro Focus Timer & Task Manager" />
   <meta name="twitter:description"
     content="Plan tasks, run focus sessions and keep your Pomodoro workflow available as an installable offline PWA." />
-  <meta name="twitter:image" content="https://ataraxiatimer.app/screenshot-desktop.png" />
+  <meta name="twitter:image" content="https://i.ibb.co/rRNbd7rQ/screenshot-desktop.jpg" />
   <meta name="twitter:image:alt" content="Ataraxia Timer focus dashboard" />
 
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Outfit:wght@100..900&display=swap" rel="stylesheet" />
@@ -64,8 +72,8 @@
       "operatingSystem": "Web, Android, iOS, Windows, macOS, Linux",
       "description": "Ataraxia Timer is a Pomodoro focus timer and task manager designed for deep work, study sessions, breaks, offline use and distraction-free productivity.",
       "url": "https://ataraxiatimer.app/",
-      "image": "https://ataraxiatimer.app/screenshot-desktop.png",
-      "screenshot": "https://ataraxiatimer.app/screenshot-desktop.png",
+      "image": "https://i.ibb.co/rRNbd7rQ/screenshot-desktop.jpg",
+      "screenshot": "https://i.ibb.co/gZgdYHSQ/screenshot-mobile.jpg",
       "featureList": [
         "Pomodoro focus timer",
         "Short and long break sessions",

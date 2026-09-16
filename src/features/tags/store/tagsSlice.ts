@@ -4,12 +4,14 @@ import { TagResponse, CreateTagDto, UpdateTagDto } from '@/features/tags/types/t
 interface TagsState {
   items: TagResponse[];
   loading: boolean;
+  initialized: boolean;
   error: string | null;
 }
 
 const initialState: TagsState = {
   items: [],
   loading: false,
+  initialized: false,
   error: null,
 };
 
@@ -21,10 +23,12 @@ const tagsSlice = createSlice({
     fetchTagsRequest: (state) => { state.loading = true; },
     fetchTagsSuccess: (state, action: PayloadAction<TagResponse[]>) => {
       state.loading = false;
+      state.initialized = true;
       state.items = action.payload;
     },
     fetchTagsFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
+      state.initialized = true;
       state.error = action.payload;
     },
     // Add
@@ -59,6 +63,7 @@ const tagsSlice = createSlice({
     clearTags: (state) => {
       state.items = [];
       state.loading = false;
+      state.initialized = false;
       state.error = null;
     },
   }

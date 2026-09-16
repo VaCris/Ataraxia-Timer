@@ -11,7 +11,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       injectRegister: null,
       devOptions: {
         enabled: false,
@@ -21,8 +21,6 @@ export default defineConfig({
       includeAssets: [
         'pwa-192x192.png',
         'pwa-512x512.png',
-        'screenshot-desktop.png',
-        'screenshot-mobile.png',
         'robots.txt',
         'sitemap.xml'
       ],
@@ -62,25 +60,26 @@ export default defineConfig({
         ],
         screenshots: [
           {
-            src: 'screenshot-desktop.png',
+            src: 'https://i.ibb.co/rRNbd7rQ/screenshot-desktop.jpg',
             sizes: '1280x720',
-            type: 'image/png',
+            type: 'image/jpeg',
             form_factor: 'wide',
             label: 'Ataraxia Timer desktop focus dashboard'
           },
           {
-            src: 'screenshot-mobile.png',
+            src: 'https://i.ibb.co/gZgdYHSQ/screenshot-mobile.jpg',
             sizes: '720x1280',
-            type: 'image/png',
+            type: 'image/jpeg',
             form_factor: 'narrow',
             label: 'Ataraxia Timer mobile Pomodoro dashboard'
           }
         ]
       },
       workbox: {
-        skipWaiting: true,
+        skipWaiting: false,
         clientsClaim: true,
-        globPatterns: ['**/*.{js,css,html,png,svg,mp3,xml,txt,webmanifest}'],
+        navigateFallback: 'index.html',
+        globPatterns: ['**/*.{js,css,html,png,svg,mp3,xml,txt,webmanifest,json}'],
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
@@ -108,12 +107,21 @@ export default defineConfig({
     })
   ],
 
+  esbuild: {
+    drop: ['console', 'debugger']
+  },
+
   build: {
+    target: 'es2022',
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'framer-motion'],
-          redux: ['@reduxjs/toolkit', 'react-redux']
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-redux': ['@reduxjs/toolkit', 'react-redux', 'redux-saga'],
+          'vendor-db': ['dexie'],
+          'vendor-icons': ['lucide-react'],
+          'vendor-motion': ['framer-motion']
         }
       }
     }
@@ -122,19 +130,15 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-
       '@app': path.resolve(__dirname, './src/app'),
       '@components': path.resolve(__dirname, './src/app/components'),
       '@pages': path.resolve(__dirname, './src/app/pages'),
-
       '@features': path.resolve(__dirname, './src/features'),
       '@shared': path.resolve(__dirname, './src/shared'),
       '@infrastructure': path.resolve(__dirname, './src/infrastructure'),
-
       '@api': path.resolve(__dirname, './src/infrastructure/api'),
       '@sync': path.resolve(__dirname, './src/infrastructure/sync'),
       '@store': path.resolve(__dirname, './src/store'),
-
       '@assets': path.resolve(__dirname, './src/assets'),
       '@utils': path.resolve(__dirname, './src/shared/utils')
     }

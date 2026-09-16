@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 
 let capturedPrompt = null;
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    capturedPrompt = e;
+window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    capturedPrompt = event;
 });
 
 export const useInstallPrompt = () => {
@@ -11,22 +11,26 @@ export const useInstallPrompt = () => {
     const [isInstallable, setIsInstallable] = useState(!!capturedPrompt);
 
     useEffect(() => {
-        const handler = (e) => {
-            e.preventDefault();
-            capturedPrompt = e;
-            setDeferredPrompt(e);
+        const handleBeforeInstallPrompt = (event) => {
+            event.preventDefault();
+            capturedPrompt = event;
+            setDeferredPrompt(event);
             setIsInstallable(true);
         };
 
-        window.addEventListener('beforeinstallprompt', handler);
-        
-        window.addEventListener('appinstalled', () => {
+        const handleAppInstalled = () => {
             capturedPrompt = null;
             setIsInstallable(false);
             setDeferredPrompt(null);
-        });
+        };
 
-        return () => window.removeEventListener('beforeinstallprompt', handler);
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        window.addEventListener('appinstalled', handleAppInstalled);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener('appinstalled', handleAppInstalled);
+        };
     }, []);
 
     const handleInstallClick = async () => {
@@ -34,17 +38,19 @@ export const useInstallPrompt = () => {
 
         if (!promptToUse) {
             alert("The browser hasn't triggered the install event yet. Make sure you are not in Incognito mode.");
-            return;
+            return 'unavailable';
         }
 
-        promptToUse.prompt();
+        await promptToUse.prompt();
         const { outcome } = await promptToUse.userChoice;
-        
+
         if (outcome === 'accepted') {
             capturedPrompt = null;
             setDeferredPrompt(null);
             setIsInstallable(false);
         }
+
+        return outcome;
     };
 
     return { isInstallable, handleInstallClick, setIsInstallable };

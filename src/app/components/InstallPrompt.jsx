@@ -35,8 +35,14 @@ const InstallPrompt = () => {
     };
 
     const handleInstall = async () => {
-        await handleInstallClick();
-        localStorage.setItem(INSTALL_PROMPT_DISMISSED_KEY, 'true');
+        const outcome = await handleInstallClick();
+
+        if (outcome === 'accepted') {
+            localStorage.setItem(INSTALL_PROMPT_DISMISSED_KEY, 'true');
+        }
+
+        // A native dismissal should only hide this prompt for the current mount.
+        // Do not persist it as dismissed so installation can be offered again later.
         setIsVisible(false);
     };
 

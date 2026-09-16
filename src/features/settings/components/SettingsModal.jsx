@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
+import { TEXTS } from '@/shared/constants/texts.constants';
 import toast from 'react-hot-toast';
 import {
   X,
@@ -22,15 +23,8 @@ import {
   updateUISettings,
   updateSettingsRequest,
 } from '@/features/settings/store/settingsSlice';
-
-const defaultShortcuts = {
-  settings: 's',
-  support: 'h',
-  music: 'm',
-  games: 'g',
-  stats: 't',
-  achievements: 'a',
-};
+import { sanitizeImageUrl } from '@/shared/utils/sanitize';
+import { DEFAULT_SHORTCUTS as defaultShortcuts } from '@/features/settings/constants/settings.constants';
 
 const normalizeShortcuts = (shortcuts) => {
   if (!shortcuts || Object.keys(shortcuts).length === 0) {
@@ -109,17 +103,15 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
   const uiSettings = settings.ui || {};
   const apiSettings = settings.api || {};
 
-  const {
-    focusDuration = 25,
-    shortBreakDuration = 5,
-    longBreakDuration = 15,
-    autoStartBreaks = false,
-    autoStartPomodoros = false,
-    longBreakInterval = 4,
-    theme = 'dark',
-    soundEnabled = true,
-    platform = 'web',
-  } = apiSettings;
+  const pomodoroLength = apiSettings.pomodoroLength ?? apiSettings.focusDuration ?? 25;
+  const shortBreakLength = apiSettings.shortBreakLength ?? apiSettings.shortBreakDuration ?? 5;
+  const longBreakLength = apiSettings.longBreakLength ?? apiSettings.longBreakDuration ?? 15;
+  const autoStartBreaks = apiSettings.autoStartBreaks ?? false;
+  const autoStartPomodoros = apiSettings.autoStartPomodoros ?? false;
+  const longBreakInterval = apiSettings.longBreakInterval ?? 4;
+  const theme = apiSettings.theme ?? 'dark';
+  const soundEnabled = apiSettings.soundEnabled ?? true;
+  const apiVolume = apiSettings.volume ?? 50;
 
   const {
     accentColor = '#14b8a6',
@@ -131,9 +123,9 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
   } = uiSettings;
 
   const [localTimers, setLocalTimers] = useState(() => ({
-    FOCUS: readStoredNumber('focusDuration', focusDuration),
-    SHORT_BREAK: readStoredNumber('shortBreakDuration', shortBreakDuration),
-    LONG_BREAK: readStoredNumber('longBreakDuration', longBreakDuration),
+    FOCUS: readStoredNumber('pomodoroLength', pomodoroLength),
+    SHORT_BREAK: readStoredNumber('shortBreakLength', shortBreakLength),
+    LONG_BREAK: readStoredNumber('longBreakLength', longBreakLength),
   }));
 
   const [localApiSettings, setLocalApiSettings] = useState(() => ({
@@ -142,12 +134,12 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
     longBreakInterval: readStoredNumber('longBreakInterval', longBreakInterval),
     theme: readStoredValue('theme', theme),
     soundEnabled: readStoredBoolean('soundEnabled', soundEnabled),
-    platform: readStoredValue('platform', platform),
+    volume: readStoredNumber('volume', apiVolume),
   }));
 
   const [localUISettings, setLocalUISettings] = useState(() => ({
     accentColor: readStoredValue('accentColor', accentColor),
-    bgImage: readStoredValue('bgImage', bgImage || ''),
+    bgImage: readStoredValue('bgImage', bgImage || 'https://i.ibb.co/ynRCysgx/default-image.png'),
     blurIntensity: readStoredNumber('blurIntensity', blurIntensity),
     volume: readStoredNumber('volume', volume),
     is24Hour: readStoredBoolean('is24Hour', is24Hour),
@@ -164,7 +156,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
       document.documentElement.style.setProperty('--color-accent-rgb', rgb);
       document.documentElement.style.setProperty('--bg-blur', `${(blurIntensity / 100) * 40}px`);
       if (bgImage) {
-        document.documentElement.style.setProperty('--bg-image', `url("${bgImage}")`);
+        document.documentElement.style.setProperty('--bg-image', `url("${bgImage.replace(/\\/g, '').replace(/"/g, '').replace(/'/g, '').replace(/[();]/g, '')}")`);
       } else {
         document.documentElement.style.removeProperty('--bg-image');
       }
@@ -238,15 +230,15 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
     }
 
     const payload = {
-      focusDuration: focusVal,
-      shortBreakDuration: shortVal,
-      longBreakDuration: longVal,
+      pomodoroLength: focusVal,
+      shortBreakLength: shortVal,
+      longBreakLength: longVal,
       autoStartBreaks: localApiSettings.autoStartBreaks,
       autoStartPomodoros: localApiSettings.autoStartPomodoros,
       longBreakInterval: localApiSettings.longBreakInterval,
       theme: localApiSettings.theme,
       soundEnabled: localApiSettings.soundEnabled,
-      platform: localApiSettings.platform,
+      volume: localApiSettings.volume,
     };
 
     const durationByMode = {
@@ -344,7 +336,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
         <div className="flex justify-between items-center mb-5 sm:mb-6 shrink-0">
           <h2 className="flex items-center gap-3 font-black text-xl xs:text-2xl tracking-tighter min-w-0">
             <span style={{ color: localAccentColor }}>/</span>
-            <span className="truncate">CONFIGURATION</span>
+            <span className="truncate">{TEXTS.settings.title.toUpperCase()}</span>
           </h2>
 
           <button
@@ -360,7 +352,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
           <section>
             <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.24em] sm:tracking-[0.3em]">
               <Clock size={14} />
-              Timer Durations
+              {TEXTS.settings.timer}
             </div>
 
             <div className="gap-3 sm:gap-4 grid grid-cols-1 xs:grid-cols-3 bg-white/5 p-4 sm:p-6 border border-white/5 rounded-[1.5rem] sm:rounded-[2rem]">
@@ -368,21 +360,21 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                 label="Focus"
                 value={localTimers.FOCUS}
                 onChange={(value) => handleTimerChange('FOCUS', value)}
-                onBlur={() => handleTimerBlur('FOCUS', localTimers.FOCUS, focusDuration)}
+                onBlur={() => handleTimerBlur('FOCUS', localTimers.FOCUS, pomodoroLength)}
               />
 
               <TimeInput
                 label="Short"
                 value={localTimers.SHORT_BREAK}
                 onChange={(value) => handleTimerChange('SHORT_BREAK', value)}
-                onBlur={() => handleTimerBlur('SHORT_BREAK', localTimers.SHORT_BREAK, shortBreakDuration)}
+                onBlur={() => handleTimerBlur('SHORT_BREAK', localTimers.SHORT_BREAK, shortBreakLength)}
               />
 
               <TimeInput
                 label="Long"
                 value={localTimers.LONG_BREAK}
                 onChange={(value) => handleTimerChange('LONG_BREAK', value)}
-                onBlur={() => handleTimerBlur('LONG_BREAK', localTimers.LONG_BREAK, longBreakDuration)}
+                onBlur={() => handleTimerBlur('LONG_BREAK', localTimers.LONG_BREAK, longBreakLength)}
               />
             </div>
           </section>
@@ -391,7 +383,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
             <div className="flex justify-between items-center gap-3 mb-4">
               <div className="flex items-center gap-2 font-bold text-[10px] text-white/30 uppercase tracking-[0.24em] sm:tracking-[0.3em] min-w-0">
                 <Keyboard size={14} className="shrink-0" />
-                <span className="truncate">Global Shortcuts</span>
+                <span className="truncate">{TEXTS.settings.shortcuts}</span>
               </div>
 
               <button
@@ -400,7 +392,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                 className="flex items-center gap-1 text-[10px] text-white/30 hover:text-white uppercase tracking-widest shrink-0"
               >
                 <RotateCcw size={12} />
-                reset
+                {TEXTS.settings.reset}
               </button>
             </div>
 
@@ -433,7 +425,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
           <section>
             <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.24em] sm:tracking-[0.3em]">
               <Monitor size={14} />
-              Workflow & Automation
+              {TEXTS.settings.workflow}
             </div>
 
             <div className="space-y-4 bg-white/5 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem]">
@@ -456,7 +448,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
 
               <div className="flex justify-between items-center gap-4">
                 <span className="text-white/60 text-xs">
-                  Auto-start Breaks
+                  {TEXTS.settings.autoStartBreaks}
                 </span>
 
                 <Switch
@@ -470,7 +462,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
 
               <div className="flex justify-between items-center gap-4">
                 <span className="text-white/60 text-xs">
-                  Auto-start Focus
+                  {TEXTS.settings.autoStartFocus}
                 </span>
 
                 <Switch
@@ -484,7 +476,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
 
               <div className="flex justify-between items-center gap-4">
                 <span className="text-white/60 text-xs">
-                  24-Hour Clock
+                  {TEXTS.settings.clock24}
                 </span>
 
                 <Switch
@@ -501,13 +493,13 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
           <section>
             <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.24em] sm:tracking-[0.3em]">
               <Volume2 size={14} />
-              Auditory Experience
+              {TEXTS.settings.auditory}
             </div>
 
             <div className="space-y-6 bg-white/5 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem]">
               <div className="space-y-3">
                 <div className="flex justify-between font-bold text-[10px] text-white/30 uppercase">
-                  <span>Master Volume</span>
+                  <span>{TEXTS.settings.masterVolume}</span>
                   <span>{Math.round(localUISettings.volume)}%</span>
                 </div>
 
@@ -531,7 +523,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                 className="flex justify-center items-center gap-2 bg-white/5 hover:bg-white/10 py-4 rounded-xl w-full font-bold text-[10px] text-white/60 uppercase"
               >
                 <Bell size={14} />
-                Test Focus Alarm
+                {TEXTS.settings.testAlarm}
               </button>
             </div>
           </section>
@@ -539,13 +531,13 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
           <section>
             <div className="flex items-center gap-2 mb-4 font-bold text-[10px] text-white/30 uppercase tracking-[0.24em] sm:tracking-[0.3em]">
               <Sun size={14} />
-              Visual Sanctuary
+              {TEXTS.settings.visual}
             </div>
 
             <div className="space-y-6 bg-white/5 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem]">
               <div className="flex justify-between items-center gap-4 bg-black/20 p-4 border border-white/5 rounded-xl">
                 <span className="text-white/60 text-xs">
-                  Accent Theme
+                  {TEXTS.settings.accentTheme}
                 </span>
 
                 <div className="relative border-2 border-white/20 rounded-full w-8 h-8 overflow-hidden shrink-0">
@@ -566,7 +558,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
 
               <div className="space-y-3">
                 <div className="flex justify-between font-bold text-[10px] text-white/30 uppercase">
-                  <span>Glass Blur Intensity</span>
+                  <span>{TEXTS.settings.glassBlur}</span>
                   <span>{localUISettings.blurIntensity}%</span>
                 </div>
 
@@ -594,19 +586,20 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                     const val = event.target.value;
                     handleUISettingChange('bgImage', val);
                     if (val) {
-                      document.documentElement.style.setProperty('--bg-image', `url("${val}")`);
+                      const safe = val.replace(/\\/g, '').replace(/"/g, '').replace(/'/g, '').replace(/[();]/g, '');
+                      document.documentElement.style.setProperty('--bg-image', `url("${safe}")`);
                     } else {
                       document.documentElement.style.removeProperty('--bg-image');
                     }
                   }}
-                  placeholder="Custom Image URL..."
+                  placeholder={TEXTS.settings.bgImage}
                   className="bg-black/20 px-4 py-3 border border-white/10 focus:border-white/30 rounded-xl outline-none w-full text-white/80 text-xs"
                 />
 
                 <div className="flex gap-2">
                   <label className="flex flex-1 justify-center items-center gap-2 border border-white/10 hover:border-white/30 border-dashed rounded-xl h-12 text-white/40 text-xs transition-colors cursor-pointer min-w-0">
                     <Upload size={14} className="shrink-0" />
-                    <span className="truncate">Upload File</span>
+                    <span className="truncate">{TEXTS.settings.uploadFile}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -620,7 +613,10 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
                         reader.onloadend = () => {
                           const result = reader.result;
                           handleUISettingChange('bgImage', result);
-                          document.documentElement.style.setProperty('--bg-image', `url("${result}")`);
+                          if (typeof result === 'string') {
+                            const safe = result.replace(/\\/g, '').replace(/"/g, '').replace(/'/g, '').replace(/[();]/g, '');
+                            document.documentElement.style.setProperty('--bg-image', `url("${safe}")`);
+                          }
                         };
 
                         reader.readAsDataURL(file);
@@ -660,7 +656,7 @@ const SettingsModal = ({ isOpen = true, onClose }) => {
             ) : (
               <>
                 <Save size={18} />
-                SAVE CONFIGURATION
+                {TEXTS.settings.save.toUpperCase()}
               </>
             )}
           </button>

@@ -1,22 +1,17 @@
 import { call, put, takeLatest } from 'redux-saga/effects'
-import { PayloadAction } from '@reduxjs/toolkit'
 import { timersService } from '@/features/pomodoro/api/timers.api'
+import type { TimerResponse } from '@/features/pomodoro/types/timer.dto'
 import {
     createTimerRequest,
     createTimerSuccess,
     createTimerFailure
 } from '@/features/pomodoro/store/timersSlice'
 
-type CreateTimerPayload = {
-    duration: number
-    taskId?: string
-}
-
 function* createTimerSaga(
-    action: PayloadAction<CreateTimerPayload>
-): Generator<any, void, any> {
+    action: ReturnType<typeof createTimerRequest>
+): Generator {
     try {
-        const res = yield call(timersService.create, action.payload)
+        const res = (yield call(() => timersService.create(action.payload))) as TimerResponse
         yield put(createTimerSuccess(res))
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error'

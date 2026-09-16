@@ -7,12 +7,13 @@ import type {
 
 const ENDPOINTS = {
     BASE: '/tasks',
+    INBOX: '/tasks/inbox',
     BY_ID: (id: string) => `/tasks/${id}`,
 };
 
 export const tasksService = {
     getAll: async (): Promise<TaskResponse[]> => {
-        const { data } = await api.get<TaskResponse[]>(ENDPOINTS.BASE);
+        const { data } = await api.get<TaskResponse[]>(ENDPOINTS.INBOX);
         return data;
     },
 
@@ -30,7 +31,7 @@ export const tasksService = {
         id: string,
         payload: UpdateTaskDto
     ): Promise<TaskResponse> => {
-        const { data } = await api.patch<TaskResponse>(
+        const { data } = await api.put<TaskResponse>(
             ENDPOINTS.BY_ID(id),
             payload
         );

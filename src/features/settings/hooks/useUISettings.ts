@@ -2,6 +2,8 @@ import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/store'
 
+const DEFAULT_BACKGROUND = '/assets/default-image.png'
+
 const readStoredValue = <T,>(key: string, fallback: T): T => {
   const value = localStorage.getItem(`ataraxia_${key}`)
 
@@ -10,6 +12,16 @@ const readStoredValue = <T,>(key: string, fallback: T): T => {
   }
 
   return value as T
+}
+
+const readStoredBackground = (fallback: string | null): { value: string; isDefault: boolean } => {
+  const storedValue = localStorage.getItem('ataraxia_bgImage')
+
+  if (!storedValue) {
+    return { value: fallback || DEFAULT_BACKGROUND, isDefault: true }
+  }
+
+  return { value: storedValue, isDefault: false }
 }
 
 const readStoredNumber = (key: string, fallback: number): number => {
@@ -46,25 +58,27 @@ export const useUISettings = () => {
   const uiSettingsState = useSelector((state: RootState) => state.settings.ui)
 
   const uiSettings = useMemo(() => {
-    const focusDuration = readStoredNumber(
-      'focusDuration',
-      apiSettings?.focusDuration ?? 25
+    const pomodoroLength = readStoredNumber(
+      'pomodoroLength',
+      apiSettings?.pomodoroLength ?? (apiSettings as any)?.focusDuration ?? 25
     )
 
-    const shortBreakDuration = readStoredNumber(
-      'shortBreakDuration',
-      apiSettings?.shortBreakDuration ?? 5
+    const shortBreakLength = readStoredNumber(
+      'shortBreakLength',
+      apiSettings?.shortBreakLength ?? (apiSettings as any)?.shortBreakDuration ?? 5
     )
 
-    const longBreakDuration = readStoredNumber(
-      'longBreakDuration',
-      apiSettings?.longBreakDuration ?? 15
+    const longBreakLength = readStoredNumber(
+      'longBreakLength',
+      apiSettings?.longBreakLength ?? (apiSettings as any)?.longBreakDuration ?? 15
     )
 
     const longBreakInterval = readStoredNumber(
       'longBreakInterval',
       apiSettings?.longBreakInterval ?? 4
     )
+
+    const background = readStoredBackground(uiSettingsState.bgImage || DEFAULT_BACKGROUND)
 
     return {
       ...uiSettingsState,
@@ -74,19 +88,12 @@ export const useUISettings = () => {
         uiSettingsState.accentColor || '#14b8a6'
       ),
 
-      bgImage: readStoredValue(
-        'bgImage',
-        uiSettingsState.bgImage || null
-      ),
+      bgImage: background.value,
+      isDefaultBackground: background.isDefault,
 
       blurIntensity: readStoredNumber(
         'blurIntensity',
         uiSettingsState.blurIntensity || 0
-      ),
-
-      volume: readStoredNumber(
-        'volume',
-        uiSettingsState.volume || 50
       ),
 
       is24Hour: readStoredBoolean(
@@ -96,9 +103,9 @@ export const useUISettings = () => {
 
       customShortcuts: safeParseShortcuts(),
 
-      focusDuration,
-      shortBreakDuration,
-      longBreakDuration,
+      pomodoroLength,
+      shortBreakLength,
+      longBreakLength,
       autoStartBreaks: readStoredBoolean(
         'autoStartBreaks',
         apiSettings?.autoStartBreaks ?? false
@@ -113,7 +120,7 @@ export const useUISettings = () => {
         'soundEnabled',
         apiSettings?.soundEnabled ?? true
       ),
-      platform: readStoredValue('platform', apiSettings?.platform ?? 'web'),
+      volume: readStoredNumber('volume', apiSettings?.volume ?? 50),
     }
   }, [apiSettings, uiSettingsState])
 

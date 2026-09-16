@@ -1,0 +1,83 @@
+/* Settings modal light-theme polish.
+ * Keep this scoped to the settings dialog so the rest of the theme remains unchanged.
+ */
+
+html.theme-light .fixed.z-\[100\]:has(> .glass .custom-scrollbar) > .absolute.inset-0 {
+  background: rgba(17, 24, 26, 0.44) !important;
+  -webkit-backdrop-filter: blur(6px) saturate(0.88) !important;
+  backdrop-filter: blur(6px) saturate(0.88) !important;
+}
+
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) {
+  background: rgba(255, 252, 244, 0.96) !important;
+  border-color: rgba(17, 17, 17, 0.14) !important;
+  box-shadow:
+    0 28px 80px -28px rgba(17, 17, 17, 0.38),
+    0 1px 0 rgba(255, 255, 255, 0.85) inset !important;
+  color: #111111 !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.04) !important;
+  backdrop-filter: blur(18px) saturate(1.04) !important;
+}
+
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) .text-white\/20 {
+  color: rgba(17, 17, 17, 0.46) !important;
+}
+
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) .text-white\/30 {
+  color: rgba(17, 17, 17, 0.58) !important;
+}
+
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) .text-white\/40 {
+  color: rgba(17, 17, 17, 0.66) !important;
+}
+
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) .text-white\/60 {
+  color: rgba(17, 17, 17, 0.76) !important;
+}
+
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) .text-white\/80 {
+  color: rgba(17, 17, 17, 0.9) !important;
+}
+
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) .bg-white\/5 {
+  background-color: rgba(17, 17, 17, 0.055) !important;
+}
+
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) .bg-white\/10 {
+  background-color: rgba(17, 17, 17, 0.09) !important;
+}
+
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) .bg-black\/20 {
+  background-color: rgba(255, 255, 255, 0.62) !important;
+}
+
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) .bg-black\/40 {
+  background-color: rgba(255, 255, 255, 0.82) !important;
+}
+
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) .border-white\/5 {
+  border-color: rgba(17, 17, 17, 0.08) !important;
+}
+
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) .border-white\/10 {
+  border-color: rgba(17, 17, 17, 0.12) !important;
+}
+
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) input[type='number'],
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) input[type='text'] {
+  color: #171717 !important;
+}
+
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) input::placeholder {
+  color: rgba(17, 17, 17, 0.42) !important;
+}
+
+html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(17, 17, 17, 0.22) !important;
+}
+
+@media (max-width: 639px) {
+  html.theme-light .fixed.z-\[100\] > .glass:has(.custom-scrollbar) {
+    background: rgba(255, 252, 244, 0.985) !important;
+  }
+}

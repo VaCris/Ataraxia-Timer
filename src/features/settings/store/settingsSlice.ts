@@ -1,45 +1,35 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { SettingResponse, UpdateSettingDto, CreateSettingDto } from '@/features/settings/types/setting.dto';
+import { SettingResponseDto, UpdateSettingDto } from '@/features/settings/types/setting.dto';
 import { UISettings } from '../types';
+import { INITIAL_UI_SETTINGS } from '../constants/settings.constants';
 
 export interface SettingsState {
-    api: SettingResponse | null;
-    items: SettingResponse[];
+    api: SettingResponseDto | null;
     ui: UISettings;
     status: 'idle' | 'loading' | 'error';
     error: string | null;
 }
 
-const initialUISettings: UISettings = {
-    theme: 'dark',
-    accentColor: '#14b8a6',
-    bgImage: null,
-    blurIntensity: 0,
-    volume: 50,
-    isMuted: false,
-    pipEnabled: true,
-    is24Hour: false,
-    customShortcuts: {},
-};
-
-const getFallbackApiSettings = (current: SettingResponse | null): SettingResponse => ({
+const getFallbackApiSettings = (current: SettingResponseDto | null): SettingResponseDto => ({
     id: current?.id || '',
-    userId: current?.userId || '',
-    focusDuration: current?.focusDuration ?? 25,
-    shortBreakDuration: current?.shortBreakDuration ?? 5,
-    longBreakDuration: current?.longBreakDuration ?? 15,
+    pomodoroLength: current?.pomodoroLength ?? (current as any)?.focusDuration ?? 25,
+    shortBreakLength: current?.shortBreakLength ?? (current as any)?.shortBreakDuration ?? 5,
+    longBreakLength: current?.longBreakLength ?? (current as any)?.longBreakDuration ?? 15,
     longBreakInterval: current?.longBreakInterval ?? 4,
     autoStartBreaks: current?.autoStartBreaks ?? false,
     autoStartPomodoros: current?.autoStartPomodoros ?? false,
-    theme: current?.theme ?? 'dark',
     soundEnabled: current?.soundEnabled ?? true,
-    platform: current?.platform ?? 'web',
+    volume: current?.volume ?? 50,
+    theme: current?.theme ?? 'dark',
+    language: current?.language ?? 'en',
+    timeFormat: current?.timeFormat ?? '24h',
+    weekStart: current?.weekStart ?? 'monday',
+    notificationsEnabled: current?.notificationsEnabled ?? true,
 });
 
 const initialState: SettingsState = {
     api: null,
-    items: [],
-    ui: initialUISettings,
+    ui: INITIAL_UI_SETTINGS,
     status: 'idle',
     error: null,
 };
@@ -59,37 +49,11 @@ const settingsSlice = createSlice({
             state.status = 'loading';
             state.error = null;
         },
-        fetchSettingsSuccess: (state, action: PayloadAction<SettingResponse>) => {
+        fetchSettingsSuccess: (state, action: PayloadAction<SettingResponseDto>) => {
             state.status = 'idle';
             state.api = action.payload;
         },
         fetchSettingsFailure: (state, action: PayloadAction<string>) => {
-            state.status = 'error';
-            state.error = action.payload;
-        },
-
-        fetchAllSettingsRequest: (state) => {
-            state.status = 'loading';
-            state.error = null;
-        },
-        fetchAllSettingsSuccess: (state, action: PayloadAction<SettingResponse[]>) => {
-            state.status = 'idle';
-            state.items = action.payload;
-        },
-        fetchAllSettingsFailure: (state, action: PayloadAction<string>) => {
-            state.status = 'error';
-            state.error = action.payload;
-        },
-
-        createSettingsRequest: (state, _action: PayloadAction<CreateSettingDto>) => {
-            state.status = 'loading';
-            state.error = null;
-        },
-        createSettingsSuccess: (state, action: PayloadAction<SettingResponse>) => {
-            state.status = 'idle';
-            state.api = action.payload;
-        },
-        createSettingsFailure: (state, action: PayloadAction<string>) => {
             state.status = 'error';
             state.error = action.payload;
         },
@@ -102,7 +66,7 @@ const settingsSlice = createSlice({
                 ...action.payload,
             };
         },
-        updateSettingsSuccess: (state, action: PayloadAction<SettingResponse>) => {
+        updateSettingsSuccess: (state, action: PayloadAction<SettingResponseDto>) => {
             state.status = 'idle';
             state.api = action.payload;
         },
@@ -110,36 +74,6 @@ const settingsSlice = createSlice({
             state.status = 'error';
             state.error = action.payload;
         },
-
-        deleteSettingsRequest: (state, _action: PayloadAction<string>) => {
-            state.status = 'loading';
-            state.error = null;
-        },
-        deleteSettingsSuccess: (state) => {
-            state.status = 'idle';
-            state.api = null;
-        },
-        deleteSettingsFailure: (state, action: PayloadAction<string>) => {
-            state.status = 'error';
-            state.error = action.payload;
-        },
-
-        adminUpdateSettingsRequest: (state, action: PayloadAction<{ id: string; data: UpdateSettingDto }>) => {
-            state.status = 'loading';
-            state.error = null;
-            state.api = {
-                ...getFallbackApiSettings(state.api),
-                ...action.payload.data,
-            };
-        },
-        adminUpdateSettingsSuccess: (state, action: PayloadAction<SettingResponse>) => {
-            state.status = 'idle';
-            state.api = action.payload;
-        },
-        adminUpdateSettingsFailure: (state, action: PayloadAction<string>) => {
-            state.status = 'error';
-            state.error = action.payload;
-        }
     }
 });
 
@@ -149,21 +83,9 @@ export const {
     fetchSettingsRequest,
     fetchSettingsSuccess,
     fetchSettingsFailure,
-    fetchAllSettingsRequest,
-    fetchAllSettingsSuccess,
-    fetchAllSettingsFailure,
-    createSettingsRequest,
-    createSettingsSuccess,
-    createSettingsFailure,
     updateSettingsRequest,
     updateSettingsSuccess,
     updateSettingsFailure,
-    deleteSettingsRequest,
-    deleteSettingsSuccess,
-    deleteSettingsFailure,
-    adminUpdateSettingsRequest,
-    adminUpdateSettingsSuccess,
-    adminUpdateSettingsFailure
 } = settingsSlice.actions;
 
 export default settingsSlice.reducer;

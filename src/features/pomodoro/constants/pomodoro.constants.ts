@@ -1,0 +1,4 @@
+export const DEFAULT_FOCUS_TIME = 25 * 60;
+export const DEFAULT_SHORT_BREAK_TIME = 5 * 60;
+export const DEFAULT_LONG_BREAK_TIME = 15 * 60;
+export const DEFAULT_LONG_BREAK_INTERVAL = 4;

@@ -1,15 +1,26 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Loader2, Music } from 'lucide-react';
 
 const MusicWidget = ({ isOpen, onClose }) => {
     const [hasBeenOpened, setHasBeenOpened] = useState(isOpen);
+    const [isIframeLoading, setIsIframeLoading] = useState(true);
+    const [iframeError, setIframeError] = useState(false);
+    const [iframeKey, setIframeKey] = useState(0);
 
     if (isOpen && !hasBeenOpened) {
         setHasBeenOpened(true);
+        setIsIframeLoading(true);
+        setIframeError(false);
     }
 
     if (!hasBeenOpened) return null;
+
+    const retryIframe = () => {
+        setIframeError(false);
+        setIsIframeLoading(true);
+        setIframeKey((key) => key + 1);
+    };
 
     return (
         <motion.div
@@ -43,12 +54,47 @@ const MusicWidget = ({ isOpen, onClose }) => {
                 </div>
 
                 <div className="relative flex-1 bg-black min-h-0">
+                    {(isIframeLoading || iframeError) && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/80 z-10">
+                            {iframeError ? (
+                                <>
+                                    <Music size={32} className="text-white/20" />
+                                    <p className="text-white/40 text-xs text-center px-4">
+                                        Unable to load lofi.cafe.<br />
+                                        Please check your connection and try again.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={retryIframe}
+                                        className="px-4 py-2 text-[10px] uppercase tracking-widest text-white/60 hover:text-white border border-white/10 rounded-xl transition-colors"
+                                    >
+                                        Retry
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <Loader2 size={24} className="text-white/30 animate-spin" />
+                                    <p className="text-white/30 text-[10px] uppercase tracking-widest">
+                                        Loading music player...
+                                    </p>
+                                </>
+                            )}
+                        </div>
+                    )}
+
                     <iframe
+                        key={iframeKey}
                         src="https://www.lofi.cafe/"
+                        loading="lazy"
                         className="border-none w-full h-full"
                         title="Lofi Cafe"
-                        allow="autoplay; encrypted-media"
-                        loading="lazy"
+                        allow="autoplay; encrypted-media; fullscreen"
+                        sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                        onLoad={() => setIsIframeLoading(false)}
+                        onError={() => {
+                            setIsIframeLoading(false);
+                            setIframeError(true);
+                        }}
                     />
 
                     <div className="right-3 sm:right-4 bottom-3 sm:bottom-4 left-3 sm:left-4 absolute pointer-events-none">
