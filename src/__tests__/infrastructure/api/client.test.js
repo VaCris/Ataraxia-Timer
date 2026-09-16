@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => {
     post: vi.fn(),
     create: vi.fn(() => client),
     client,
+    requestUse,
+    responseUse,
   }
 })
 
@@ -38,16 +40,36 @@ const setOnline = (online) => {
   })
 }
 
+const getResponseErrorHandler = () => mocks.responseUse.mock.calls[0]?.[1]
+
 describe('API refresh coordination', () => {
   beforeEach(() => {
     localStorage.clear()
     mocks.post.mockReset()
+    mocks.client.mockReset()
     setOnline(true)
   })
 
-  it('shares one refresh request across concurrent callers', async () => {
-    localStorage.setItem('refreshToken', 'refresh-old')
+  it('refreshes with the HttpOnly cookie and never persists a refresh token', async () => {
+    mocks.post.mockResolvedValue({
+      data: {
+        access_token: 'access-new',
+        refresh_token: 'body-refresh-ignored',
+      },
+    })
 
+    await expect(tryRefresh()).resolves.toBe(true)
+
+    expect(mocks.post).toHaveBeenCalledWith(
+      'https://api.example.test/auth/refresh',
+      undefined,
+      { withCredentials: true }
+    )
+    expect(localStorage.getItem('token')).toBe('access-new')
+    expect(localStorage.getItem('refreshToken')).toBeNull()
+  })
+
+  it('shares one refresh request across concurrent callers', async () => {
     let resolveRefresh
     mocks.post.mockReturnValue(new Promise((resolve) => {
       resolveRefresh = resolve
@@ -61,19 +83,45 @@ describe('API refresh coordination', () => {
     resolveRefresh({
       data: {
         access_token: 'access-new',
-        refresh_token: 'refresh-new',
       },
     })
 
     await expect(first).resolves.toBe(true)
     await expect(second).resolves.toBe(true)
     expect(localStorage.getItem('token')).toBe('access-new')
-    expect(localStorage.getItem('refreshToken')).toBe('refresh-new')
   })
 
-  it('clears only remote tokens when refresh fails', async () => {
+  it('coordinates concurrent 401 responses through a single active refresh', async () => {
     localStorage.setItem('token', 'access-old')
-    localStorage.setItem('refreshToken', 'refresh-old')
+
+    let resolveRefresh
+    mocks.post.mockReturnValue(new Promise((resolve) => {
+      resolveRefresh = resolve
+    }))
+    mocks.client.mockResolvedValue({ data: { ok: true } })
+
+    const handleError = getResponseErrorHandler()
+    expect(handleError).toBeTypeOf('function')
+
+    const requestA = { url: '/tasks', headers: {} }
+    const requestB = { url: '/tags', headers: {} }
+
+    const first = handleError({ config: requestA, response: { status: 401 } })
+    const second = handleError({ config: requestB, response: { status: 401 } })
+
+    expect(mocks.post).toHaveBeenCalledTimes(1)
+
+    resolveRefresh({ data: { access_token: 'access-new' } })
+
+    await expect(first).resolves.toEqual({ data: { ok: true } })
+    await expect(second).resolves.toEqual({ data: { ok: true } })
+    expect(requestA.headers.Authorization).toBe('Bearer access-new')
+    expect(requestB.headers.Authorization).toBe('Bearer access-new')
+    expect(mocks.client).toHaveBeenCalledTimes(2)
+  })
+
+  it('clears only the remote access token when refresh fails', async () => {
+    localStorage.setItem('token', 'access-old')
     localStorage.setItem('ataraxia_local_profile', '{"id":"local-user"}')
     mocks.post.mockRejectedValue(new Error('refresh failed'))
 
@@ -86,11 +134,20 @@ describe('API refresh coordination', () => {
 
   it('does not contact the backend while offline', async () => {
     setOnline(false)
-    localStorage.setItem('refreshToken', 'refresh-old')
 
     await expect(tryRefresh()).resolves.toBe(false)
 
     expect(mocks.post).not.toHaveBeenCalled()
-    expect(localStorage.getItem('refreshToken')).toBe('refresh-old')
+  })
+
+  it('does not refresh or logout on HTTP 500', async () => {
+    const handleError = getResponseErrorHandler()
+    expect(handleError).toBeTypeOf('function')
+
+    const error = { config: { url: '/tasks', headers: {} }, response: { status: 500 } }
+
+    await expect(handleError(error)).rejects.toBe(error)
+    expect(mocks.post).not.toHaveBeenCalled()
+    expect(localStorage.getItem('token')).toBeNull()
   })
 })
