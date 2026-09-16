@@ -163,8 +163,14 @@ export const classifySyncError = (error: unknown): SyncQueueStatus => {
 }
 
 const markQueueFailure = async (queue: SyncQueueItem[], error: unknown) => {
+  const candidate = toErrorLike(error)
+  const errorStatus = candidate.status || candidate.response?.status
   const status = classifySyncError(error)
   const message = errorMessage(error)
+
+  if (status === 'blocked_auth' && errorStatus === 401) {
+    localStorage.removeItem('token')
+  }
 
   for (const item of queue) {
     if (status === 'blocked_auth') {
