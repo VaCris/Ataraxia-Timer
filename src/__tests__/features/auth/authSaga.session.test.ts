@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getLocalProfile: vi.fn(),
   saveLocalProfile: vi.fn(),
   clearLocalProfile: vi.fn(),
+  tryRefresh: vi.fn(),
 }))
 
 vi.mock('@/features/auth/api/auth.api', () => ({
@@ -23,6 +24,11 @@ vi.mock('@/features/auth/api/auth.api', () => ({
     resetPassword: vi.fn(),
     logout: vi.fn(),
   },
+}))
+
+vi.mock('@/infrastructure/api/client', () => ({
+  tryRefresh: mocks.tryRefresh,
+  default: {},
 }))
 
 vi.mock('@/features/auth/repositories/auth.local.repository', () => ({
@@ -86,6 +92,8 @@ describe('authSaga local session restoration', () => {
     mocks.getLocalProfile.mockReset()
     mocks.saveLocalProfile.mockReset()
     mocks.clearLocalProfile.mockReset()
+    mocks.tryRefresh.mockReset()
+    mocks.tryRefresh.mockResolvedValue(false)
     mocks.getLocalProfile.mockReturnValue(localUser)
   })
 
@@ -100,41 +108,60 @@ describe('authSaga local session restoration', () => {
 
     const dispatched = await runCheckAuth()
 
+    expect(mocks.tryRefresh).not.toHaveBeenCalled()
     expect(mocks.getRemoteProfile).not.toHaveBeenCalled()
     expect(dispatched).toContainEqual(loginSuccess({
       user: localUser,
       accessToken: null,
-      refreshToken: null,
       isRemoteSessionAvailable: false,
     }))
   })
 
-  it('restores a known local profile without requiring a remote token', async () => {
+  it('falls back to a known local profile when cookie refresh is unavailable', async () => {
     setOnline(true)
 
     const dispatched = await runCheckAuth()
 
+    expect(mocks.tryRefresh).toHaveBeenCalledTimes(1)
     expect(mocks.getRemoteProfile).not.toHaveBeenCalled()
     expect(dispatched).toContainEqual(loginSuccess({
       user: localUser,
       accessToken: null,
-      refreshToken: null,
       isRemoteSessionAvailable: false,
     }))
   })
 
-  it('uses the remote profile when a valid online session is available', async () => {
+  it('restores the remote session from the HttpOnly refresh cookie when no access token exists', async () => {
+    setOnline(true)
+    mocks.tryRefresh.mockImplementation(async () => {
+      localStorage.setItem('token', 'refreshed-token')
+      return true
+    })
+    mocks.getRemoteProfile.mockResolvedValue({ user: localUser })
+
+    const dispatched = await runCheckAuth()
+
+    expect(mocks.tryRefresh).toHaveBeenCalledTimes(1)
+    expect(mocks.getRemoteProfile).toHaveBeenCalledTimes(1)
+    expect(dispatched).toContainEqual(loginSuccess({
+      user: localUser,
+      accessToken: 'refreshed-token',
+      isRemoteSessionAvailable: true,
+    }))
+  })
+
+  it('uses the remote profile when a valid online access token is available', async () => {
     localStorage.setItem('token', 'valid-token')
     setOnline(true)
     mocks.getRemoteProfile.mockResolvedValue({ user: localUser })
 
     const dispatched = await runCheckAuth()
 
+    expect(mocks.tryRefresh).not.toHaveBeenCalled()
     expect(mocks.getRemoteProfile).toHaveBeenCalledTimes(1)
     expect(dispatched).toContainEqual(loginSuccess({
       user: localUser,
       accessToken: 'valid-token',
-      refreshToken: null,
       isRemoteSessionAvailable: true,
     }))
   })
