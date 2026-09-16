@@ -2,8 +2,14 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://ataraxiatimer.app/</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
+    <lastmod>2026-09-16</lastmod>
+  </url>
+  <url>
+    <loc>https://ataraxiatimer.app/privacy</loc>
+    <lastmod>2026-09-16</lastmod>
+  </url>
+  <url>
+    <loc>https://ataraxiatimer.app/terms</loc>
+    <lastmod>2026-09-16</lastmod>
   </url>
 </urlset>
