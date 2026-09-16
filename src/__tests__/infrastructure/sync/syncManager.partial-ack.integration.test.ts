@@ -65,6 +65,30 @@ describe('syncManager partial acknowledgement', () => {
   })
 
   it('does not advance the cursor while a batch mutation remains unacknowledged', async () => {
+    const ownerId = getLocalOwnerId()
+    await db.tasks.bulkPut([
+      {
+        id: 'task-a',
+        ownerId,
+        userId: 'sync-partial-user',
+        title: 'A',
+        status: 'TODO',
+        syncStatus: 'pending_update',
+        updatedAt: Date.now(),
+        deletedAt: null,
+      },
+      {
+        id: 'task-b',
+        ownerId,
+        userId: 'sync-partial-user',
+        title: 'B',
+        status: 'TODO',
+        syncStatus: 'pending_update',
+        updatedAt: Date.now(),
+        deletedAt: null,
+      },
+    ])
+
     await addToSyncQueue({
       method: 'PATCH',
       url: '/tasks/task-a',
@@ -94,6 +118,8 @@ describe('syncManager partial acknowledgement', () => {
 
     expect(await db.syncQueue.get(queue[0].id)).toBeUndefined()
     expect(await db.syncQueue.get(queue[1].id)).toBeDefined()
-    expect(localStorage.getItem(getSyncCursorStorageKey(getLocalOwnerId()))).toBeNull()
+    expect((await db.tasks.get('task-a'))?.syncStatus).toBe('synced')
+    expect((await db.tasks.get('task-b'))?.syncStatus).toBe('pending_update')
+    expect(localStorage.getItem(getSyncCursorStorageKey(ownerId))).toBeNull()
   })
 })
