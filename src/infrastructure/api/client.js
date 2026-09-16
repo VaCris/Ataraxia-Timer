@@ -1,5 +1,11 @@
 import axios from 'axios';
 import rateLimit from 'axios-rate-limit';
+import {
+    clearLegacyRefreshToken,
+    clearRemoteSession,
+    getAccessToken,
+    setAccessToken,
+} from '@/infrastructure/auth/remoteSession';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -15,35 +21,33 @@ const api = rateLimit(axios.create({
     withCredentials: true,
 }), { maxRequests: 10, perMilliseconds: 1000, maxRPS: 10 });
 
-let refreshPromise = null;
+// Refresh credentials are now owned by the backend HttpOnly cookie.
+// Remove any token left by older frontend versions as soon as the API layer loads.
+clearLegacyRefreshToken();
 
-function clearRemoteTokens() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-}
+let refreshPromise = null;
 
 async function tryRefresh() {
     if (refreshPromise) return refreshPromise;
     if (!navigator.onLine) return false;
 
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) return false;
-
     refreshPromise = (async () => {
         try {
             const { data } = await axios.post(
                 `${api.defaults.baseURL}/auth/refresh`,
-                { refreshToken },
+                undefined,
                 { withCredentials: true }
             );
 
-            if (!data?.access_token) return false;
+            if (!data?.access_token) {
+                clearRemoteSession();
+                return false;
+            }
 
-            localStorage.setItem('token', data.access_token);
-            if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token);
+            setAccessToken(data.access_token);
             return true;
         } catch {
-            clearRemoteTokens();
+            clearRemoteSession();
             return false;
         } finally {
             refreshPromise = null;
@@ -55,7 +59,7 @@ async function tryRefresh() {
 
 api.interceptors.request.use(
     async (config) => {
-        let token = localStorage.getItem('token');
+        let token = getAccessToken();
 
         if (
             navigator.onLine &&
@@ -64,7 +68,7 @@ api.interceptors.request.use(
             !config.url?.includes('/auth/refresh')
         ) {
             await tryRefresh();
-            token = localStorage.getItem('token');
+            token = getAccessToken();
         }
 
         if (token) {
@@ -94,7 +98,7 @@ api.interceptors.response.use(
 
             const refreshed = await tryRefresh();
             if (refreshed) {
-                const newToken = localStorage.getItem('token');
+                const newToken = getAccessToken();
                 if (newToken) originalRequest.headers.Authorization = `Bearer ${newToken}`;
                 return api(originalRequest);
             }
@@ -129,7 +133,7 @@ if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState !== 'visible' || !navigator.onLine) return;
 
-        const token = localStorage.getItem('token');
+        const token = getAccessToken();
         if (!token) return;
 
         const payload = parseJwt(token);
