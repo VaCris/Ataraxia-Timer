@@ -26,65 +26,69 @@ export const ensureCurrentOwnerData = async (): Promise<string> => {
   const markerKey = `${MIGRATION_MARKER_PREFIX}${ownerId}`
   if (localStorage.getItem(markerKey) === '1') return ownerId
 
-  await db.transaction('rw', db.settings, db.tasks, db.tags, db.syncQueue, db.timerSessions, async () => {
-    await db.tasks
-      .filter((item) => isClaimableOwner(item.ownerId))
-      .modify({ ownerId })
+  await db.transaction(
+    'rw',
+    [db.settings, db.tasks, db.tags, db.syncQueue, db.timerSessions],
+    async () => {
+      await db.tasks
+        .filter((item) => isClaimableOwner(item.ownerId))
+        .modify({ ownerId })
 
-    await db.tags
-      .filter((item) => isClaimableOwner(item.ownerId))
-      .modify({ ownerId })
+      await db.tags
+        .filter((item) => isClaimableOwner(item.ownerId))
+        .modify({ ownerId })
 
-    await db.syncQueue
-      .filter((item) => isClaimableOwner(item.ownerId))
-      .modify({ ownerId })
+      await db.syncQueue
+        .filter((item) => isClaimableOwner(item.ownerId))
+        .modify({ ownerId })
 
-    const legacySettings = await db.settings
-      .filter((item) => isClaimableOwner(item.ownerId))
-      .toArray()
+      const legacySettings = await db.settings
+        .filter((item) => isClaimableOwner(item.ownerId))
+        .toArray()
 
-    for (const setting of legacySettings) {
-      const remoteId = setting.remoteId || setting.id.split(':').at(-1) || 'me'
-      const targetId = getSettingsStorageId(remoteId, ownerId)
-      const existingTarget = await db.settings.get(targetId)
+      for (const setting of legacySettings) {
+        const remoteId = setting.remoteId || setting.id.split(':').pop() || 'me'
+        const targetId = getSettingsStorageId(remoteId, ownerId)
+        const existingTarget = await db.settings.get(targetId)
 
-      if (!existingTarget) {
-        await db.settings.put({
-          ...setting,
-          id: targetId,
-          ownerId,
-          remoteId,
-        })
-      }
-
-      if (setting.id !== targetId) await db.settings.delete(setting.id)
-    }
-
-    const legacySessions = await db.timerSessions
-      .filter((item) => isClaimableOwner(item.ownerId))
-      .toArray()
-
-    if (legacySessions.length) {
-      const targetId = getTimerSessionStorageId(ownerId)
-      const existingTarget = await db.timerSessions.get(targetId)
-      const latestLegacy = [...legacySessions]
-        .sort((a, b) => b.lastUpdatedAt - a.lastUpdatedAt)[0]
-
-      if (!existingTarget && latestLegacy) {
-        const migrated: LocalTimerSession = {
-          ...latestLegacy,
-          id: targetId,
-          ownerId,
+        if (!existingTarget) {
+          await db.settings.put({
+            ...setting,
+            id: targetId,
+            ownerId,
+            remoteId,
+          })
         }
-        await db.timerSessions.put(migrated)
+
+        if (setting.id !== targetId) await db.settings.delete(setting.id)
       }
 
-      const legacyIds = legacySessions
-        .map((item) => item.id)
-        .filter((id) => id !== targetId)
-      if (legacyIds.length) await db.timerSessions.bulkDelete(legacyIds)
+      const legacySessions = await db.timerSessions
+        .filter((item) => isClaimableOwner(item.ownerId))
+        .toArray()
+
+      if (legacySessions.length) {
+        const targetId = getTimerSessionStorageId(ownerId)
+        const existingTarget = await db.timerSessions.get(targetId)
+        const latestLegacy = [...legacySessions]
+          .sort((a, b) => b.lastUpdatedAt - a.lastUpdatedAt)[0]
+
+        if (!existingTarget && latestLegacy) {
+          const migrated: LocalTimerSession = {
+            ...latestLegacy,
+            id: targetId,
+            ownerId,
+          }
+          await db.timerSessions.put(migrated)
+        }
+
+        const legacyIds = legacySessions
+          .map((item) => item.id)
+          .filter((id) => id !== targetId)
+        if (legacyIds.length) await db.timerSessions.bulkDelete(legacyIds)
+      }
     }
-  })
+  )
 
   const ownerRoundKey = getCurrentRoundStorageKey(ownerId)
   if (!localStorage.getItem(ownerRoundKey)) {
