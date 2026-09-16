@@ -36,7 +36,7 @@ async function checkVersion(registration) {
         // Ask the browser to check for a newer service worker without deleting
         // the active precache or forcing a reload. With registerType='prompt' and
         // skipWaiting=false, the currently controlled app keeps working until
-        // the new worker can activate safely after the current session ends.
+        // the user explicitly accepts the waiting update.
         await registration?.update()
     } catch (error) {
         console.error(error)
@@ -44,13 +44,21 @@ async function checkVersion(registration) {
 }
 
 export function startVersionGuard(registration) {
-    checkVersion(registration)
+    let disposed = false
 
-    setInterval(() => {
-        checkVersion(registration)
-    }, VERSION_CHECK_INTERVAL)
+    const runCheck = () => {
+        if (!disposed) checkVersion(registration)
+    }
 
-    window.addEventListener('focus', () => {
-        checkVersion(registration)
-    })
+    runCheck()
+
+    const intervalId = window.setInterval(runCheck, VERSION_CHECK_INTERVAL)
+    const onFocus = () => runCheck()
+    window.addEventListener('focus', onFocus)
+
+    return () => {
+        disposed = true
+        window.clearInterval(intervalId)
+        window.removeEventListener('focus', onFocus)
+    }
 }
