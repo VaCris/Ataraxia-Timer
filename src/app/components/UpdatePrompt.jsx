@@ -48,7 +48,7 @@ const UpdatePrompt = () => {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
-          className="right-4 sm:right-6 bottom-20 sm:bottom-6 z-[100] fixed max-w-[calc(100vw-2rem)] sm:max-w-[340px)]"
+          className="right-4 sm:right-6 bottom-20 sm:bottom-6 z-[100] fixed max-w-[calc(100vw-2rem)] sm:max-w-[340px]"
         >
           <div className="relative bg-[#1a1a1b]/90 shadow-2xl backdrop-blur-2xl p-5 border border-white/10 rounded-2xl overflow-hidden">
             <div className="relative flex items-start gap-4">
