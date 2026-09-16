@@ -16,7 +16,6 @@ const ENDPOINTS = {
     LOGIN: '/auth/login',
     PROFILE: '/auth/profile',
     LOGOUT: '/auth/logout',
-    REFRESH: '/auth/refresh',
     REGISTER: '/auth/register',
     GUEST: '/auth/guest-login',
     FORGOT_PASSWORD: '/auth/forgot-password',
@@ -53,11 +52,6 @@ export const authService = {
 
     logout: async () => {
         await api.post(ENDPOINTS.LOGOUT)
-    },
-
-    refresh: async (): Promise<AuthResponse> => {
-        const res = await api.post<AuthResponse>(ENDPOINTS.REFRESH)
-        return res.data
     },
 
     forgotPassword: async (data: ForgotPasswordDto) => {
