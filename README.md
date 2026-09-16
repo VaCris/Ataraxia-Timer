@@ -2,7 +2,7 @@
 
 Ataraxia is a Pomodoro-focused productivity PWA built with React, Vite, Redux Toolkit, Dexie and Workbox.
 
-The application follows a **local-first architecture for its core productivity features**: the timer, tasks, tags and settings must remain usable when the API is unavailable. Remote services are used for account operations, cross-device synchronization and other inherently online capabilities.
+The application follows a **local-first architecture for its core productivity features**: the timer, tasks, tags and settings must remain usable when the API is unavailable. Remote services are used for account operations, synchronization and other inherently online capabilities.
 
 ## Core offline capabilities
 
@@ -44,13 +44,23 @@ The sync queue distinguishes between:
 
 Transient network, rate-limit and server failures must **never silently delete queued user changes**.
 
-The remote API acts as a synchronization peer, not as the source required to render or edit core local data.
+The client keeps a stable `clientMutationId` across retries. Backend deduplication for repeated mutation IDs is implemented, so resending the same mutation does not create a duplicate operation.
+
+The frontend also protects its cursor from advancing when a push batch is only partially acknowledged or when a pulled change cannot be persisted. Local pending changes are not silently overwritten by a simulated concurrent remote change.
+
+### Current synchronization limitation
+
+Full multi-client conflict resolution is **not yet complete end to end**. The current backend still needs real domain-conflict detection and incremental pull behavior for two clients working concurrently. That work is tracked separately in frontend issue `#12` and the linked backend sync issue.
+
+Until that work is complete, do not describe cross-device conflict resolution as fully implemented. The offline/local-first guarantees remain independent from this limitation.
 
 ## PWA behavior
 
 Production builds precache the application shell and use a navigation fallback so an installed/cached application can start without network access.
 
 Service-worker updates use a prompt instead of immediately replacing the running version. PWA service-worker behavior is disabled during normal Vite development to avoid stale development caches.
+
+The production cold-start/offline verification procedure is documented in [`docs/PWA_OFFLINE_TEST.md`](./docs/PWA_OFFLINE_TEST.md).
 
 ## Local session vs remote session
 
@@ -59,7 +69,7 @@ Ataraxia distinguishes between:
 - **Local session/profile:** allows a previously known user to keep accessing locally persisted productivity data.
 - **Remote session:** authorizes API and synchronization operations.
 
-An expired or temporarily unavailable remote session must not invalidate the local session. Explicit logout clears the local profile and remote credentials according to the selected local-data policy.
+An expired or temporarily unavailable remote session must not invalidate the local session. Explicit logout clears or preserves owner-scoped local data according to the selected local-data policy.
 
 ### Remote credential strategy
 
@@ -78,8 +88,8 @@ Legacy `refreshToken` values left in `localStorage` by older frontend versions a
 
 ### Requirements
 
-- Node.js compatible with the versions required by the current dependency tree.
-- pnpm 10 (the repository declares its package-manager version in `package.json`).
+- Node.js **20.19+** or **22.12+**. These are the minimum ranges required by Vite 7.
+- pnpm **10**. The repository pins pnpm through the `packageManager` field in `package.json`.
 
 ### Install
 
@@ -105,11 +115,26 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm test:run
+pnpm test:coverage
 pnpm build
 pnpm preview
 ```
 
-`pnpm test` runs Vitest in watch/development mode. `pnpm test:run` executes the suite once and is suitable for automated validation.
+- `pnpm test` runs Vitest in watch/development mode.
+- `pnpm test:run` executes the suite once and is suitable for automated validation.
+- `pnpm test:coverage` runs the suite with V8 coverage.
+- `pnpm build` also generates `public/version.json` through the `prebuild` script before producing the production bundle.
+
+A normal validation pass before merging should include:
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test:run
+pnpm build
+```
+
+For PWA/offline work, follow that with the production preview checklist in [`docs/PWA_OFFLINE_TEST.md`](./docs/PWA_OFFLINE_TEST.md).
 
 ## Project structure
 
@@ -123,7 +148,7 @@ The codebase is organized by application, features and infrastructure:
 - `src/store/` — Redux store and root orchestration.
 - `src/__tests__/` — automated tests.
 
-See [`Structure.md`](./Structure.md) for the broader repository map.
+See [`Structure.md`](./Structure.md) for the broader repository map. The generated API client and DTOs live under `src/infrastructure/api/generated/`; synchronization behavior is implemented in `src/infrastructure/sync/` and is validated by integration tests under `src/__tests__/infrastructure/sync/`.
 
 ## Data migration rules
 
@@ -131,11 +156,15 @@ IndexedDB schema changes must use an explicit Dexie version and migration when e
 
 Service-worker changes and IndexedDB migrations must be designed so updating the application cannot silently discard pending local work.
 
-## Current development focus
+Owner-aware migrations must preserve isolation between local profiles and must not reassign data already owned by another profile.
 
-The `dev` branch is being hardened around four guarantees:
+## Current development status
+
+The client currently guarantees:
 
 1. Core workflows remain operational offline.
-2. Local mutations are never silently discarded.
+2. Local mutations are retained instead of being silently discarded on transient errors.
 3. Remote authentication is independent from local usability.
-4. Reconnection and synchronization are idempotent and conflict-aware.
+4. Mutation retries are idempotent and cursor advancement is guarded against partial application.
+
+Full conflict resolution and incremental pull across concurrent clients remain tracked separately in `#12`.
