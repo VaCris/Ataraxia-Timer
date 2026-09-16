@@ -8,6 +8,7 @@ import { checkAuthRequest } from './features/auth/store/authSlice';
 import { fetchTasksRequest } from './features/tasks/store/tasksSlice';
 
 import { Loader } from './shared/ui/feedback/Loader';
+import RouteSeo from './app/seo/RouteSeo';
 
 const Maintenance = lazy(() => import('./app/pages/Maintenance'));
 const ComingSoon = lazy(() => import('./app/pages/ComingSoon'));
@@ -90,6 +91,8 @@ function App() {
 
   return (
     <>
+      <RouteSeo />
+
       <Loader
         isLoading={isBooting}
         fullScreen={true}
